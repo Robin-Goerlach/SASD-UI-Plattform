@@ -24,7 +24,9 @@ public sealed class SasdGridPageLoadedEventArgs : EventArgs
 }
 
 /// <summary>
-/// Coordinates a designer-friendly non-generic <see cref="SasdDataGrid"/> with a typed, application-owned page source.
+/// Coordinates a designer-friendly non-generic <see cref="SasdDataGrid"/> with a typed,
+/// application-owned page source. The controller intentionally knows nothing about SQL,
+/// Entity Framework, REST, SQLite, or any other concrete storage technology.
 /// </summary>
 /// <typeparam name="T">The row model type.</typeparam>
 public sealed class SasdGridController<T> : IDisposable
@@ -41,10 +43,7 @@ public sealed class SasdGridController<T> : IDisposable
     {
         this.grid = grid ?? throw new ArgumentNullException(nameof(grid));
         this.source = source ?? throw new ArgumentNullException(nameof(source));
-        if (pageSize <= 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(pageSize));
-        }
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(pageSize);
 
         PageSize = pageSize;
         grid.DataSource = bindingSource;
@@ -79,6 +78,7 @@ public sealed class SasdGridController<T> : IDisposable
             return;
         }
 
+        // Detach first so replacing a pager can never leave duplicate event handlers behind.
         if (pager is not null)
         {
             pager.PageRequested -= OnPageRequested;
@@ -92,6 +92,9 @@ public sealed class SasdGridController<T> : IDisposable
     public async Task LoadAsync(CancellationToken cancellationToken = default)
     {
         ThrowIfDisposed();
+
+        // A new request supersedes an older request. This keeps fast typing, sorting,
+        // and paging from applying stale data after a newer result has already arrived.
         activeLoad?.Cancel();
         activeLoad?.Dispose();
         activeLoad = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -105,6 +108,8 @@ public sealed class SasdGridController<T> : IDisposable
                 Sort,
                 SearchText).Validate();
 
+            // Continue on the WinForms synchronization context because BindingSource and
+            // pager updates below must run on the UI thread.
             var page = await source.LoadAsync(query, load.Token).ConfigureAwait(true);
             load.Token.ThrowIfCancellationRequested();
 
@@ -171,7 +176,7 @@ public sealed class SasdGridController<T> : IDisposable
         }
         catch (OperationCanceledException)
         {
-            // A newer page request superseded this one.
+            // A newer page request superseded this one. Cancellation is expected here.
         }
     }
 
@@ -189,7 +194,8 @@ public sealed class SasdGridController<T> : IDisposable
             return;
         }
 
-        var direction = Sort.FirstOrDefault()?.Field == field && Sort.First().Direction == SasdSortDirection.Ascending
+        SasdSortDescriptor? currentSort = Sort.Count > 0 ? Sort[0] : null;
+        var direction = currentSort?.Field == field && currentSort.Direction == SasdSortDirection.Ascending
             ? SasdSortDirection.Descending
             : SasdSortDirection.Ascending;
 
@@ -199,7 +205,7 @@ public sealed class SasdGridController<T> : IDisposable
         }
         catch (OperationCanceledException)
         {
-            // A newer sort or page request superseded this one.
+            // A newer sort or page request superseded this one. Cancellation is expected here.
         }
     }
 

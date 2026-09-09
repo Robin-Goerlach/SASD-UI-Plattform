@@ -7,10 +7,30 @@ public sealed record SasdFileDialogOptions(
     string? InitialDirectory = null,
     string? DefaultExtension = null);
 
-/// <summary>Provides application-neutral access to native Windows file and folder dialogs.</summary>
-public sealed class SasdFileDialogService
+/// <summary>Abstraction for native file and folder selection dialogs.</summary>
+public interface ISasdFileDialogService
 {
     /// <summary>Prompts for one existing file.</summary>
+    string? OpenFile(IWin32Window? owner, SasdFileDialogOptions? options = null);
+
+    /// <summary>Prompts for zero or more existing files.</summary>
+    IReadOnlyList<string> OpenFiles(IWin32Window? owner, SasdFileDialogOptions? options = null);
+
+    /// <summary>Prompts for a destination file path.</summary>
+    string? SaveFile(IWin32Window? owner, SasdFileDialogOptions? options = null, string? suggestedFileName = null);
+
+    /// <summary>Prompts for an existing folder.</summary>
+    string? PickFolder(IWin32Window? owner, string? description = null, string? initialDirectory = null);
+}
+
+/// <summary>
+/// Provides application-neutral access to native Windows file and folder dialogs.
+/// Keeping the dialog calls behind an instance service makes consuming code testable
+/// and leaves room for a different Windows implementation later.
+/// </summary>
+public sealed class SasdFileDialogService : ISasdFileDialogService
+{
+    /// <inheritdoc />
     public string? OpenFile(IWin32Window? owner, SasdFileDialogOptions? options = null)
     {
         options ??= new SasdFileDialogOptions();
@@ -19,7 +39,7 @@ public sealed class SasdFileDialogService
         return dialog.ShowDialog(owner) == DialogResult.OK ? dialog.FileName : null;
     }
 
-    /// <summary>Prompts for zero or more existing files.</summary>
+    /// <inheritdoc />
     public IReadOnlyList<string> OpenFiles(IWin32Window? owner, SasdFileDialogOptions? options = null)
     {
         options ??= new SasdFileDialogOptions();
@@ -28,7 +48,7 @@ public sealed class SasdFileDialogService
         return dialog.ShowDialog(owner) == DialogResult.OK ? dialog.FileNames : Array.Empty<string>();
     }
 
-    /// <summary>Prompts for a destination file path.</summary>
+    /// <inheritdoc />
     public string? SaveFile(IWin32Window? owner, SasdFileDialogOptions? options = null, string? suggestedFileName = null)
     {
         options ??= new SasdFileDialogOptions();
@@ -48,7 +68,7 @@ public sealed class SasdFileDialogService
         return dialog.ShowDialog(owner) == DialogResult.OK ? dialog.FileName : null;
     }
 
-    /// <summary>Prompts for an existing folder.</summary>
+    /// <inheritdoc />
     public string? PickFolder(IWin32Window? owner, string? description = null, string? initialDirectory = null)
     {
         using var dialog = new FolderBrowserDialog

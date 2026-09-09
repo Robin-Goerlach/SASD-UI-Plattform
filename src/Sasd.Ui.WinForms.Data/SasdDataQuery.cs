@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Sasd.Ui.WinForms.Data;
 
 /// <summary>Sort direction used by vendor-neutral data queries.</summary>
@@ -28,17 +30,18 @@ public sealed record SasdDataQuery(
     IReadOnlyList<SasdSortDescriptor>? Sort = null,
     string? SearchText = null)
 {
-    /// <summary>Returns a validated query.</summary>
+    /// <summary>
+    /// Validates paging bounds and returns this immutable query so callers can
+    /// conveniently validate while constructing a request.
+    /// </summary>
     public SasdDataQuery Validate()
     {
-        if (Offset < 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(Offset));
-        }
+        ArgumentOutOfRangeException.ThrowIfNegative(Offset);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(Limit);
 
-        if (Limit <= 0 || Limit > 10_000)
+        if (Limit > 10_000)
         {
-            throw new ArgumentOutOfRangeException(nameof(Limit), "Limit must be between 1 and 10000.");
+            throw new ArgumentOutOfRangeException(nameof(Limit), "Limit must not exceed 10000 rows.");
         }
 
         return this;
@@ -48,13 +51,26 @@ public sealed record SasdDataQuery(
 /// <summary>One page returned by an application-owned data source.</summary>
 public sealed record SasdDataPage<T>(IReadOnlyList<T> Items, int TotalCount)
 {
-    /// <summary>Creates a validated data page.</summary>
+    /// <summary>
+    /// Creates a validated data page. The factory remains on the generic type
+    /// deliberately so application data-source implementations discover it next
+    /// to the page model they return.
+    /// </summary>
+    [SuppressMessage(
+        "Design",
+        "CA1000:Do not declare static members on generic types",
+        Justification = "The factory is intentionally colocated with the generic page result for discoverability and type safety.")]
     public static SasdDataPage<T> Create(IReadOnlyList<T> items, int totalCount)
     {
         ArgumentNullException.ThrowIfNull(items);
-        if (totalCount < 0 || totalCount < items.Count)
+        ArgumentOutOfRangeException.ThrowIfNegative(totalCount);
+
+        // A page cannot contain more rows than the source reports in total.
+        if (totalCount < items.Count)
         {
-            throw new ArgumentOutOfRangeException(nameof(totalCount));
+            throw new ArgumentOutOfRangeException(
+                nameof(totalCount),
+                "Total count must be greater than or equal to the number of returned items.");
         }
 
         return new SasdDataPage<T>(items, totalCount);

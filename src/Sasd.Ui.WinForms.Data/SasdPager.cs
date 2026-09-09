@@ -19,7 +19,11 @@ public sealed class SasdPageRequestedEventArgs : EventArgs
     public int PageSize { get; }
 }
 
-/// <summary>Provides conservative paging controls for business data views.</summary>
+/// <summary>
+/// Provides conservative paging controls for business data views. The control only
+/// raises page requests; loading data remains the responsibility of a controller or
+/// consuming application.
+/// </summary>
 public class SasdPager : UserControl
 {
     private readonly Button previousButton;
@@ -88,20 +92,9 @@ public class SasdPager : UserControl
     /// <summary>Updates the pager after a data page has been loaded.</summary>
     public void SetState(int currentPageIndex, int currentPageSize, int knownTotalCount)
     {
-        if (currentPageIndex < 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(currentPageIndex));
-        }
-
-        if (currentPageSize <= 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(currentPageSize));
-        }
-
-        if (knownTotalCount < 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(knownTotalCount));
-        }
+        ArgumentOutOfRangeException.ThrowIfNegative(currentPageIndex);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(currentPageSize);
+        ArgumentOutOfRangeException.ThrowIfNegative(knownTotalCount);
 
         internalChange = true;
         try
@@ -110,6 +103,9 @@ public class SasdPager : UserControl
             totalCount = knownTotalCount;
             int maximumPage = Math.Max(0, PageCount - 1);
             pageIndex = Math.Min(currentPageIndex, maximumPage);
+
+            // Preserve an application-specific page size even if it is not one of
+            // the standard values offered by the control.
             if (!pageSizeComboBox.Items.Contains(pageSize))
             {
                 pageSizeComboBox.Items.Add(pageSize);

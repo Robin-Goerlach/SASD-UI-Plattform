@@ -3,10 +3,24 @@ using Sasd.Ui.Core;
 
 namespace Sasd.Ui.WinForms.Windows;
 
-/// <summary>Provides explicit text clipboard operations with recoverable failure results.</summary>
-public sealed class SasdClipboardService
+/// <summary>Abstraction for text clipboard operations used by SASD applications.</summary>
+public interface ISasdClipboardService
 {
     /// <summary>Copies non-null text to the Windows clipboard.</summary>
+    UiOperationResult SetText(string text);
+
+    /// <summary>Returns clipboard text when available.</summary>
+    UiOperationResult<string?> GetText();
+}
+
+/// <summary>
+/// Provides explicit text clipboard operations with recoverable failure results.
+/// The service is intentionally instance-based so applications can inject, replace,
+/// or fake it without static calls scattered through UI code.
+/// </summary>
+public sealed class SasdClipboardService : ISasdClipboardService
+{
+    /// <inheritdoc />
     public UiOperationResult SetText(string text)
     {
         ArgumentNullException.ThrowIfNull(text);
@@ -25,7 +39,7 @@ public sealed class SasdClipboardService
         }
     }
 
-    /// <summary>Returns clipboard text when available.</summary>
+    /// <inheritdoc />
     public UiOperationResult<string?> GetText()
     {
         try
