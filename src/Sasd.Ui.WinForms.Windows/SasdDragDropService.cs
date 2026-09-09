@@ -204,7 +204,7 @@ public sealed class SasdDragDropService : ISasdDragDropService
         var result = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (string extension in extensions)
         {
-            string normalized = extension.StartsWith('.', StringComparison.Ordinal) ? extension : $".{extension}";
+            string normalized = extension.StartsWith(".", StringComparison.Ordinal) ? extension : $".{extension}";
             result.Add(normalized);
         }
 
