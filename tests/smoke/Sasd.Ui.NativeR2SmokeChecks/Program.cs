@@ -16,6 +16,7 @@ internal static class Program
             ValidatePropertyEditor();
             ValidateGridColumnChooser();
             ValidateImageViewer();
+            DashboardSmokeChecks.Run();
 
             Console.WriteLine("SASD native R2 smoke checks passed.");
             return 0;
