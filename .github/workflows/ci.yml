@@ -33,4 +33,4 @@ jobs:
         run: dotnet run --project tests/smoke/Sasd.Ui.SmokeChecks/Sasd.Ui.SmokeChecks.csproj --configuration Release --no-build
 
       - name: UI-state smoke checks
-        run: dotnet run --project tests/smoke/Sasd.Ui.StateSmokeChecks/Sasd.Ui.StateSmokeChecks.csproj --configuration Release --no-build
+        run: dotnet run --project tests/smoke/Sasd.Ui.StateSmokeChecks/Sasd.Ui.StateSmokeChecks.csproj --configuration Release
