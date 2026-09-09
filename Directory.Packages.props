@@ -1,13 +1,14 @@
 <Project>
   <!--
-    Central package management is enabled when the first approved external
-    dependency is introduced during R0. Until then, the scaffold intentionally
-    restores without third-party packages.
+    External package versions are pinned centrally so every project restores the
+    same reviewed dependency version. New packages require the dependency and
+    licensing review documented under docs/en/project.
   -->
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
-    <!-- PackageVersion entries are added only after licence and ADR review. -->
+    <!-- R0.2 visual pilot: isolated to Sasd.Ui.WinForms.Krypton. -->
+    <PackageVersion Include="Krypton.Toolkit" Version="105.26.7.201" />
   </ItemGroup>
 </Project>

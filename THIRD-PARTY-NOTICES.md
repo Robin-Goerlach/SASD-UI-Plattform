@@ -1,12 +1,22 @@
 # Third-Party Notices
 
-The current R0 repository scaffold does not include third-party UI library source code or compiled third-party packages.
+The SASD UI Platform uses third-party packages only behind reviewed package and adapter boundaries. The repository's MIT licence applies to SASD-authored code; third-party components remain governed by their own licences.
 
-The component catalogue names commercial and open-source products for research, benchmarking and future adapter evaluation. A catalogue entry does **not** mean that the product is distributed with this repository or covered by the repository's MIT licence.
+## Krypton.Toolkit
 
-Before a third-party dependency is added, the project requires:
+- **Package:** `Krypton.Toolkit`
+- **Reviewed/pinned version:** `105.26.7.201`
+- **Purpose:** R0.2 WinForms visual-component pilot, isolated to `Sasd.Ui.WinForms.Krypton`
+- **Licence:** BSD 3-Clause
+- **Upstream:** Krypton-Suite / Standard-Toolkit
 
-1. an Architecture Decision Record;
+The project does not copy Krypton source code into the SASD repository. Applications that consume the Krypton adapter receive the dependency through NuGet and must preserve applicable third-party notices when redistributed.
+
+## Dependency review requirements
+
+Before another third-party dependency is added, the project requires:
+
+1. an Architecture Decision Record or an existing ADR that explicitly covers the dependency;
 2. identification of the exact package and licence version;
 3. review of transitive dependencies and notices;
 4. security and maintenance assessment;

@@ -41,3 +41,6 @@ jobs:
 
       - name: WinForms foundation smoke checks
         run: dotnet run --project tests/smoke/Sasd.Ui.WinFormsSmokeChecks/Sasd.Ui.WinFormsSmokeChecks.csproj --configuration Release
+
+      - name: Krypton adapter smoke checks
+        run: dotnet run --project tests/smoke/Sasd.Ui.KryptonSmokeChecks/Sasd.Ui.KryptonSmokeChecks.csproj --configuration Release

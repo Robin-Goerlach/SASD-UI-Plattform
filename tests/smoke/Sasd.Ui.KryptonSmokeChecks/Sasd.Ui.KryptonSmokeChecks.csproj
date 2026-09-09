@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <RootNamespace>Sasd.Ui.KryptonSmokeChecks</RootNamespace>
+    <AssemblyName>Sasd.Ui.KryptonSmokeChecks</AssemblyName>
+    <Description>Dependency and construction smoke checks for the isolated Krypton R0.2 adapter.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Sasd.Ui.WinForms.Krypton\Sasd.Ui.WinForms.Krypton.csproj" />
+  </ItemGroup>
+</Project>
