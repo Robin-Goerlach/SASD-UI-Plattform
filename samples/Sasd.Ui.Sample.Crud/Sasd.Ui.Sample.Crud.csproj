@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <RootNamespace>Sasd.Ui.Sample.Crud</RootNamespace>
+    <AssemblyName>Sasd.Ui.Sample.Crud</AssemblyName>
+    <Description>In-memory CRUD reference application for SASD WinForms UI Platform components.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Sasd.Ui.WinForms\Sasd.Ui.WinForms.csproj" />
+    <ProjectReference Include="..\..\src\Sasd.Ui.WinForms.Commands\Sasd.Ui.WinForms.Commands.csproj" />
+    <ProjectReference Include="..\..\src\Sasd.Ui.WinForms.Data\Sasd.Ui.WinForms.Data.csproj" />
+    <ProjectReference Include="..\..\src\Sasd.Ui.WinForms.Dialogs\Sasd.Ui.WinForms.Dialogs.csproj" />
+    <ProjectReference Include="..\..\src\Sasd.Ui.WinForms.Forms\Sasd.Ui.WinForms.Forms.csproj" />
+    <ProjectReference Include="..\..\src\Sasd.Ui.WinForms.Shell\Sasd.Ui.WinForms.Shell.csproj" />
+  </ItemGroup>
+</Project>
