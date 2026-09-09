@@ -15,8 +15,8 @@ public sealed class SasdProgressDialog : SasdForm, IProgress<SasdProgressUpdate>
     private readonly object pendingLock = new();
     private SasdProgressUpdate? pendingUpdate;
     private DialogResult? pendingCompletion;
-    private bool completed;
-    private bool disposed;
+    private volatile bool completed;
+    private volatile bool disposed;
 
     /// <summary>Initialises the progress dialog.</summary>
     public SasdProgressDialog(string title, string initialMessage, bool allowCancellation = true)
@@ -216,13 +216,9 @@ public sealed class SasdProgressDialog : SasdForm, IProgress<SasdProgressUpdate>
         }
         catch (InvalidOperationException)
         {
-            // Closing the dialog can destroy the handle between the lifecycle check
-            // and BeginInvoke. Progress is transient, so shutdown races are ignored.
-        }
-        catch (ObjectDisposedException)
-        {
-            // Dispose can win the same race. Reporting progress after shutdown must
-            // not turn a successful application close into an unhandled exception.
+            // Close/Dispose can destroy the handle between the lifecycle check and
+            // BeginInvoke. ObjectDisposedException derives from InvalidOperationException,
+            // so this one catch deliberately covers both shutdown races.
         }
     }
 
