@@ -44,7 +44,7 @@ internal static class Program
         return Path.GetFullPath(candidate);
     }
 
-    private static IReadOnlyDictionary<string, ProjectInfo> LoadProjects(string sourceRoot)
+    private static Dictionary<string, ProjectInfo> LoadProjects(string sourceRoot)
     {
         var result = new Dictionary<string, ProjectInfo>(StringComparer.OrdinalIgnoreCase);
 
@@ -67,13 +67,13 @@ internal static class Program
         return result;
     }
 
-    private static IReadOnlyList<string> ReadValues(XDocument document, string elementName) =>
+    private static string[] ReadValues(XDocument document, string elementName) =>
         document.Descendants(elementName)
             .Select(element => element.Value.Trim())
             .Where(value => value.Length > 0)
             .ToArray();
 
-    private static IReadOnlyList<string> ReadIncludes(XDocument document, string elementName) =>
+    private static string[] ReadIncludes(XDocument document, string elementName) =>
         document.Descendants(elementName)
             .Select(element => element.Attribute("Include")?.Value?.Trim())
             .Where(value => !string.IsNullOrWhiteSpace(value))
