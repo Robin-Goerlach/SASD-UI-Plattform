@@ -6,6 +6,9 @@ internal static class Program
     private static void Main()
     {
         ApplicationConfiguration.Initialize();
-        Application.Run(new MainForm());
+
+        // Start with the integration-oriented R1 shell. The existing detailed
+        // component catalog remains available from the shell's toolbar/shortcut.
+        Application.Run(new GalleryShellForm());
     }
 }
