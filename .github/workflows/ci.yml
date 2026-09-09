@@ -48,5 +48,8 @@ jobs:
       - name: Windows integration smoke checks
         run: dotnet run --project tests/smoke/Sasd.Ui.WindowsSmokeChecks/Sasd.Ui.WindowsSmokeChecks.csproj --configuration Release -p:TreatWarningsAsErrors=true
 
+      - name: Shell integration smoke checks
+        run: dotnet run --project tests/smoke/Sasd.Ui.ShellSmokeChecks/Sasd.Ui.ShellSmokeChecks.csproj --configuration Release -p:TreatWarningsAsErrors=true
+
       - name: Krypton adapter smoke checks
         run: dotnet run --project tests/smoke/Sasd.Ui.KryptonSmokeChecks/Sasd.Ui.KryptonSmokeChecks.csproj --configuration Release
