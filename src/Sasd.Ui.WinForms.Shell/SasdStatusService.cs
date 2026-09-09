@@ -83,6 +83,7 @@ public sealed class SasdStatusBinding : IDisposable
 {
     private readonly ISasdStatusService service;
     private readonly SasdStatusBar statusBar;
+    private readonly int ownerThreadId;
     private bool disposed;
 
     /// <summary>Creates a status binding. Construct it on the WinForms UI thread.</summary>
@@ -90,6 +91,7 @@ public sealed class SasdStatusBinding : IDisposable
     {
         this.service = service ?? throw new ArgumentNullException(nameof(service));
         this.statusBar = statusBar ?? throw new ArgumentNullException(nameof(statusBar));
+        ownerThreadId = Environment.CurrentManagedThreadId;
         service.StatusPublished += OnStatusPublished;
         service.ClearRequested += OnClearRequested;
     }
@@ -123,9 +125,15 @@ public sealed class SasdStatusBinding : IDisposable
 
         if (!statusBar.IsHandleCreated)
         {
-            // A missing native handle makes InvokeRequired ambiguous. Dropping an
-            // early status update is safer than accidentally touching WinForms from
-            // a worker thread. Normal shells create the status-bar handle at startup.
+            // Before a native handle exists InvokeRequired is ambiguous. The binding
+            // can still process constructor/startup status published on the UI thread
+            // that created the binding, while worker-thread publications are ignored
+            // until normal WinForms handle creation makes marshaling reliable.
+            if (Environment.CurrentManagedThreadId == ownerThreadId)
+            {
+                action();
+            }
+
             return;
         }
 
