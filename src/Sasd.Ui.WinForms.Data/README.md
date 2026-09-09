@@ -1,5 +1,11 @@
 # Sasd.Ui.WinForms.Data
 
-**Reserved R1 module:** DataGrid, typed controller, lists, trees, search, filters, paging and state.
+R0 implementation of the first reusable data-presentation components.
 
-The project file and implementation are added only when its R0/R1 acceptance criteria are scheduled. This placeholder keeps the architecture visible without claiming unfinished code.
+Currently included:
+
+- `SasdSearchBox` with clear action;
+- `SasdEmptyState` with optional primary action;
+- `SasdDataGrid` with conservative business-application defaults.
+
+Still pending for R1: typed `SasdGridController<T>`, query/filter models, paging, CSV export, persisted grid state, list/tree helpers and large-data performance evidence.

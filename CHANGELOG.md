@@ -4,12 +4,23 @@ All significant changes to the SASD UI Platform and its project documentation ar
 
 ## [Unreleased]
 
+### Added
+
+- first native WinForms R0 component slice with built-in SASD Light, Dark, and High Contrast theme definitions;
+- native `SasdThemeService` for explicit recursive theming without a global service locator;
+- `SasdSectionPanel` and `SasdFieldLayout` for reusable business-form layouts;
+- `SasdSearchBox`, `SasdEmptyState`, and `SasdDataGrid` for common data-view scenarios;
+- `ISasdDialogService` with a native MessageBox implementation;
+- an expanded Component Gallery that demonstrates the implemented controls and theme switching;
+- dependency-free core smoke checks and a Windows GitHub Actions build workflow;
+- `global.json` for predictable .NET 8 SDK selection.
+
 ### Planned
 
-- R0.1 repository and build foundation.
-- Initial ADR validation.
-- Krypton/native WinForms pilot.
-- Component Gallery skeleton.
+- architecture and public API tests beyond the initial smoke checks;
+- native WinForms versus Krypton visual pilot;
+- typed grid controller, filtering, paging, CSV export, and UI-state persistence;
+- richer error, progress, notification, and validation components.
 
 ## [0.1.0-docs] – 2026-07-23
 

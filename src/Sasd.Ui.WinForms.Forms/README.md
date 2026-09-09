@@ -1,5 +1,10 @@
 # Sasd.Ui.WinForms.Forms
 
-**Reserved R1 module:** Semantic field layout, binding adapters and validation coordination.
+R0 implementation of the first reusable form-layout components.
 
-The project file and implementation are added only when its R0/R1 acceptance criteria are scheduled. This placeholder keeps the architecture visible without claiming unfinished code.
+Currently included:
+
+- `SasdSectionPanel` for consistent form sections;
+- `SasdFieldLayout` for simple two-column label/editor forms with required markers.
+
+Still pending for R1: validation coordination, binding helpers, validation summary, richer responsive layout modes and full designer/DPI evidence.

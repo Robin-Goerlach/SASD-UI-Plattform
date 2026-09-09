@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <RootNamespace>Sasd.Ui.WinForms.Dialogs</RootNamespace>
+    <AssemblyName>Sasd.Ui.WinForms.Dialogs</AssemblyName>
+    <Description>Standard dialogs and user-safe feedback services for SASD WinForms applications.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Sasd.Ui.WinForms\Sasd.Ui.WinForms.csproj" />
+  </ItemGroup>
+</Project>

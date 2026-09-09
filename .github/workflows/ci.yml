@@ -1,0 +1,33 @@
+name: ci
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: dotnet restore SASD.Ui.Platform.sln
+
+      - name: Build
+        run: dotnet build SASD.Ui.Platform.sln --configuration Release --no-restore
+
+      - name: Core smoke checks
+        run: dotnet run --project tests/smoke/Sasd.Ui.SmokeChecks/Sasd.Ui.SmokeChecks.csproj --configuration Release --no-build
