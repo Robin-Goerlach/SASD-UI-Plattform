@@ -1,0 +1,23 @@
+digraph G {
+
+  graph [fontname="DejaVu Sans", bgcolor="white", pad="0.25", nodesep="0.45", ranksep="0.65"];
+  node [fontname="DejaVu Sans", fontsize=10, shape=box, style="rounded,filled", color="#36546B", fillcolor="#EEF4F7", fontcolor="#172B3A", margin="0.14,0.08"];
+  edge [fontname="DejaVu Sans", fontsize=9, color="#567386", fontcolor="#36546B", arrowsize=0.7];
+
+  rankdir=LR;
+  design [label="Platform-neutral knowledge core\nDesign tokens | semantics | UX rules | component contracts", fillcolor="#D3E4ED", penwidth=2];
+  winforms [label="Current: WinForms\nR0–R3", fillcolor="#DCEAF2"];
+  wpf [label="Later: WPF\nown rendering/controls", style="rounded,dashed,filled"];
+  winui [label="Later: WinUI 3\npilot", style="rounded,dashed,filled"];
+  avalonia [label="Later: Avalonia\nseparate desktop project", style="rounded,dashed,filled"];
+  web [label="Later: ASP.NET Core/Blazor\nseparate web project", style="rounded,dashed,filled"];
+  aspx [label="Later: ASP.NET Web Forms/ASPX\nlegacy/migration project", style="rounded,dashed,filled"];
+  java [label="Later: Java/OpenXava\nseparate project", style="rounded,dashed,filled"];
+  design -> winforms;
+  design -> wpf [style=dashed];
+  design -> winui [style=dashed];
+  design -> avalonia [style=dashed];
+  design -> web [style=dashed];
+  design -> aspx [style=dashed];
+  design -> java [style=dashed];
+}

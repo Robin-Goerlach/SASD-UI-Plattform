@@ -1,0 +1,1 @@
+Modular, designer-friendly C# WinForms UI platform for SASD applications, with reusable shells, forms, commands, data views, dialogs, themes, state persistence, Windows integration, optional adapters, samples, quality gates, and bilingual architecture documentation.

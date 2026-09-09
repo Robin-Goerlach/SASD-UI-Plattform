@@ -1,0 +1,13 @@
+<Project>
+  <!--
+    Central package management is enabled when the first approved external
+    dependency is introduced during R0. Until then, the scaffold intentionally
+    restores without third-party packages.
+  -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- PackageVersion entries are added only after licence and ADR review. -->
+  </ItemGroup>
+</Project>

@@ -1,0 +1,18 @@
+digraph G {
+
+  graph [fontname="DejaVu Sans", bgcolor="white", pad="0.25", nodesep="0.45", ranksep="0.65"];
+  node [fontname="DejaVu Sans", fontsize=10, shape=box, style="rounded,filled", color="#36546B", fillcolor="#EEF4F7", fontcolor="#172B3A", margin="0.14,0.08"];
+  edge [fontname="DejaVu Sans", fontsize=9, color="#567386", fontcolor="#36546B", arrowsize=0.7];
+
+  rankdir=LR;
+  source [label="Theme-Quelle\nSystem | Benutzer | Anwendung"];
+  service [label="IThemeService", fillcolor="#D3E4ED", penwidth=2];
+  tokens [label="SasdThemeDefinition\nFarben | Typografie | Abstände | Größen | Zustände"];
+  mapping [label="Implementierung\nKrypton-Mapping oder Native Mapping"];
+  icons [label="IIconService\nTheme/DPI/Zustand Cache"];
+  controls [label="SASD Controls und Composite Views"];
+  a11y [label="High Contrast / Fokus / Kontrastprüfung"];
+  source -> service -> tokens -> mapping -> controls;
+  tokens -> icons -> controls;
+  service -> a11y -> mapping;
+}

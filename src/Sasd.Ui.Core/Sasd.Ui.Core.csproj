@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>Sasd.Ui.Core</RootNamespace>
+    <AssemblyName>Sasd.Ui.Core</AssemblyName>
+    <Description>Platform-neutral contracts and design semantics for the SASD UI Platform.</Description>
+  </PropertyGroup>
+</Project>

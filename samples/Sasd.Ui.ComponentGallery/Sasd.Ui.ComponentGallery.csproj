@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <RootNamespace>Sasd.Ui.ComponentGallery</RootNamespace>
+    <AssemblyName>Sasd.Ui.ComponentGallery</AssemblyName>
+    <Description>Executable specification and R0 acceptance host for SASD WinForms components.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Sasd.Ui.WinForms\Sasd.Ui.WinForms.csproj" />
+  </ItemGroup>
+</Project>

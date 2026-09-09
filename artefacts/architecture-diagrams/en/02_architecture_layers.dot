@@ -1,0 +1,34 @@
+digraph G {
+
+  graph [fontname="DejaVu Sans", bgcolor="white", pad="0.25", nodesep="0.45", ranksep="0.65"];
+  node [fontname="DejaVu Sans", fontsize=10, shape=box, style="rounded,filled", color="#36546B", fillcolor="#EEF4F7", fontcolor="#172B3A", margin="0.14,0.08"];
+  edge [fontname="DejaVu Sans", fontsize=9, color="#567386", fontcolor="#36546B", arrowsize=0.7];
+
+  rankdir=TB;
+  subgraph cluster_apps { label="Consuming applications"; color="#9AB0BF"; style="rounded";
+    app1 [label="Prompt Manager"];
+    app2 [label="Mail Workbench"];
+    app3 [label="Notes / Utilities"];
+  }
+  subgraph cluster_product { label="SASD UI Platform"; color="#5D7C8F"; style="rounded";
+    templates [label="Templates, Gallery, Testing"];
+    feature [label="Shell | Forms | Data | Dialogs | Windows | State"];
+    foundation [label="WinForms Foundation\nBaseForm | Dispatcher | Busy | Empty | Search"];
+    theme [label="Theming & Icons\nDesign Tokens | Theme Service | Krypton implementation"];
+    core [label="Sasd.Ui.Core\nContracts | result/error models | shared primitives", fillcolor="#D3E4ED", penwidth=2];
+    adapters [label="Optional adapter packages\nCharts | Editors | Media | PDF | WebView2 | Docking"];
+  }
+  third [label="Third-party libraries", fillcolor="#F4F0E8"];
+  os [label=".NET 8 + Windows Forms + Windows", fillcolor="#F4F0E8"];
+  app1 -> templates; app2 -> templates; app3 -> templates;
+  templates -> feature;
+  feature -> foundation;
+  feature -> theme;
+  foundation -> core;
+  theme -> core;
+  adapters -> core;
+  feature -> adapters [style=dashed, label="optional"];
+  adapters -> third;
+  foundation -> os;
+  theme -> os;
+}

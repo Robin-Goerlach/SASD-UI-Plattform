@@ -1,0 +1,19 @@
+digraph G {
+
+  graph [fontname="DejaVu Sans", bgcolor="white", pad="0.25", nodesep="0.45", ranksep="0.65"];
+  node [fontname="DejaVu Sans", fontsize=10, shape=box, style="rounded,filled", color="#36546B", fillcolor="#EEF4F7", fontcolor="#172B3A", margin="0.14,0.08"];
+  edge [fontname="DejaVu Sans", fontsize=9, color="#567386", fontcolor="#36546B", arrowsize=0.7];
+
+  rankdir=TB;
+  node [shape=box];
+  start [label="Program.Main / ApplicationConfiguration.Initialize"];
+  bootstrap [label="Composition Root erzeugt AppServices"];
+  state [label="StateStore lädt globale UI-Einstellungen"];
+  theme [label="ThemeService wählt System/Light/Dark/High Contrast"];
+  commands [label="CommandManager registriert globale Commands"];
+  shell [label="SasdShellForm wird konstruiert"];
+  restore [label="Fenster-, Navigation- und Tab-Zustand wird sicher wiederhergestellt"];
+  run [label="Application.Run(shell)"];
+  shutdown [label="ShutdownCoordinator: Dirty-State, State speichern, Dispose, Logs flushen"];
+  start -> bootstrap -> state -> theme -> commands -> shell -> restore -> run -> shutdown;
+}

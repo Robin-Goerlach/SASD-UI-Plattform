@@ -1,0 +1,122 @@
+# Build output
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+[Aa]rtifacts/
+[Tt]est[Rr]esults*/
+coverage/
+coverage-*.xml
+*.coverage
+*.coveragexml
+*.trx
+*.binlog
+*.nupkg
+*.snupkg
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.rsuser
+*.VC.db
+*.VC.VC.opendb
+*.opendb
+*.sdf
+*.cachefile
+*.csproj.user
+*.vbproj.user
+*.fsproj.user
+
+# Rider / IntelliJ
+.idea/
+*.sln.iml
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# VS Code local settings
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+# NuGet
+packages/
+*.nuget.props
+*.nuget.targets
+.nuget/packages/
+
+# .NET tooling
+.dotnet/
+artifacts/
+BenchmarkDotNet.Artifacts/
+*.deps.json
+*.runtimeconfig.dev.json
+
+# Windows and installer output
+*.msi
+*.msix
+*.msixbundle
+*.appx
+*.appxbundle
+*.appinstaller
+*.cer
+*.pfx
+*.publish.xml
+*.pubxml.user
+PublishProfiles/
+
+# Generated documentation and site output
+_site/
+site/
+api/
+.docfx/
+
+# Visual and UI test output
+screenshots/actual/
+screenshots/diff/
+visual-test-output/
+ui-test-output/
+
+# Local settings, state and secrets
+.env
+.env.*
+!.env.example
+secrets.json
+appsettings.*.local.json
+*.local.json
+*.local.user
+local.settings.json
+*.p12
+*.key
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.orig
+*.rej
+*.swp
+*.swo
+*~
+~$*
+
+# OS metadata
+.DS_Store
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Python helper artefacts used only for documentation/build scripts
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Keep intentional repository artefacts such as conceptual screenshots
+!artefacts/
+!artefacts/**

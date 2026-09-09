@@ -1,0 +1,18 @@
+digraph G {
+
+  graph [fontname="DejaVu Sans", bgcolor="white", pad="0.25", nodesep="0.45", ranksep="0.65"];
+  node [fontname="DejaVu Sans", fontsize=10, shape=box, style="rounded,filled", color="#36546B", fillcolor="#EEF4F7", fontcolor="#172B3A", margin="0.14,0.08"];
+  edge [fontname="DejaVu Sans", fontsize=9, color="#567386", fontcolor="#36546B", arrowsize=0.7];
+
+  rankdir=LR;
+  ui [label="UI modules\nWindow | grid | tabs | recent items"];
+  api [label="IStateStore\nGet/Set/Remove/Migrate", fillcolor="#D3E4ED", penwidth=2];
+  serialize [label="System.Text.Json\nSchemaVersion + DTOs"];
+  validate [label="Validation and migration"];
+  temp [label="Temporary file"];
+  final [label="%LocalAppData%\SASD-GmbH\<Product>\ui-state.json"];
+  backup [label="Backup / reset"];
+  ui -> api -> serialize -> validate -> temp -> final;
+  final -> backup [style=dashed];
+  final -> api [label="Load", dir=back];
+}

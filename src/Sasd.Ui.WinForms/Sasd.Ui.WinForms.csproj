@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <RootNamespace>Sasd.Ui.WinForms</RootNamespace>
+    <AssemblyName>Sasd.Ui.WinForms</AssemblyName>
+    <Description>Designer-friendly WinForms foundations for the SASD UI Platform.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Sasd.Ui.Core\Sasd.Ui.Core.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,24 @@
+digraph G {
+
+  graph [fontname="DejaVu Sans", bgcolor="white", pad="0.25", nodesep="0.45", ranksep="0.65"];
+  node [fontname="DejaVu Sans", fontsize=10, shape=box, style="rounded,filled", color="#36546B", fillcolor="#EEF4F7", fontcolor="#172B3A", margin="0.14,0.08"];
+  edge [fontname="DejaVu Sans", fontsize=9, color="#567386", fontcolor="#36546B", arrowsize=0.7];
+
+  rankdir=LR;
+  dev [label="SASD developers\nand maintainers", shape=ellipse, fillcolor="#E8F0F8"];
+  apps [label="SASD WinForms applications\nPrompt Manager | Mail Workbench | Notes | Utilities", fillcolor="#DCEAF2"];
+  platform [label="SASD UI Platform\nWinForms components, services, templates", fillcolor="#D3E4ED", penwidth=2];
+  windows [label="Windows 10/11\nWinForms | DPI | UI Automation | High Contrast"];
+  feed [label="Internal NuGet feed\nPackages, symbols, XML documentation"];
+  third [label="Third-party libraries\nKrypton | ScottPlot | ScintillaNET | WebView2 | other adapters"];
+  ci [label="GitHub/CI runner\nBuild | tests | SBOM | packaging"];
+  users [label="Application users", shape=ellipse, fillcolor="#E8F0F8"];
+  dev -> platform [label="develops and maintains"];
+  platform -> feed [label="publishes"];
+  apps -> feed [label="consumes packages", dir=back];
+  apps -> platform [label="uses"];
+  platform -> windows [label="runs on"];
+  platform -> third [label="adapts"];
+  ci -> platform [label="verifies"];
+  users -> apps [label="uses"];
+}

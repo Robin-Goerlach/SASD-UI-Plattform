@@ -1,0 +1,20 @@
+digraph G {
+
+  graph [fontname="DejaVu Sans", bgcolor="white", pad="0.25", nodesep="0.45", ranksep="0.65"];
+  node [fontname="DejaVu Sans", fontsize=10, shape=box, style="rounded,filled", color="#36546B", fillcolor="#EEF4F7", fontcolor="#172B3A", margin="0.14,0.08"];
+  edge [fontname="DejaVu Sans", fontsize=9, color="#567386", fontcolor="#36546B", arrowsize=0.7];
+
+  rankdir=TB;
+  feed [label="Interner NuGet Feed", fillcolor="#D3E4ED", penwidth=2];
+  base [label="Sasd.Ui.Core + Sasd.Ui.WinForms"];
+  visual [label="Sasd.Ui.WinForms.Krypton"];
+  data [label="Sasd.Ui.WinForms.Data"];
+  optional [label="Optionale R2-Pakete"];
+  app [label="SASD-Anwendung\nComposition Root + Fachmodule"];
+  config [label="%LocalAppData%\SASD-GmbH\<Produkt>"];
+  runtime [label="Windows Desktop Runtime"];
+  feed -> base; feed -> visual; feed -> data; feed -> optional;
+  base -> app; visual -> app; data -> app; optional -> app [style=dashed];
+  app -> config;
+  app -> runtime;
+}

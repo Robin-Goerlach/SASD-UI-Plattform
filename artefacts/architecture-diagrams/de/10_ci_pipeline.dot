@@ -1,0 +1,17 @@
+digraph G {
+
+  graph [fontname="DejaVu Sans", bgcolor="white", pad="0.25", nodesep="0.45", ranksep="0.65"];
+  node [fontname="DejaVu Sans", fontsize=10, shape=box, style="rounded,filled", color="#36546B", fillcolor="#EEF4F7", fontcolor="#172B3A", margin="0.14,0.08"];
+  edge [fontname="DejaVu Sans", fontsize=9, color="#567386", fontcolor="#36546B", arrowsize=0.7];
+
+  rankdir=LR;
+  pr [label="Pull Request"];
+  validate [label="Validate\nFormat | Restore Lock | License | Vulnerability | Architecture"];
+  build [label="Build\nDebug + Release\nnet8.0-windows"];
+  tests [label="Tests\nUnit | Integration | UIA"];
+  visual [label="Visual Matrix\nTheme | DPI | Kultur | Zustände"];
+  pack [label="Pack\nNuGet | Symbols | XML | SBOM | Notices"];
+  approve [label="Manuelle Release-Freigabe", shape=diamond, fillcolor="#FFF7DD"];
+  publish [label="Interner Feed + Release-Archiv"];
+  pr -> validate -> build -> tests -> visual -> pack -> approve -> publish;
+}
