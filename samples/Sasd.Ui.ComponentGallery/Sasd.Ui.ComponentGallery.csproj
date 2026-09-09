@@ -10,9 +10,13 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Sasd.Ui.WinForms\Sasd.Ui.WinForms.csproj" />
+    <ProjectReference Include="..\..\src\Sasd.Ui.WinForms.Commands\Sasd.Ui.WinForms.Commands.csproj" />
     <ProjectReference Include="..\..\src\Sasd.Ui.WinForms.Data\Sasd.Ui.WinForms.Data.csproj" />
     <ProjectReference Include="..\..\src\Sasd.Ui.WinForms.Dialogs\Sasd.Ui.WinForms.Dialogs.csproj" />
     <ProjectReference Include="..\..\src\Sasd.Ui.WinForms.Forms\Sasd.Ui.WinForms.Forms.csproj" />
+    <ProjectReference Include="..\..\src\Sasd.Ui.WinForms.Shell\Sasd.Ui.WinForms.Shell.csproj" />
+    <ProjectReference Include="..\..\src\Sasd.Ui.WinForms.State\Sasd.Ui.WinForms.State.csproj" />
     <ProjectReference Include="..\..\src\Sasd.Ui.WinForms.Theming\Sasd.Ui.WinForms.Theming.csproj" />
+    <ProjectReference Include="..\..\src\Sasd.Ui.WinForms.Windows\Sasd.Ui.WinForms.Windows.csproj" />
   </ItemGroup>
 </Project>
