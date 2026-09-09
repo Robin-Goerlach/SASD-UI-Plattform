@@ -8,7 +8,16 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
-$crudSampleProject = 'samples/Sasd.Ui.Sample.Crud/Sasd.Ui.Sample.Crud.csproj'
+$referenceProjects = @(
+    @{
+        Name = 'CRUD reference application'
+        Project = 'samples/Sasd.Ui.Sample.Crud/Sasd.Ui.Sample.Crud.csproj'
+    },
+    @{
+        Name = 'Workbench reference application'
+        Project = 'samples/Sasd.Ui.Sample.Workbench/Sasd.Ui.Sample.Workbench.csproj'
+    }
+)
 
 function Invoke-DotNetStep {
     param(
@@ -38,12 +47,15 @@ try {
         )
 
         # Reference applications are intentionally kept outside the hand-maintained
-        # classic solution while they are still small pilots. Restore them explicitly
-        # so verification proves that each sample is independently consumable.
-        Invoke-DotNetStep -Name 'Restore CRUD reference application' -Arguments @(
-            'restore',
-            $crudSampleProject
-        )
+        # classic solution while they are still small consumer pilots. Restoring each
+        # one explicitly proves that samples do not accidentally depend on solution-only
+        # state or manually copied binaries.
+        foreach ($reference in $referenceProjects) {
+            Invoke-DotNetStep -Name "Restore $($reference.Name)" -Arguments @(
+                'restore',
+                $reference.Project
+            )
+        }
     }
 
     # The solution build is intentionally strict. The repository treats analyzer
@@ -57,16 +69,18 @@ try {
         '-p:TreatWarningsAsErrors=true'
     )
 
-    # Build the first real consumer/reference application with the same analyzer
-    # policy. This catches awkward public APIs and missing package/project references
-    # that component-level tests alone cannot reveal.
-    Invoke-DotNetStep -Name 'Build CRUD reference application' -Arguments @(
-        'build',
-        $crudSampleProject,
-        '--configuration', 'Release',
-        '--no-restore',
-        '-p:TreatWarningsAsErrors=true'
-    )
+    # Reference consumers are built with the same analyzer policy as product code.
+    # This catches awkward public APIs and missing project/package references that
+    # component-level smoke checks alone cannot reveal.
+    foreach ($reference in $referenceProjects) {
+        Invoke-DotNetStep -Name "Build $($reference.Name)" -Arguments @(
+            'build',
+            $reference.Project,
+            '--configuration', 'Release',
+            '--no-restore',
+            '-p:TreatWarningsAsErrors=true'
+        )
+    }
 
     Invoke-DotNetStep -Name 'Architecture checks' -Arguments @(
         'run',
