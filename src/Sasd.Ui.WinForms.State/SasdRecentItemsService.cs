@@ -71,8 +71,10 @@ public sealed class SasdRecentItemsService
     }
 
     /// <summary>Clears recent references without touching other UI state.</summary>
-    public Task ClearAsync(CancellationToken cancellationToken = default) =>
-        store.RemoveAsync(StateKey, cancellationToken);
+    public async Task ClearAsync(CancellationToken cancellationToken = default)
+    {
+        _ = await store.RemoveAsync(StateKey, cancellationToken).ConfigureAwait(false);
+    }
 
     private static string? NormalizeDisplayName(string? displayName) =>
         string.IsNullOrWhiteSpace(displayName) ? null : displayName.Trim();
