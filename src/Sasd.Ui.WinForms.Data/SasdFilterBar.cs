@@ -82,7 +82,7 @@ public class SasdFilterBar : UserControl
         clearAllButton.Dock = DockStyle.Right;
     }
 
-    /// <summary>Occurs after a filter is added, replaced, removed or cleared.</summary>
+    /// <summary>Occurs after a filter is added, replaced, removed, cleared or replaced as a set.</summary>
     public event EventHandler? FiltersChanged;
 
     /// <summary>Gets a snapshot of the active filters in display order.</summary>
@@ -116,6 +116,43 @@ public class SasdFilterBar : UserControl
             activeFilters.Add(validated);
         }
 
+        RebuildFilterControls();
+        FiltersChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Replaces the complete active-filter set and raises <see cref="FiltersChanged"/> once.
+    /// </summary>
+    /// <remarks>
+    /// Duplicate keys are resolved using the same case-insensitive replacement rule as
+    /// <see cref="AddOrUpdateFilter(SasdActiveFilter)"/> while retaining the first key position.
+    /// This method is useful when restoring a saved view because listeners can refresh their
+    /// data once after the complete filter state has been applied.
+    /// </remarks>
+    public void SetFilters(IEnumerable<SasdActiveFilter> filters)
+    {
+        ArgumentNullException.ThrowIfNull(filters);
+
+        var replacement = new List<SasdActiveFilter>();
+        foreach (SasdActiveFilter filter in filters)
+        {
+            ArgumentNullException.ThrowIfNull(filter);
+            SasdActiveFilter validated = SasdActiveFilter.Create(filter.Key, filter.Label, filter.Value);
+            int existingIndex = replacement.FindIndex(item =>
+                string.Equals(item.Key, validated.Key, StringComparison.OrdinalIgnoreCase));
+
+            if (existingIndex >= 0)
+            {
+                replacement[existingIndex] = validated;
+            }
+            else
+            {
+                replacement.Add(validated);
+            }
+        }
+
+        activeFilters.Clear();
+        activeFilters.AddRange(replacement);
         RebuildFilterControls();
         FiltersChanged?.Invoke(this, EventArgs.Empty);
     }
