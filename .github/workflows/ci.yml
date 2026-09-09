@@ -27,6 +27,10 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
+      - name: Codex/developer preflight
+        shell: pwsh
+        run: ./eng/codex/preflight.ps1
+
       - name: Verify repository
         shell: pwsh
         run: ./build/verify.ps1
