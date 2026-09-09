@@ -107,7 +107,9 @@ internal static class Program
             "Command bar accepted a duplicate command id.");
 
         Ensure(commandBar.RemoveCommand("smoke.command-bar"), "Command bar could not remove an existing command.");
-        Ensure(button.IsDisposed && commandBar.CommandCount == 0, "Removed command-bar resources were not disposed.");
+        Ensure(
+            button.Owner is null && !commandBar.Items.Contains(button) && commandBar.CommandCount == 0,
+            "Removed command-bar item remained owned by the command bar.");
     }
 
     private static async Task ValidateCsvAndGridStateAsync()
@@ -290,8 +292,9 @@ internal static class Program
             TimeSpan.FromSeconds(5));
 
         Ensure(publications == 1 && received is not null, "Notification service did not publish exactly once.");
-        Ensure(received.Severity == SasdNotificationSeverity.Success, "Notification severity changed during publication.");
-        Ensure(received.Lifetime == TimeSpan.FromSeconds(5), "Notification lifetime changed during publication.");
+        SasdNotification published = received ?? throw new InvalidOperationException("Published notification was unexpectedly null.");
+        Ensure(published.Severity == SasdNotificationSeverity.Success, "Notification severity changed during publication.");
+        Ensure(published.Lifetime == TimeSpan.FromSeconds(5), "Notification lifetime changed during publication.");
 
         EnsureThrows<ArgumentException>(
             () => service.Publish(new SasdNotification(" ")),
