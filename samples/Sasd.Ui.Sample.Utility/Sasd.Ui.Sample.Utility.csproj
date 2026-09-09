@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <RootNamespace>Sasd.Ui.Sample.Utility</RootNamespace>
+    <AssemblyName>Sasd.Ui.Sample.Utility</AssemblyName>
+    <Description>Small Windows utility reference application for SASD UI Platform integration services.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Sasd.Ui.Core\Sasd.Ui.Core.csproj" />
+    <ProjectReference Include="..\..\src\Sasd.Ui.WinForms\Sasd.Ui.WinForms.csproj" />
+    <ProjectReference Include="..\..\src\Sasd.Ui.WinForms.Shell\Sasd.Ui.WinForms.Shell.csproj" />
+    <ProjectReference Include="..\..\src\Sasd.Ui.WinForms.Windows\Sasd.Ui.WinForms.Windows.csproj" />
+  </ItemGroup>
+</Project>
