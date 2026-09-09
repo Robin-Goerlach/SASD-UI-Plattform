@@ -170,8 +170,9 @@ internal static class Program
             SasdNotificationSeverity.Success,
             TimeSpan.FromSeconds(30));
 
-        Ensure(host.CurrentNotification is not null, "Notification host did not receive a bound service publication.");
-        Ensure(host.CurrentNotification.Severity == SasdNotificationSeverity.Success,
+        SasdNotification? current = host.CurrentNotification;
+        Ensure(current is not null, "Notification host did not receive a bound service publication.");
+        Ensure(current?.Severity == SasdNotificationSeverity.Success,
             "Notification host changed notification severity.");
         Ensure(shown == 1, "Notification host did not report exactly one shown notification.");
 
