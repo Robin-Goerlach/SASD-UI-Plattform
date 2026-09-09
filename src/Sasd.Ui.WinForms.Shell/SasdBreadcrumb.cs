@@ -70,7 +70,7 @@ public sealed class SasdBreadcrumb : UserControl
         pathHost.SuspendLayout();
         try
         {
-            pathHost.Controls.Clear();
+            DisposePathControls();
             for (int index = 0; index < materialized.Length; index++)
             {
                 SasdBreadcrumbItem item = materialized[index];
@@ -114,6 +114,19 @@ public sealed class SasdBreadcrumb : UserControl
         finally
         {
             pathHost.ResumeLayout(true);
+        }
+    }
+
+    private void DisposePathControls()
+    {
+        // Controls.Clear() only detaches child controls. Explicit disposal matters in
+        // a long-lived shell because a breadcrumb can be rebuilt many times while a
+        // user navigates and each child may own native Windows resources.
+        while (pathHost.Controls.Count > 0)
+        {
+            Control control = pathHost.Controls[0];
+            pathHost.Controls.RemoveAt(0);
+            control.Dispose();
         }
     }
 
