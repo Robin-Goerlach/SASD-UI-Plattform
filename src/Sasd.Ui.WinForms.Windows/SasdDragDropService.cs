@@ -65,8 +65,8 @@ public interface ISasdDragDropService
 /// <remarks>
 /// <para>
 /// This service validates metadata only. A permitted extension is not proof of file content,
-/// safety or trustworthiness. Consuming applications must still validate/parses file content
-/// appropriate to their domain before importing it.
+/// safety or trustworthiness. Consuming applications must still validate and parse file content
+/// appropriately for their domain before importing it.
 /// </para>
 /// <para>
 /// The service never opens or executes a dropped file. It normalises paths, verifies existence,
@@ -204,7 +204,7 @@ public sealed class SasdDragDropService : ISasdDragDropService
         var result = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (string extension in extensions)
         {
-            string normalized = extension.StartsWith(".", StringComparison.Ordinal) ? extension : $".{extension}";
+            string normalized = extension.StartsWith('.') ? extension : $".{extension}";
             result.Add(normalized);
         }
 
