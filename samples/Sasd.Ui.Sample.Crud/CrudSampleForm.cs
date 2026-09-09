@@ -57,8 +57,11 @@ internal sealed class CrudSampleForm : SasdForm
         validation = new SasdValidationCoordinator(this);
         validation.AddRequired("name", nameTextBox, "Name");
         validation.AddRequired("email", emailTextBox, "Email");
-        validation.AddRule("email-format", emailTextBox, _ =>
+        validation.AddRule("email-format", emailTextBox, validationToken =>
         {
+            // The format check is synchronous, but the shared validation contract is cancellation-aware.
+            // Checking here keeps cancellation semantics predictable if this rule later becomes asynchronous.
+            validationToken.ThrowIfCancellationRequested();
             string value = emailTextBox.Text.Trim();
             if (value.Length == 0 || MailAddress.TryCreate(value, out _))
             {
@@ -135,7 +138,7 @@ internal sealed class CrudSampleForm : SasdForm
         base.Dispose(disposing);
     }
 
-    private Control CreateMainLayout()
+    private SplitContainer CreateMainLayout()
     {
         var split = new SplitContainer
         {
@@ -179,15 +182,25 @@ internal sealed class CrudSampleForm : SasdForm
         return split;
     }
 
-    private static Label CreateEditorHeading() => new()
+    private static Label CreateEditorHeading()
     {
-        AutoSize = true,
-        Font = new Font(SystemFonts.MessageBoxFont, FontStyle.Bold),
-        Margin = new Padding(0, 0, 0, 12),
-        Text = "Customer editor",
-    };
+        var label = new Label
+        {
+            AutoSize = true,
+            Margin = new Padding(0, 0, 0, 12),
+            Text = "Customer editor",
+        };
 
-    private Control CreateFieldLayout()
+        // This sample creates the derived Font and therefore explicitly disposes it
+        // when the label is disposed. SystemFonts themselves remain framework-owned.
+        Font baseFont = SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont;
+        Font boldFont = new(baseFont, FontStyle.Bold);
+        label.Font = boldFont;
+        label.Disposed += (_, _) => boldFont.Dispose();
+        return label;
+    }
+
+    private SasdFieldLayout CreateFieldLayout()
     {
         var fields = new SasdFieldLayout
         {
