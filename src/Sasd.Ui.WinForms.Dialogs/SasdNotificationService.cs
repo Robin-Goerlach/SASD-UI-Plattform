@@ -194,11 +194,27 @@ public sealed class SasdNotificationHost : UserControl
         base.Dispose(disposing);
     }
 
-    private void OnNotificationAdded(object? sender, SasdNotificationEventArgs e) =>
-        PostToUi(() => AddCard(e.Notification));
+    private void OnNotificationAdded(object? sender, SasdNotificationEventArgs e)
+    {
+        // An event can already be queued while the host is being rebound. Ignore it
+        // when it belongs to the previous service instead of rendering stale state.
+        if (!ReferenceEquals(sender, service))
+        {
+            return;
+        }
 
-    private void OnNotificationRemoved(object? sender, SasdNotificationEventArgs e) =>
+        PostToUi(() => AddCard(e.Notification));
+    }
+
+    private void OnNotificationRemoved(object? sender, SasdNotificationEventArgs e)
+    {
+        if (!ReferenceEquals(sender, service))
+        {
+            return;
+        }
+
         PostToUi(() => RemoveCard(e.Notification.Id));
+    }
 
     private void RebuildFromService()
     {
