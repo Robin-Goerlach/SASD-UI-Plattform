@@ -48,6 +48,19 @@ function Test-RequiredFile {
     Write-Check -Label $RelativePath -Value 'missing' -State Fail
 }
 
+function Invoke-GitText {
+    param(
+        [Parameter(Mandatory)]
+        [string[]]$Arguments
+    )
+
+    # Some valid Git commands (for example `branch --show-current` in detached
+    # HEAD state) intentionally produce no output. Joining the pipeline output
+    # converts that case to an empty string instead of leaving a null value that
+    # would make a subsequent Trim() unsafe under PowerShell strict mode.
+    return ((& git @Arguments 2>$null) -join [Environment]::NewLine).Trim()
+}
+
 Write-Host ''
 Write-Host 'SASD UI Platform - Codex preflight' -ForegroundColor Cyan
 Write-Host "Repository: $repositoryRoot" -ForegroundColor DarkGray
@@ -97,7 +110,7 @@ else {
 if ($null -ne $gitCommand) {
     Push-Location $repositoryRoot
     try {
-        $insideWorkTree = (& git rev-parse --is-inside-work-tree 2>$null) -eq 'true'
+        $insideWorkTree = (Invoke-GitText -Arguments @('rev-parse', '--is-inside-work-tree')) -eq 'true'
         if (-not $insideWorkTree) {
             $errors.Add('Repository directory is not a Git worktree.')
             Write-Check -Label 'Git worktree' -Value 'not detected' -State Fail
@@ -105,7 +118,7 @@ if ($null -ne $gitCommand) {
         else {
             Write-Check -Label 'Git worktree' -Value 'detected'
 
-            $branch = (& git branch --show-current).Trim()
+            $branch = Invoke-GitText -Arguments @('branch', '--show-current')
             if ([string]::IsNullOrWhiteSpace($branch)) {
                 Write-Check -Label 'Current branch' -Value 'detached HEAD' -State Warn
                 $warnings.Add('Detached HEAD detected. This can be valid in managed tasks, but commits may need an explicit branch/ref.')
@@ -123,7 +136,7 @@ if ($null -ne $gitCommand) {
                 $warnings.Add('Working tree is not clean. Codex must preserve unrelated user work and avoid destructive reset/checkout operations.')
             }
 
-            $origin = (& git remote get-url origin 2>$null).Trim()
+            $origin = Invoke-GitText -Arguments @('remote', 'get-url', 'origin')
             if ([string]::IsNullOrWhiteSpace($origin)) {
                 Write-Check -Label 'Origin remote' -Value 'not configured' -State Warn
                 $warnings.Add('No origin remote is configured. Local coding can continue, but push/PR workflow is unavailable until a remote is configured.')
