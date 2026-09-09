@@ -11,7 +11,7 @@ public sealed class SasdStateStore : IAsyncDisposable
     private readonly SasdStateStoreOptions options;
     private readonly SemaphoreSlim gate = new(1, 1);
     private readonly JsonSerializerOptions serializerOptions;
-    private readonly IReadOnlyDictionary<int, ISasdStateMigration> migrations;
+    private readonly Dictionary<int, ISasdStateMigration> migrations;
     private readonly string rootPath;
     private readonly string statePath;
     private readonly string backupPath;
