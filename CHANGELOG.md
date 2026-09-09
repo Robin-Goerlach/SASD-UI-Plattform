@@ -9,18 +9,32 @@ All significant changes to the SASD UI Platform and its project documentation ar
 - first native WinForms R0 component slice with built-in SASD Light, Dark, and High Contrast theme definitions;
 - native `SasdThemeService` for explicit recursive theming without a global service locator;
 - `SasdSectionPanel` and `SasdFieldLayout` for reusable business-form layouts;
+- `SasdValidationCoordinator`, required-field rules, asynchronous rule support, and `SasdValidationSummary`;
 - `SasdSearchBox`, `SasdEmptyState`, and `SasdDataGrid` for common data-view scenarios;
-- `ISasdDialogService` with a native MessageBox implementation;
-- an expanded Component Gallery that demonstrates the implemented controls and theme switching;
-- dependency-free core smoke checks and a Windows GitHub Actions build workflow;
+- vendor-neutral paging/sorting contracts (`SasdDataQuery`, `SasdDataPage<T>`, `ISasdDataPageSource<T>`);
+- persistable `SasdDataGridState` and dependency-free CSV export;
+- `SasdCommand`, `SasdCommandRunner`, and WinForms command-surface bindings with re-entry protection;
+- `SasdNavigationHost` and prioritized `SasdStatusBar` shell components;
+- versioned `SasdStateStore`, atomic replacement, backup recovery, reset, safe window placement, and `SasdFormStateService`;
+- `SasdFileDialogService`, `SasdClipboardService`, and constrained `SasdShellService` Windows integration;
+- `ISasdDialogService`, detailed error presentation, and `SasdBusyOverlay`;
+- expanded Component Gallery covering forms, data, commands, navigation, state, CSV export, feedback, and theme switching;
+- dependency-free core, UI-state, and WinForms-foundation smoke checks;
+- Windows GitHub Actions restore/build/smoke workflow;
 - `global.json` for predictable .NET 8 SDK selection.
+
+### Changed
+
+- the R0 Gallery now acts as an executable specification for multiple reusable modules rather than only a repository scaffold;
+- previously reserved `Commands`, `Shell`, `State`, and `Windows` areas now contain initial implementations.
 
 ### Planned
 
-- architecture and public API tests beyond the initial smoke checks;
+- architecture and public API tests beyond the current smoke checks;
 - native WinForms versus Krypton visual pilot;
-- typed grid controller, filtering, paging, CSV export, and UI-state persistence;
-- richer error, progress, notification, and validation components.
+- typed grid controller, richer filter expressions and paging UI;
+- progress dialog, notification surface, recent-items service, and stronger migration support;
+- designer, DPI, keyboard, High Contrast and UI Automation evidence across the Gallery.
 
 ## [0.1.0-docs] – 2026-07-23
 
