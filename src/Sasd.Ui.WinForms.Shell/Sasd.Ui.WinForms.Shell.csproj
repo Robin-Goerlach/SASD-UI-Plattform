@@ -10,5 +10,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Sasd.Ui.Core\Sasd.Ui.Core.csproj" />
     <ProjectReference Include="..\Sasd.Ui.WinForms\Sasd.Ui.WinForms.csproj" />
+    <ProjectReference Include="..\Sasd.Ui.WinForms.Commands\Sasd.Ui.WinForms.Commands.csproj" />
   </ItemGroup>
 </Project>
