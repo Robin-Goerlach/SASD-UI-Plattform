@@ -32,6 +32,16 @@ public sealed class SasdCommandManager
     /// <summary>Gets the number of registered commands.</summary>
     public int Count => commands.Count;
 
+    /// <summary>
+    /// Gets the runner shared by manager-based execution surfaces.
+    /// </summary>
+    /// <remarks>
+    /// Reusing one runner for shortcuts, toolbars and programmatic execution prevents
+    /// the same command from being started concurrently through different global UI
+    /// surfaces. The manager owns neither the runner nor command business state.
+    /// </remarks>
+    public SasdCommandRunner Runner => runner;
+
     /// <summary>Registers one command.</summary>
     public void Register(SasdCommand command)
     {
