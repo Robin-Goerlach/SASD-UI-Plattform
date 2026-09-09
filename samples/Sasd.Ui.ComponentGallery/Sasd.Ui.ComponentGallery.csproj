@@ -6,7 +6,7 @@
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <RootNamespace>Sasd.Ui.ComponentGallery</RootNamespace>
     <AssemblyName>Sasd.Ui.ComponentGallery</AssemblyName>
-    <Description>Executable specification and R0 acceptance host for SASD WinForms components.</Description>
+    <Description>Executable specification and visual acceptance host for SASD WinForms components.</Description>
     <!-- The Gallery favors clear, general sample code over micro-optimizing concrete return types. -->
     <NoWarn>$(NoWarn);CA1859</NoWarn>
   </PropertyGroup>
@@ -16,6 +16,7 @@
     <ProjectReference Include="..\..\src\Sasd.Ui.WinForms.Data\Sasd.Ui.WinForms.Data.csproj" />
     <ProjectReference Include="..\..\src\Sasd.Ui.WinForms.Dialogs\Sasd.Ui.WinForms.Dialogs.csproj" />
     <ProjectReference Include="..\..\src\Sasd.Ui.WinForms.Forms\Sasd.Ui.WinForms.Forms.csproj" />
+    <ProjectReference Include="..\..\src\Sasd.Ui.WinForms.Media\Sasd.Ui.WinForms.Media.csproj" />
     <ProjectReference Include="..\..\src\Sasd.Ui.WinForms.Shell\Sasd.Ui.WinForms.Shell.csproj" />
     <ProjectReference Include="..\..\src\Sasd.Ui.WinForms.State\Sasd.Ui.WinForms.State.csproj" />
     <ProjectReference Include="..\..\src\Sasd.Ui.WinForms.Theming\Sasd.Ui.WinForms.Theming.csproj" />

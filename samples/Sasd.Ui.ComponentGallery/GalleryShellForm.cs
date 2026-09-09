@@ -11,9 +11,8 @@ namespace Sasd.Ui.ComponentGallery;
 /// <remarks>
 /// <para>
 /// The existing <see cref="MainForm"/> remains the detailed catalog of individual controls.
-/// This window demonstrates how the R1 shell services work together in a normal application:
-/// global commands, keyboard shortcuts, navigation, status publication, notifications and
-/// constrained file drag-and-drop.
+/// This window demonstrates how the reusable shell services and dependency-free R2 helpers work
+/// together in a normal application surface.
 /// </para>
 /// <para>
 /// The sample intentionally uses plain, readable event wiring. It is an executable reference,
@@ -34,7 +33,7 @@ internal sealed class GalleryShellForm : SasdShellForm
     /// <summary>Creates the integration gallery and registers its application-owned pages/commands.</summary>
     public GalleryShellForm()
     {
-        Text = "SASD UI Platform — R1 Integration Gallery";
+        Text = "SASD UI Platform — R1/R2 Integration Gallery";
         StateKey = "ComponentGallery.IntegrationShell";
         MinimumSize = new Size(900, 620);
         ClientSize = new Size(1180, 760);
@@ -43,13 +42,14 @@ internal sealed class GalleryShellForm : SasdShellForm
         NavigationHost.CachePages = true;
         NavigationHost.NavigationWidth = 210;
         NavigationHost.RegisterPage("overview", "Overview", CreateOverviewPage);
+        NavigationHost.RegisterPage("r2-native", "Native R2", static () => new R2NativeGalleryPage());
         NavigationHost.RegisterPage("feedback", "Feedback", CreateFeedbackPage);
         NavigationHost.RegisterPage("windows", "Windows integration", CreateWindowsIntegrationPage);
         NavigationHost.Navigated += OnNavigated;
 
         RegisterGalleryCommands();
         NavigationHost.Navigate("overview");
-        PublishStatus("R1 integration gallery ready.", SasdStatusSeverity.Success, TimeSpan.FromSeconds(4));
+        PublishStatus("R1/R2 integration gallery ready.", SasdStatusSeverity.Success, TimeSpan.FromSeconds(4));
     }
 
     private void RegisterGalleryCommands()
@@ -66,6 +66,17 @@ internal sealed class GalleryShellForm : SasdShellForm
             },
             "Open the existing detailed catalog of individual R1 components.",
             Keys.Control | Keys.D));
+
+        RegisterCommand(new SasdCommand(
+            "gallery.r2-native",
+            "Native R2",
+            _ =>
+            {
+                NavigationHost.Navigate("r2-native");
+                return Task.CompletedTask;
+            },
+            "Open the dependency-free native R2 examples.",
+            Keys.Control | Keys.Shift | Keys.R));
 
         RegisterCommand(new SasdCommand(
             "gallery.success-notification",
@@ -115,18 +126,21 @@ internal sealed class GalleryShellForm : SasdShellForm
     {
         var panel = CreatePagePanel();
         panel.Controls.Add(CreateTextLabel(
-            "R1 integration shell\r\n\r\n" +
+            "R1/R2 integration shell\r\n\r\n" +
             "This window is composed from SasdShellForm rather than reproducing application plumbing. " +
             "The toolbar and keyboard shortcuts share one command registry/runner; navigation is application-owned; " +
             "status messages are published through ISasdStatusService; notifications use a presentation-neutral service; " +
             "and Windows drag-and-drop is validated before application code receives paths.\r\n\r\n" +
+            "The Native R2 page demonstrates the dependency-free property editor, column chooser, image viewer, " +
+            "saved grid views, KPI cards and sparklines together.\r\n\r\n" +
             "Useful shortcuts:\r\n" +
             "• Ctrl+D — open the detailed component gallery\r\n" +
+            "• Ctrl+Shift+R — native R2 page\r\n" +
             "• Ctrl+Shift+S — success notification\r\n" +
             "• Ctrl+Shift+W — warning notification\r\n" +
             "• Ctrl+Shift+D — safe drag-and-drop page\r\n\r\n" +
             "The sample deliberately keeps business policy out of the UI platform. Applications still decide what pages, commands, " +
-            "files and operations mean."));
+            "files, filters and operations mean."));
         return panel;
     }
 
