@@ -222,7 +222,13 @@ public sealed class SasdPropertyEditor : UserControl
 
         private PropertyDescriptorCollection CreateProperties(PropertyDescriptorCollection source)
         {
-            IEnumerable<PropertyDescriptor> properties = source.Cast<PropertyDescriptor>();
+            // ICustomTypeDescriptor callers can request the complete descriptor set directly.
+            // PropertyGrid normally applies BrowsableAttribute itself, but because this wrapper
+            // becomes the new descriptor source we preserve that native semantic explicitly.
+            IEnumerable<PropertyDescriptor> properties = source
+                .Cast<PropertyDescriptor>()
+                .Where(property => property.IsBrowsable);
+
             if (filterText.Length > 0)
             {
                 properties = properties.Where(MatchesFilter);
