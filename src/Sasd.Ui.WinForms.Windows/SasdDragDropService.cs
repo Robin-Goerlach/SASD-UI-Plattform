@@ -193,7 +193,7 @@ public sealed class SasdDragDropService : ISasdDragDropService
         foreach (string extension in extensions)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(extension);
-            result.Add(extension.StartsWith('.', StringComparison.Ordinal) ? extension : $".{extension}");
+            result.Add(extension.StartsWith(".", StringComparison.Ordinal) ? extension : $".{extension}");
         }
 
         return result;
@@ -262,8 +262,10 @@ public sealed class SasdFileDropBinding : IDisposable
 
     private SasdFileDropEvaluation EvaluateEvent(DragEventArgs e)
     {
-        if (!e.Data!.GetDataPresent(DataFormats.FileDrop) ||
-            e.Data.GetData(DataFormats.FileDrop) is not string[] paths)
+        IDataObject? data = e.Data;
+        if (data is null ||
+            !data.GetDataPresent(DataFormats.FileDrop) ||
+            data.GetData(DataFormats.FileDrop) is not string[] paths)
         {
             return new SasdFileDropEvaluation(
                 Array.Empty<string>(),
