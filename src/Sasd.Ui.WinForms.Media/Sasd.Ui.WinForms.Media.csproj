@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <RootNamespace>Sasd.Ui.WinForms.Media</RootNamespace>
+    <AssemblyName>Sasd.Ui.WinForms.Media</AssemblyName>
+    <Description>Reusable native image and media presentation components for SASD WinForms applications.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Sasd.Ui.WinForms\Sasd.Ui.WinForms.csproj" />
+  </ItemGroup>
+</Project>
