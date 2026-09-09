@@ -1,7 +1,7 @@
 # Roadmap – SASD UI Platform
 
-**As of:** 2026-07-23  
-**Version:** 0.1  
+**As of:** 2026-09-09  
+**Version:** 0.2  
 **Horizon:** R0 through R3; no artificial calendar dates without reliable capacity planning
 
 ## 1. Roadmap Principles
@@ -16,7 +16,23 @@ The roadmap prioritizes **usability over component count**. A component does not
 
 The product line is not developed simultaneously for WinForms, WPF, web, and Java. The current focus remains WinForms.
 
-## 2. Release Map
+## 2. Current Implementation Status
+
+The repository is no longer only an R0 scaffold. A reusable native WinForms foundation is implemented and guarded by strict Windows CI, architecture checks and dependency-free smoke executables.
+
+The status below distinguishes **implemented code** from **completed release gates**. A gate is not marked complete merely because most of its classes exist.
+
+| Stage | Current status | Evidence already present | Important work still open |
+| --- | --- | --- | --- |
+| R0.1 | Largely implemented | .NET 8 solution, central build/package configuration, strict warning-free CI, architecture checks, ADR/licence process, Component Gallery | packaging/API-baseline/release-engineering work can be strengthened further |
+| R0.2 | Pilot implemented; decision gate still open | native theme/form baseline, isolated `Krypton.Toolkit` adapter, Krypton smoke check, automated vendor-boundary enforcement | Visual Studio Designer matrix, multi-DPI/focus/high-contrast acceptance and final native-vs-Krypton standard decision |
+| R0.3 | Core interaction code largely implemented | grid/controller/paging/search/filter contracts, CSV and grid state, dialogs/error/busy/progress, versioned UI state with backup/migrations, command/shell/state smoke checks | UIA/FlaUI pilot, screenshot regression, keyboard-only end-to-end evidence and wider Gallery coverage |
+| R1.0 | Started | reusable forms/validation, commands, navigation/status, data views, Windows services, UI state/recent items and several R1 controls | remaining R1 controls, icons, notifications, drag/drop/tray, reference applications, NuGet publication and first real consumer migration |
+| R1.1 | Not started as a release stage | some hardening already happens continuously | formal public-API review, performance/handle-leak matrix and three real SASD consumers |
+| R2.0 | Deferred | architecture and candidate list documented | no specialist adapter should be promoted before an R1 consumer need exists |
+| R3 | Deferred | scope rules documented | requires demonstrated product need and explicit maintenance ownership |
+
+## 3. Release Map
 
 | Stage | Goal | Result | Release Criterion |
 | --- | --- | --- | --- |
@@ -28,24 +44,31 @@ The product line is not developed simultaneously for WinForms, WPF, web, and Jav
 | R2.0 | Optional specialist modules | Charts, Markdown, code, diff, images, PDF, barcode, WebView2, docking | Every adapter has security, licensing, and lifecycle evidence |
 | R3 | Proven additional modules | Wizard, Ribbon, and only extensions with demonstrated need | Separate business case, ADR, and maintenance ownership |
 
-## 3. R0.1 – Architecture and Repository Foundation
+## 4. R0.1 – Architecture and Repository Foundation
 
 ### Goals
 
-- Create the `SASD-UI-Platform` repository.
+- Create the `SASD-UI-Plattform` repository.
 - Establish the solution and project structure defined by the architecture document.
 - Configure `Directory.Build.props`, `Directory.Packages.props`, `global.json`, and analyzers.
-- Add initial architecture tests for dependency direction and public API boundaries.
+- Add architecture tests for dependency direction and public API boundaries.
 - Prepare the ADR process, license inventory, and third-party notices.
-- Build minimal `Sasd.Ui.Core`, `Sasd.Ui.WinForms`, and `Sasd.Ui.WinForms.Testing` packages.
+- Build minimal `Sasd.Ui.Core` and WinForms foundation packages/projects.
 
-### Deliverables
+### Implemented
 
-- reproducible Debug and Release builds;
-- initial internal NuGet packages without production-readiness claims;
-- CI with restore, build, unit tests, and architecture tests;
-- Component Gallery skeleton;
-- documented local developer setup.
+- reproducible Windows restore/build in GitHub Actions;
+- warnings treated as errors in CI;
+- architecture checks for cycles, platform-neutral `Core`, product-reference boundaries and Krypton isolation;
+- central package version management;
+- ADR and third-party notice baseline;
+- executable Component Gallery and smoke-check projects.
+
+### Remaining Gate Work
+
+- establish repeatable NuGet packaging and symbols as an explicit release path;
+- add public-API baseline tooling before API stability is claimed;
+- add SBOM/release-engineering helpers under `eng/` when packaging starts.
 
 ### Stop Criteria
 
@@ -56,23 +79,31 @@ R0.1 is not complete if:
 - the build depends on local machine state, the GAC, or manually copied DLLs;
 - the license status of a core dependency is unresolved.
 
-## 4. R0.2 – UI Technology Pilot
+## 5. R0.2 – UI Technology Pilot
 
 ### Candidates
 
 1. native WinForms controls;
-2. Krypton Standard Toolkit as the primary visible implementation;
+2. Krypton Standard Toolkit as the primary visible implementation candidate;
 3. AntdUI/ReaLTaiizor only as separate comparison prototypes, never as a mixed visual system.
 
-### Pilot Scope
+### Implemented Pilot Scope
 
-- design tokens for color, typography, spacing, radii, and semantic states;
-- `SasdThemeService` with Light, Dark, and High Contrast;
-- `SasdForm`, `SasdDialogForm`, and `SasdUserControl`;
+- vendor-neutral theme definitions for Light, Dark and High Contrast;
+- native `SasdThemeService`;
+- `SasdForm`, `SasdDialogForm`, and `SasdUserControl` foundation;
 - `SasdSectionPanel` and `SasdFieldLayout`;
-- icon service and semantic standard icons;
-- runtime theme switching;
-- designer serialization and reopening in the Visual Studio Designer.
+- isolated `Sasd.Ui.WinForms.Krypton` project using a centrally pinned Krypton package;
+- automated architecture rule preventing Krypton implementation types from leaking into native product projects;
+- dedicated Krypton smoke check.
+
+### Still Required Before the Technology Decision
+
+- designer serialization and reopening in Visual Studio;
+- 100/125/150/200 percent DPI and mixed-monitor checks;
+- keyboard focus traversal and high-contrast verification;
+- representative native-versus-Krypton Gallery pages;
+- explicit decision record update stating which visual implementation becomes the default.
 
 ### Decision Outcome
 
@@ -85,26 +116,28 @@ Krypton becomes the standard if it:
 
 Otherwise, the native WinForms implementation becomes the standard. Design tokens and contracts remain independent of the result.
 
-## 5. R0.3 – Grid, Dialog, State, and Test Pilot
+## 6. R0.3 – Grid, Dialog, State, and Test Pilot
 
-### Pilot Components
+### Implemented or In Progress
 
 - `SasdDataGrid` plus `SasdGridController<T>`;
 - `SasdSearchBox`, `SasdFilterBar`, `SasdEmptyState`, and `SasdBusyOverlay`;
-- `SasdDialogService`, `SasdErrorDialog`, and `SasdProgressDialog`;
-- `SasdStateStore` with versioning, backup, migration, and reset;
+- vendor-neutral paging, sorting and filter descriptors;
+- CSV export and persisted grid-column state;
+- `SasdDialogService`, `SasdErrorDialog`, `SasdProgressDialog`, and `SasdDialogForm`;
+- `SasdStateStore` with versioning, backup recovery, incremental migration and reset;
+- `SasdRecentItemsService`;
+- strict smoke coverage for commands, grid/state, forms, dispatcher, shell safety and Krypton.
+
+### Evidence Still Required for the Gate
+
 - UI Automation through UIA3/FlaUI as a pilot;
-- screenshot regression for defined Gallery states.
+- screenshot regression for defined Gallery states;
+- at least one keyboard-only end-to-end scenario;
+- broader Component Gallery coverage of the implemented components;
+- defined manual DPI/accessibility checklist results stored with the release evidence.
 
-### Evidence
-
-- sorting, search, filtering, selection, and CSV export in the grid spike;
-- persisted grid-column state without database coupling;
-- a corrupted state file does not prevent application startup;
-- cancellation/progress and error completion behave predictably;
-- at least one keyboard-only end-to-end scenario is automated.
-
-## 6. R1.0 – Productive Foundation
+## 7. R1.0 – Productive Foundation
 
 ### Binding Product Areas
 
@@ -118,11 +151,23 @@ Otherwise, the native WinForms implementation becomes the standard. Design token
 - Component Gallery and three reference applications;
 - NuGet, symbols, XML documentation, SBOM, and third-party notices.
 
+### Near-Term Implementation Order
+
+Unless a real SASD consumer exposes a more urgent need, prefer the following order:
+
+1. finish the low-risk R1 shell/data-view controls already defined by the specification;
+2. add semantic icon service and notification service;
+3. add drag-and-drop and tray services with explicit safety boundaries;
+4. expand Gallery coverage and keyboard/DPI/accessibility evidence;
+5. establish NuGet packaging and API-baseline checks;
+6. migrate the first bounded feature from a real SASD application, preferably Prompt Manager;
+7. use migration feedback to simplify APIs before R1.0 is declared stable.
+
 ### Pilot Migration
 
-The first adoption target is a small, clearly bounded application or feature. Prompt Manager is suitable for themes, form layout, dialogs, search/filtering, and grid state. A complete navigation redesign is not mandatory for R1.
+The first adoption target is a small, clearly bounded application or feature. Prompt Manager is suitable for themes, form layout, dialogs, search/filtering, commands and UI state. A complete navigation redesign is not mandatory for R1.
 
-## 7. R1.1 – Stabilization
+## 8. R1.1 – Stabilization
 
 - API review focused on naming, nullability, error models, and cancellation;
 - performance and handle-leak tests;
@@ -131,7 +176,7 @@ The first adoption target is a small, clearly bounded application or feature. Pr
 - reduction of direct package dependencies for consumers;
 - documentation of known boundaries instead of hidden special cases.
 
-## 8. R2.0 – Specialist Modules
+## 9. R2.0 – Specialist Modules
 
 R2 modules are separate packages and are not installed automatically.
 
@@ -146,15 +191,15 @@ R2 modules are separate packages and are not installed automatically.
 | WebView2 | Microsoft WebView2 | Default-deny, allowlist, and download rules tested |
 | Docking | Krypton Docking/Workspace | Layout reset and resource disposal are reliable |
 
-## 9. R3 and Deliberate Non-Goals
+## 10. R3 and Deliberate Non-Goals
 
 Wizard and Ribbon components are developed only if at least two real applications demonstrate the same need, or if one strategic product has a documented business case.
 
 This roadmap does not include Pivot/OLAP, spreadsheet engines, Office editors, report/dashboard designers, Gantt, complex scheduling, 3D, mobile controls, or a cross-platform rewrite.
 
-## 10. Roadmap Maintenance
+## 11. Roadmap Maintenance
 
-The roadmap is updated at every gate review. New components may not be added directly to R1/R2. Admission requires:
+The roadmap is updated at every gate review and whenever implementation progress materially changes the next useful development step. New components may not be added directly to R1/R2. Admission requires:
 
 1. a demonstrated application scenario;
 2. scope and maintenance evaluation;
