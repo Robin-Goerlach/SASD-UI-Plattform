@@ -154,7 +154,6 @@ internal static class Program
         filterBar.ActiveFilterCount = 1;
         bool clearRequested = false;
         filterBar.ClearRequested += (_, _) => clearRequested = true;
-        filterBar.Controls.Find(string.Empty, true);
         Ensure(filterBar.RemoveFilter(filterEditor), "Filter editor could not be removed again.");
         Ensure(filterBar.ActiveFilterCount == 1, "Filter state count was not retained.");
 
@@ -208,8 +207,8 @@ internal static class Program
         command.Enabled = true;
         Ensure(button.Enabled, "Command bar did not update after command state changed.");
 
-        // The event is deliberately application-owned; assigning the counter above is
-        // enough to verify that constructing the filter bar did not unexpectedly clear it.
+        // ClearRequested is application-owned. Merely constructing and configuring the
+        // filter bar must not unexpectedly raise it.
         Ensure(!clearRequested, "Filter bar raised ClearRequested without user interaction.");
     }
 
