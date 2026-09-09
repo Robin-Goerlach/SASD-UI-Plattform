@@ -44,7 +44,7 @@ internal sealed class UtilitySampleForm : SasdForm
         ShowResult("Utility reference application ready.");
     }
 
-    private Control CreateContent()
+    private TableLayoutPanel CreateContent()
     {
         var root = new TableLayoutPanel
         {
@@ -118,7 +118,16 @@ internal sealed class UtilitySampleForm : SasdForm
 
     private void CopyText()
     {
-        UiOperationResult result = clipboard.SetText(valueTextBox.Text);
+        string text = valueTextBox.Text;
+        if (text.Length == 0)
+        {
+            // Clipboard.SetText does not accept empty text. Treat that as normal UI validation
+            // instead of turning a predictable user action into an exception path.
+            ShowResult("Enter or paste text before copying it.", SasdStatusSeverity.Warning);
+            return;
+        }
+
+        UiOperationResult result = clipboard.SetText(text);
         HandleResult(result, "Copied text to clipboard.", "Copy text");
     }
 
