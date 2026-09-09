@@ -33,6 +33,9 @@ jobs:
       - name: Build
         run: dotnet build SASD.Ui.Platform.sln --configuration Release --no-restore -p:TreatWarningsAsErrors=true
 
+      - name: Architecture checks
+        run: dotnet run --project tests/architecture/Sasd.Ui.ArchitectureChecks/Sasd.Ui.ArchitectureChecks.csproj --configuration Release -p:TreatWarningsAsErrors=true -- .
+
       - name: Core smoke checks
         run: dotnet run --project tests/smoke/Sasd.Ui.SmokeChecks/Sasd.Ui.SmokeChecks.csproj --configuration Release --no-build
 
