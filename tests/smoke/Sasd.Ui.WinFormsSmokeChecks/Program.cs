@@ -2,8 +2,10 @@ using System.Text;
 using Sasd.Ui.WinForms;
 using Sasd.Ui.WinForms.Commands;
 using Sasd.Ui.WinForms.Data;
+using Sasd.Ui.WinForms.Dialogs;
 using Sasd.Ui.WinForms.Forms;
 using Sasd.Ui.WinForms.Shell;
+using Sasd.Ui.WinForms.Theming;
 using Sasd.Ui.WinForms.Windows;
 
 namespace Sasd.Ui.WinFormsSmokeChecks;
@@ -16,6 +18,7 @@ internal static class Program
         try
         {
             await ValidateCommandsAsync();
+            await ValidateCommandBarAsync();
             await ValidateCsvAndGridStateAsync();
             await ValidateFormsAsync();
             await ValidateUiDispatcherAsync();
@@ -24,6 +27,8 @@ internal static class Program
             ValidateBreadcrumb();
             ValidateDocumentTabs();
             ValidateListAndTreeDefaults();
+            ValidateIcons();
+            ValidateNotifications();
             ValidateShell();
             ValidateWindowsShellSafety();
 
@@ -64,6 +69,45 @@ internal static class Program
         Ensure(!second.Succeeded && second.ErrorCode == "COMMAND_ALREADY_RUNNING", "Command re-entry was not blocked.");
         release.SetResult();
         Ensure((await first).Succeeded, "Initial long-running command did not complete.");
+    }
+
+    private static async Task ValidateCommandBarAsync()
+    {
+        using var commandBar = new SasdCommandBar();
+        var completion = new TaskCompletionSource<SasdCommandBarCommandCompletedEventArgs>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        int executions = 0;
+        var command = new SasdCommand(
+            "smoke.command-bar",
+            "Refresh",
+            _ =>
+            {
+                executions++;
+                return Task.CompletedTask;
+            },
+            "Refresh the sample.");
+
+        commandBar.CommandCompleted += (_, args) => completion.TrySetResult(args);
+        ToolStripButton button = commandBar.AddCommand(command);
+
+        Ensure(commandBar.CommandCount == 1, "Command bar did not retain the added command.");
+        Ensure(button.Text == "Refresh" && button.Enabled, "Command state was not projected to the command bar button.");
+
+        command.Enabled = false;
+        Ensure(!button.Enabled, "Command bar did not track disabled command state.");
+        command.Enabled = true;
+
+        button.PerformClick();
+        SasdCommandBarCommandCompletedEventArgs completed = await completion.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        Ensure(completed.Result.Succeeded && executions == 1, "Command bar did not execute the command successfully.");
+        Ensure(ReferenceEquals(completed.Command, command), "Command bar completion reported the wrong command instance.");
+
+        EnsureThrows<ArgumentException>(
+            () => commandBar.AddCommand(command),
+            "Command bar accepted a duplicate command id.");
+
+        Ensure(commandBar.RemoveCommand("smoke.command-bar"), "Command bar could not remove an existing command.");
+        Ensure(button.IsDisposed && commandBar.CommandCount == 0, "Removed command-bar resources were not disposed.");
     }
 
     private static async Task ValidateCsvAndGridStateAsync()
@@ -213,6 +257,50 @@ internal static class Program
         Ensure(!tree.HideSelection && tree.ShowNodeToolTips, "TreeView selection or tooltip defaults are incorrect.");
     }
 
+    private static void ValidateIcons()
+    {
+        var icons = new SasdSystemIconService();
+        Image information = icons.GetImage(SasdSemanticIcon.Information);
+        Image cachedInformation = icons.GetImage(SasdSemanticIcon.Information);
+
+        Ensure(ReferenceEquals(information, cachedInformation), "Icon service did not reuse its service-owned cache.");
+        Ensure(information.Width > 0 && information.Height > 0, "Icon service returned an invalid image.");
+
+        icons.Dispose();
+        EnsureThrows<ObjectDisposedException>(
+            () => icons.GetImage(SasdSemanticIcon.Warning),
+            "Disposed icon service accepted new requests.");
+    }
+
+    private static void ValidateNotifications()
+    {
+        var service = new SasdNotificationService();
+        SasdNotification? received = null;
+        int publications = 0;
+        service.NotificationPublished += (_, args) =>
+        {
+            publications++;
+            received = args.Notification;
+        };
+
+        service.Publish(
+            "Saved successfully.",
+            "Save",
+            SasdNotificationSeverity.Success,
+            TimeSpan.FromSeconds(5));
+
+        Ensure(publications == 1 && received is not null, "Notification service did not publish exactly once.");
+        Ensure(received.Severity == SasdNotificationSeverity.Success, "Notification severity changed during publication.");
+        Ensure(received.Lifetime == TimeSpan.FromSeconds(5), "Notification lifetime changed during publication.");
+
+        EnsureThrows<ArgumentException>(
+            () => service.Publish(new SasdNotification(" ")),
+            "Notification service accepted an empty message.");
+        EnsureThrows<ArgumentOutOfRangeException>(
+            () => service.Publish(new SasdNotification("Invalid lifetime", Lifetime: TimeSpan.Zero)),
+            "Notification service accepted a non-positive lifetime.");
+    }
+
     private static void ValidateShell()
     {
         using var host = new SasdNavigationHost();
@@ -243,6 +331,21 @@ internal static class Program
         var unsupportedUri = shell.OpenUri(new Uri("file:///C:/Windows/System32/cmd.exe"));
         Ensure(!unsupportedUri.Succeeded && unsupportedUri.ErrorCode == "URI_SCHEME_NOT_ALLOWED",
             "Unsupported URI scheme was accepted.");
+    }
+
+    private static void EnsureThrows<TException>(Action action, string message)
+        where TException : Exception
+    {
+        try
+        {
+            action();
+        }
+        catch (TException)
+        {
+            return;
+        }
+
+        throw new InvalidOperationException(message);
     }
 
     private static async Task EnsureThrowsAsync<TException>(Func<Task> action, string message)
