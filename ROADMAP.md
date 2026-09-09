@@ -1,8 +1,19 @@
 # Roadmap – SASD UI Platform
 
-**As of:** 2026-07-23  
-**Version:** 0.1  
+**As of:** 2026-09-09  
+**Version:** 0.2  
 **Horizon:** R0 through R3; no artificial calendar dates without reliable capacity planning
+
+## Current implementation snapshot
+
+The repository is no longer a pure R0 scaffold.
+
+- **R0.1 foundation:** technically implemented and continuously validated by clean Windows CI, architecture checks and warnings-as-errors builds.
+- **R0.2 technology pilot:** native WinForms baseline and an isolated Krypton adapter are implemented. The remaining gate is visual/designer evidence across DPI, focus, keyboard and High Contrast before making a strategic default-renderer decision.
+- **R0.3 interaction pilot:** grid, dialogs, errors, progress, recoverable/versioned UI state, migration and smoke coverage are substantially implemented. UI Automation and screenshot-regression evidence remain open.
+- **R1.0 productive foundation:** active development focus. Reusable navigation, document tabs, command surfaces, filters, list/tree defaults and Windows integration are being completed before packaging and first real-application adoption.
+
+This status section records implementation progress only. It does **not** weaken the release criteria below: code being present is not the same as a gate being accepted.
 
 ## 1. Roadmap Principles
 
@@ -37,13 +48,13 @@ The product line is not developed simultaneously for WinForms, WPF, web, and Jav
 - Configure `Directory.Build.props`, `Directory.Packages.props`, `global.json`, and analyzers.
 - Add initial architecture tests for dependency direction and public API boundaries.
 - Prepare the ADR process, license inventory, and third-party notices.
-- Build minimal `Sasd.Ui.Core`, `Sasd.Ui.WinForms`, and `Sasd.Ui.WinForms.Testing` packages.
+- Build minimal `Sasd.Ui.Core`, `Sasd.Ui.WinForms`, and testing foundations.
 
 ### Deliverables
 
 - reproducible Debug and Release builds;
 - initial internal NuGet packages without production-readiness claims;
-- CI with restore, build, unit tests, and architecture tests;
+- CI with restore, build, smoke/unit coverage and architecture tests;
 - Component Gallery skeleton;
 - documented local developer setup.
 
@@ -61,7 +72,7 @@ R0.1 is not complete if:
 ### Candidates
 
 1. native WinForms controls;
-2. Krypton Standard Toolkit as the primary visible implementation;
+2. Krypton Standard Toolkit as the primary visible implementation candidate;
 3. AntdUI/ReaLTaiizor only as separate comparison prototypes, never as a mixed visual system.
 
 ### Pilot Scope
@@ -76,7 +87,7 @@ R0.1 is not complete if:
 
 ### Decision Outcome
 
-Krypton becomes the standard if it:
+Krypton becomes the standard only if it:
 
 - works reproducibly in the designer;
 - does not degrade DPI or focus behavior;
@@ -120,7 +131,7 @@ Otherwise, the native WinForms implementation becomes the standard. Design token
 
 ### Pilot Migration
 
-The first adoption target is a small, clearly bounded application or feature. Prompt Manager is suitable for themes, form layout, dialogs, search/filtering, and grid state. A complete navigation redesign is not mandatory for R1.
+The first adoption target is a small, clearly bounded application or feature. Prompt Manager is suitable for themes, form layout, dialogs, search/filtering, commands and UI/grid state. A complete navigation redesign is not mandatory for R1.
 
 ## 7. R1.1 – Stabilization
 
