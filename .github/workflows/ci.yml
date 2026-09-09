@@ -34,3 +34,6 @@ jobs:
 
       - name: UI-state smoke checks
         run: dotnet run --project tests/smoke/Sasd.Ui.StateSmokeChecks/Sasd.Ui.StateSmokeChecks.csproj --configuration Release
+
+      - name: WinForms foundation smoke checks
+        run: dotnet run --project tests/smoke/Sasd.Ui.WinFormsSmokeChecks/Sasd.Ui.WinFormsSmokeChecks.csproj --configuration Release
