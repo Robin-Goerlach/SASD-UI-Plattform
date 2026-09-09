@@ -1,6 +1,6 @@
 namespace Sasd.Ui.WinForms.Dialogs;
 
-/// <summary>Native MessageBox implementation of <see cref="ISasdDialogService"/>.</summary>
+/// <summary>Native WinForms implementation of <see cref="ISasdDialogService"/>.</summary>
 public sealed class SasdDialogService : ISasdDialogService
 {
     /// <inheritdoc />
@@ -14,6 +14,13 @@ public sealed class SasdDialogService : ISasdDialogService
     /// <inheritdoc />
     public void ShowError(IWin32Window? owner, string message, string title) =>
         MessageBox.Show(owner, message, title, MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+    /// <inheritdoc />
+    public void ShowErrorDetails(IWin32Window? owner, string message, string title, string? technicalDetails)
+    {
+        using var dialog = new SasdErrorDialog(title, message, technicalDetails);
+        dialog.ShowDialog(owner);
+    }
 
     /// <inheritdoc />
     public bool Confirm(IWin32Window? owner, string message, string title) =>
