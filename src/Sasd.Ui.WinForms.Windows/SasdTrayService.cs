@@ -121,7 +121,7 @@ public sealed class SasdTrayService : ISasdTrayService
         get
         {
             ObjectDisposedException.ThrowIf(disposed, this);
-            return openItem.Text;
+            return openItem.Text ?? string.Empty;
         }
         set
         {
@@ -136,7 +136,7 @@ public sealed class SasdTrayService : ISasdTrayService
         get
         {
             ObjectDisposedException.ThrowIf(disposed, this);
-            return exitItem.Text;
+            return exitItem.Text ?? string.Empty;
         }
         set
         {
