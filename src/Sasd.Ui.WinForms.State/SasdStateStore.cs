@@ -236,7 +236,7 @@ public sealed class SasdStateStore : IAsyncDisposable
         }
     }
 
-    private static IReadOnlyDictionary<int, ISasdStateMigration> ValidateMigrations(SasdStateStoreOptions options)
+    private static Dictionary<int, ISasdStateMigration> ValidateMigrations(SasdStateStoreOptions options)
     {
         var result = new Dictionary<int, ISasdStateMigration>();
         foreach (var migration in options.Migrations ?? Array.Empty<ISasdStateMigration>())
