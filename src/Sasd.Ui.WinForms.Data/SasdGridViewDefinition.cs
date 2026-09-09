@@ -95,7 +95,7 @@ public sealed record SasdGridViewDefinition
         }
     }
 
-    private static IReadOnlyList<SasdActiveFilter> ValidateAndCopyFilters(IEnumerable<SasdActiveFilter> filters)
+    private static SasdActiveFilter[] ValidateAndCopyFilters(IEnumerable<SasdActiveFilter> filters)
     {
         var result = new List<SasdActiveFilter>();
         foreach (SasdActiveFilter filter in filters)
