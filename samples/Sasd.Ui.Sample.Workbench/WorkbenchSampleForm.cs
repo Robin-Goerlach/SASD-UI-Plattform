@@ -319,7 +319,8 @@ internal sealed class WorkbenchSampleForm : SasdShellForm
             // The tree is application-owned sample state. If its expected root was
             // removed by future sample changes, rebuild rather than silently losing the note.
             PopulateDocumentTree(documentTree);
-            notesRoot = documentTree.Nodes["notes"];
+            notesRoot = documentTree.Nodes["notes"]
+                ?? throw new InvalidOperationException("The Workbench Notes root could not be rebuilt.");
         }
 
         TreeNode newNode = CreateDocumentNode(document);
