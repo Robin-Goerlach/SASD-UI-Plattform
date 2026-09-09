@@ -13,4 +13,6 @@ Dieser Ordner enthält die vollständigen deutschsprachigen Ausgangs- und Beglei
 
 Die ergänzenden Dokumente befinden sich unter [`project`](project/). Dazu gehören Roadmap, Projektplan, Scope, Entwicklung, Tests, CI/CD, Releases, Lizenzen/SBOM, UI-State, Migration, Betrieb, Governance, Risiken, Gallery, Paketierung, Accessibility/DPI, Dokumentationsstandard und ADRs.
 
+Für den Einsatz von Codex gibt es zusätzlich den [Codex-Entwicklungsworkflow](project/codex-entwicklungsworkflow.md). Die eigentlichen Agenten-Anweisungen stehen bewusst kurz und englisch in der Repository-weiten [`AGENTS.md`](../../AGENTS.md), damit Codex dieselben Regeln wie die englische Primärdokumentation verwendet.
+
 Die Projektsprache für Quellcode, öffentliche APIs, GitHub-Metadaten und die primäre Repository-Dokumentation ist Englisch. Die deutsche Fassung wird parallel gepflegt.
