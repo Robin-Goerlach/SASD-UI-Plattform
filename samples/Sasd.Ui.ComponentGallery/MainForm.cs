@@ -14,8 +14,10 @@ namespace Sasd.Ui.ComponentGallery;
 /// </summary>
 internal sealed class MainForm : SasdForm
 {
+    private static readonly string[] CustomerCategories = ["Customer", "Partner", "Internal"];
+
     private readonly SasdThemeService themeService = new();
-    private readonly ISasdDialogService dialogService = new SasdDialogService();
+    private readonly SasdDialogService dialogService = new();
     private readonly Label statusLabel = new();
     private readonly SasdDataGrid customerGrid = new();
     private readonly IReadOnlyList<CustomerRow> customers = CreateCustomers();
@@ -32,7 +34,7 @@ internal sealed class MainForm : SasdForm
         Shown += (_, _) => themeService.Apply(this);
     }
 
-    private Control CreateRootLayout()
+    private TableLayoutPanel CreateRootLayout()
     {
         var root = new TableLayoutPanel
         {
@@ -56,7 +58,7 @@ internal sealed class MainForm : SasdForm
         return root;
     }
 
-    private Control CreateHeader()
+    private TableLayoutPanel CreateHeader()
     {
         var header = new TableLayoutPanel
         {
@@ -74,10 +76,11 @@ internal sealed class MainForm : SasdForm
             FlowDirection = FlowDirection.TopDown,
             WrapContents = false,
         };
+        Font titlePrototype = SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont;
         titlePanel.Controls.Add(new Label
         {
             AutoSize = true,
-            Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 20, FontStyle.Bold),
+            Font = new Font(titlePrototype.FontFamily, 20, FontStyle.Bold),
             Text = "SASD UI Platform",
         });
         titlePanel.Controls.Add(new Label
@@ -110,7 +113,7 @@ internal sealed class MainForm : SasdForm
         return header;
     }
 
-    private Control CreateTabs()
+    private TabControl CreateTabs()
     {
         var tabs = new TabControl { Dock = DockStyle.Fill };
         tabs.TabPages.Add(CreateOverviewPage());
@@ -120,7 +123,7 @@ internal sealed class MainForm : SasdForm
         return tabs;
     }
 
-    private TabPage CreateOverviewPage()
+    private static TabPage CreateOverviewPage()
     {
         var page = new TabPage("Overview") { Padding = new Padding(16) };
         var section = new SasdSectionPanel
@@ -160,7 +163,7 @@ internal sealed class MainForm : SasdForm
         fields.AddField("Category", new ComboBox
         {
             DropDownStyle = ComboBoxStyle.DropDownList,
-            DataSource = new[] { "Customer", "Partner", "Internal" },
+            DataSource = CustomerCategories,
         });
 
         var saveButton = new Button { AutoSize = true, Text = "Validate sample" };

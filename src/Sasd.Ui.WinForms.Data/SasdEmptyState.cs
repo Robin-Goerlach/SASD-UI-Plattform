@@ -30,10 +30,11 @@ public class SasdEmptyState : UserControl
         };
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 
+        Font prototype = SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont;
         titleLabel = new Label
         {
             AutoSize = true,
-            Font = new Font(SystemFonts.MessageBoxFont, FontStyle.Bold),
+            Font = new Font(prototype, FontStyle.Bold),
             Text = "Nothing here yet",
         };
         messageLabel = new Label
