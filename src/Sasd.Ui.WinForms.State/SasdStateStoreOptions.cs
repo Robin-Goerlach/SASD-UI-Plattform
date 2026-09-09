@@ -5,18 +5,15 @@ public sealed record SasdStateStoreOptions(
     string CompanyName,
     string ProductName,
     string? RootPath = null,
-    int SchemaVersion = 1)
+    int SchemaVersion = 1,
+    IReadOnlyList<ISasdStateMigration>? Migrations = null)
 {
     /// <summary>Returns the directory used for UI-state files.</summary>
     public string ResolveRootPath()
     {
         ValidatePathSegment(CompanyName, nameof(CompanyName));
         ValidatePathSegment(ProductName, nameof(ProductName));
-
-        if (SchemaVersion <= 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(SchemaVersion), "Schema version must be positive.");
-        }
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(SchemaVersion);
 
         if (!string.IsNullOrWhiteSpace(RootPath))
         {
