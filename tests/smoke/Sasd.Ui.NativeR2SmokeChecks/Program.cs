@@ -100,9 +100,11 @@ internal static class Program
         using var source = new Bitmap(32, 16);
 
         viewer.SetImage(source);
-        Ensure(viewer.HasImage && viewer.Image is not null, "Image viewer did not retain an assigned image copy.");
-        Ensure(!ReferenceEquals(source, viewer.Image), "Image viewer retained the caller-owned Image instance instead of cloning it.");
-        Ensure(viewer.Image.Width == 32 && viewer.Image.Height == 16,
+        Image displayedImage = viewer.Image
+            ?? throw new InvalidOperationException("Image viewer did not retain an assigned image copy.");
+        Ensure(viewer.HasImage, "Image viewer did not report its assigned image.");
+        Ensure(!ReferenceEquals(source, displayedImage), "Image viewer retained the caller-owned Image instance instead of cloning it.");
+        Ensure(displayedImage.Width == 32 && displayedImage.Height == 16,
             "Image viewer changed the assigned image dimensions unexpectedly.");
 
         viewer.ZoomMode = SasdImageZoomMode.ActualSize;
