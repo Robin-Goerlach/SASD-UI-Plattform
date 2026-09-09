@@ -2,6 +2,16 @@ using Sasd.Ui.Core;
 
 namespace Sasd.Ui.WinForms.Commands;
 
+/// <summary>Event data published after a bound command has completed.</summary>
+public sealed class SasdCommandCompletedEventArgs : EventArgs
+{
+    /// <summary>Initialises command completion event data.</summary>
+    public SasdCommandCompletedEventArgs(UiOperationResult result) => Result = result;
+
+    /// <summary>Gets the execution result.</summary>
+    public UiOperationResult Result { get; }
+}
+
 /// <summary>Synchronises one command with a WinForms button or ToolStrip item.</summary>
 public sealed class SasdCommandBinding : IDisposable
 {
@@ -33,7 +43,7 @@ public sealed class SasdCommandBinding : IDisposable
     }
 
     /// <summary>Raised after execution, including recoverable failure information.</summary>
-    public event EventHandler<UiOperationResult>? CommandCompleted;
+    public event EventHandler<SasdCommandCompletedEventArgs>? CommandCompleted;
 
     /// <summary>Creates a binding for a button-like control.</summary>
     public static SasdCommandBinding Bind(ButtonBase button, SasdCommand command, SasdCommandRunner runner)
@@ -79,7 +89,7 @@ public sealed class SasdCommandBinding : IDisposable
     private async void OnSurfaceClick(object? sender, EventArgs e)
     {
         var result = await runner.ExecuteAsync(command).ConfigureAwait(true);
-        CommandCompleted?.Invoke(this, result);
+        CommandCompleted?.Invoke(this, new SasdCommandCompletedEventArgs(result));
     }
 
     private void UpdateSurface()
