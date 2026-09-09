@@ -27,35 +27,6 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      - name: Restore
-        run: dotnet restore SASD.Ui.Platform.sln
-
-      - name: Build
-        run: dotnet build SASD.Ui.Platform.sln --configuration Release --no-restore -p:TreatWarningsAsErrors=true
-
-      - name: Architecture checks
-        run: dotnet run --project tests/architecture/Sasd.Ui.ArchitectureChecks/Sasd.Ui.ArchitectureChecks.csproj --configuration Release -p:TreatWarningsAsErrors=true -- .
-
-      - name: Core smoke checks
-        run: dotnet run --project tests/smoke/Sasd.Ui.SmokeChecks/Sasd.Ui.SmokeChecks.csproj --configuration Release --no-build
-
-      - name: UI-state smoke checks
-        run: dotnet run --project tests/smoke/Sasd.Ui.StateSmokeChecks/Sasd.Ui.StateSmokeChecks.csproj --configuration Release
-
-      - name: WinForms foundation smoke checks
-        run: dotnet run --project tests/smoke/Sasd.Ui.WinFormsSmokeChecks/Sasd.Ui.WinFormsSmokeChecks.csproj --configuration Release
-
-      - name: Windows integration smoke checks
-        run: dotnet run --project tests/smoke/Sasd.Ui.WindowsSmokeChecks/Sasd.Ui.WindowsSmokeChecks.csproj --configuration Release -p:TreatWarningsAsErrors=true
-
-      - name: Shell integration smoke checks
-        run: dotnet run --project tests/smoke/Sasd.Ui.ShellSmokeChecks/Sasd.Ui.ShellSmokeChecks.csproj --configuration Release -p:TreatWarningsAsErrors=true
-
-      - name: Native R2 smoke checks
-        run: dotnet run --project tests/smoke/Sasd.Ui.NativeR2SmokeChecks/Sasd.Ui.NativeR2SmokeChecks.csproj --configuration Release -p:TreatWarningsAsErrors=true
-
-      - name: Data/dashboard smoke checks
-        run: dotnet run --project tests/smoke/Sasd.Ui.DataDashboardSmokeChecks/Sasd.Ui.DataDashboardSmokeChecks.csproj --configuration Release -p:TreatWarningsAsErrors=true
-
-      - name: Krypton adapter smoke checks
-        run: dotnet run --project tests/smoke/Sasd.Ui.KryptonSmokeChecks/Sasd.Ui.KryptonSmokeChecks.csproj --configuration Release
+      - name: Verify repository
+        shell: pwsh
+        run: ./build/verify.ps1
