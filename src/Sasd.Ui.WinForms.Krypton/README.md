@@ -1,13 +1,15 @@
 # Sasd.Ui.WinForms.Krypton
 
-Isolated placeholder for the R0 Krypton Standard Toolkit pilot.
+Isolated R0.2 adapter and evaluation project for **Krypton.Toolkit**.
 
-No Krypton package is committed in the repository scaffold. Adding it requires:
+## Current scope
 
-1. ADR-0004 review;
-2. licence and transitive-dependency inventory;
-3. Visual Studio Designer test;
-4. 100–200% DPI and mixed-monitor test;
-5. keyboard, focus, UI Automation and High-Contrast review;
-6. proof that Krypton types do not leak into general SASD APIs;
-7. native WinForms fallback and exit strategy.
+- stable `Krypton.Toolkit` dependency pinned centrally in `Directory.Packages.props`;
+- `SasdKryptonForm` as a designer-friendly Krypton-backed SASD window;
+- diagnostic adapter status used by smoke checks and the evaluation process.
+
+## Boundary rule
+
+Krypton types may appear inside this project and in Krypton-specific samples. They must not leak into `Sasd.Ui.Core`, the native `Sasd.Ui.WinForms.*` contracts, or application-neutral service interfaces.
+
+This is still a **pilot**, not a decision to make Krypton mandatory. ADR-0004 remains subject to designer, DPI, accessibility, maintenance, and real-application validation.

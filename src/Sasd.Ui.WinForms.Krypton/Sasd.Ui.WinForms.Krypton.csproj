@@ -5,9 +5,13 @@
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <RootNamespace>Sasd.Ui.WinForms.Krypton</RootNamespace>
     <AssemblyName>Sasd.Ui.WinForms.Krypton</AssemblyName>
-    <Description>Isolated R0 visual-adapter project for the Krypton evaluation.</Description>
+    <Description>Isolated Krypton implementation and R0.2 visual-adapter pilot for the SASD UI Platform.</Description>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Sasd.Ui.WinForms\Sasd.Ui.WinForms.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Vendor dependency is intentionally confined to this adapter project. -->
+    <PackageReference Include="Krypton.Toolkit" />
   </ItemGroup>
 </Project>
