@@ -11,6 +11,7 @@ public sealed class SasdStateStore : IAsyncDisposable
     private readonly SasdStateStoreOptions options;
     private readonly SemaphoreSlim gate = new(1, 1);
     private readonly JsonSerializerOptions serializerOptions;
+    private readonly IReadOnlyDictionary<int, ISasdStateMigration> migrations;
     private readonly string rootPath;
     private readonly string statePath;
     private readonly string backupPath;
@@ -22,6 +23,8 @@ public sealed class SasdStateStore : IAsyncDisposable
         rootPath = options.ResolveRootPath();
         statePath = Path.Combine(rootPath, "ui-state.json");
         backupPath = Path.Combine(rootPath, "ui-state.backup.json");
+        migrations = ValidateMigrations(options);
+
         serializerOptions = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -87,6 +90,7 @@ public sealed class SasdStateStore : IAsyncDisposable
                 return false;
             }
 
+            document.SchemaVersion = options.SchemaVersion;
             document.UpdatedAtUtc = DateTimeOffset.UtcNow;
             await WriteDocumentAsync(document, cancellationToken).ConfigureAwait(false);
             return true;
@@ -127,6 +131,8 @@ public sealed class SasdStateStore : IAsyncDisposable
             return primary;
         }
 
+        // A malformed, inaccessible, future-version, or non-migratable primary
+        // document must never prevent application startup. Try the last known backup.
         var backup = await TryLoadAsync(backupPath, cancellationToken).ConfigureAwait(false);
         return backup ?? StateDocument.Create(options.SchemaVersion);
     }
@@ -150,7 +156,7 @@ public sealed class SasdStateStore : IAsyncDisposable
             }
 
             document.Sections ??= new Dictionary<string, JsonElement>(StringComparer.Ordinal);
-            return document;
+            return TryMigrate(document) ? document : null;
         }
         catch (JsonException)
         {
@@ -164,6 +170,35 @@ public sealed class SasdStateStore : IAsyncDisposable
         {
             return null;
         }
+    }
+
+    private bool TryMigrate(StateDocument document)
+    {
+        // Migrations are intentionally applied to the deserialized in-memory copy.
+        // The upgraded document is persisted only during the next explicit Save/Remove.
+        // This avoids overwriting a useful backup merely because an application read state.
+        while (document.SchemaVersion < options.SchemaVersion)
+        {
+            if (!migrations.TryGetValue(document.SchemaVersion, out var migration))
+            {
+                return false;
+            }
+
+            try
+            {
+                migration.Apply(document.Sections);
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                // UI state is disposable. A faulty migration is therefore treated like
+                // unreadable state and falls back to backup/default rather than aborting startup.
+                return false;
+            }
+
+            document.SchemaVersion = migration.ToVersion;
+        }
+
+        return true;
     }
 
     private async Task WriteDocumentAsync(StateDocument document, CancellationToken cancellationToken)
@@ -199,6 +234,38 @@ public sealed class SasdStateStore : IAsyncDisposable
         {
             DeleteIfExists(temporaryPath);
         }
+    }
+
+    private static IReadOnlyDictionary<int, ISasdStateMigration> ValidateMigrations(SasdStateStoreOptions options)
+    {
+        var result = new Dictionary<int, ISasdStateMigration>();
+        foreach (var migration in options.Migrations ?? Array.Empty<ISasdStateMigration>())
+        {
+            ArgumentNullException.ThrowIfNull(migration);
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(migration.FromVersion);
+            if (migration.ToVersion != migration.FromVersion + 1)
+            {
+                throw new ArgumentException(
+                    $"Migration {migration.FromVersion}->{migration.ToVersion} must advance exactly one version.",
+                    nameof(options));
+            }
+
+            if (migration.ToVersion > options.SchemaVersion)
+            {
+                throw new ArgumentException(
+                    $"Migration {migration.FromVersion}->{migration.ToVersion} exceeds configured schema version {options.SchemaVersion}.",
+                    nameof(options));
+            }
+
+            if (!result.TryAdd(migration.FromVersion, migration))
+            {
+                throw new ArgumentException(
+                    $"Multiple UI-state migrations start at schema version {migration.FromVersion}.",
+                    nameof(options));
+            }
+        }
+
+        return result;
     }
 
     private static void ValidateKey(string key)
