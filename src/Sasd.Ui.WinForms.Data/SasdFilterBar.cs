@@ -171,7 +171,7 @@ public class SasdFilterBar : UserControl
         clearAllButton.Visible = activeFilters.Count > 0;
     }
 
-    private Control CreateFilterChip(SasdActiveFilter filter)
+    private FlowLayoutPanel CreateFilterChip(SasdActiveFilter filter)
     {
         var chip = new FlowLayoutPanel
         {
