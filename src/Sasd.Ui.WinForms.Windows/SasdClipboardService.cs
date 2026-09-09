@@ -31,12 +31,12 @@ public sealed class SasdClipboardService
         try
         {
             return Clipboard.ContainsText()
-                ? UiOperationResults.Success<string?>(Clipboard.GetText())
-                : UiOperationResults.Success<string?>(null);
+                ? UiOperationResult<string?>.Success(Clipboard.GetText())
+                : UiOperationResult<string?>.Success(null);
         }
         catch (ExternalException exception)
         {
-            return UiOperationResults.Failure<string?>(
+            return UiOperationResult<string?>.Failure(
                 "The clipboard is currently unavailable.",
                 exception.Message,
                 "CLIPBOARD_READ_FAILED");
