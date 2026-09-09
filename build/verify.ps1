@@ -8,6 +8,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+$crudSampleProject = 'samples/Sasd.Ui.Sample.Crud/Sasd.Ui.Sample.Crud.csproj'
 
 function Invoke-DotNetStep {
     param(
@@ -35,6 +36,14 @@ try {
             'restore',
             'SASD.Ui.Platform.sln'
         )
+
+        # Reference applications are intentionally kept outside the hand-maintained
+        # classic solution while they are still small pilots. Restore them explicitly
+        # so verification proves that each sample is independently consumable.
+        Invoke-DotNetStep -Name 'Restore CRUD reference application' -Arguments @(
+            'restore',
+            $crudSampleProject
+        )
     }
 
     # The solution build is intentionally strict. The repository treats analyzer
@@ -43,6 +52,17 @@ try {
     Invoke-DotNetStep -Name 'Strict Release build' -Arguments @(
         'build',
         'SASD.Ui.Platform.sln',
+        '--configuration', 'Release',
+        '--no-restore',
+        '-p:TreatWarningsAsErrors=true'
+    )
+
+    # Build the first real consumer/reference application with the same analyzer
+    # policy. This catches awkward public APIs and missing package/project references
+    # that component-level tests alone cannot reveal.
+    Invoke-DotNetStep -Name 'Build CRUD reference application' -Arguments @(
+        'build',
+        $crudSampleProject,
         '--configuration', 'Release',
         '--no-restore',
         '-p:TreatWarningsAsErrors=true'
