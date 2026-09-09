@@ -23,6 +23,7 @@ internal static class Program
             ValidateR1Primitives();
             ValidateWindowsShellSafety();
             ValidateDragDropBoundary();
+            R1AdditionalSmoke.ValidateNotificationsAndTray();
 
             Console.WriteLine("SASD WinForms foundation smoke checks passed.");
             return 0;
