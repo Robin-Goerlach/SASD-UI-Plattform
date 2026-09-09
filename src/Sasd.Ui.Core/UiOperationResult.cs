@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Sasd.Ui.Core;
 
 /// <summary>
@@ -35,9 +37,17 @@ public sealed record UiOperationResult<T>(
     string? ErrorCode = null)
 {
     /// <summary>Creates a successful result containing <paramref name="value"/>.</summary>
+    [SuppressMessage(
+        "Design",
+        "CA1000:Do not declare static members on generic types",
+        Justification = "The factory is intentionally colocated with the generic result type for discoverability and type safety.")]
     public static UiOperationResult<T> Success(T value) => new(true, value);
 
     /// <summary>Creates a failed result with a user-safe message.</summary>
+    [SuppressMessage(
+        "Design",
+        "CA1000:Do not declare static members on generic types",
+        Justification = "The factory is intentionally colocated with the generic result type for discoverability and type safety.")]
     public static UiOperationResult<T> Failure(
         string userMessage,
         string? technicalDetails = null,

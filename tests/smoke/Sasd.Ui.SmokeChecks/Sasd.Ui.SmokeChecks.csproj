@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>Sasd.Ui.SmokeChecks</RootNamespace>
+    <AssemblyName>Sasd.Ui.SmokeChecks</AssemblyName>
+    <Description>Dependency-free smoke checks for the SASD UI Platform core contracts.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Sasd.Ui.Core\Sasd.Ui.Core.csproj" />
+  </ItemGroup>
+</Project>

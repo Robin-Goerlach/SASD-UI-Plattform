@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <RootNamespace>Sasd.Ui.WinForms.Commands</RootNamespace>
+    <AssemblyName>Sasd.Ui.WinForms.Commands</AssemblyName>
+    <Description>Application-neutral command state, execution and WinForms surface bindings.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Sasd.Ui.Core\Sasd.Ui.Core.csproj" />
+    <ProjectReference Include="..\Sasd.Ui.WinForms\Sasd.Ui.WinForms.csproj" />
+  </ItemGroup>
+</Project>

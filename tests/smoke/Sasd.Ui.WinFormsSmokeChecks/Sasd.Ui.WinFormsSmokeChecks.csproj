@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <RootNamespace>Sasd.Ui.WinFormsSmokeChecks</RootNamespace>
+    <AssemblyName>Sasd.Ui.WinFormsSmokeChecks</AssemblyName>
+    <Description>Dependency-free behavioral smoke checks for the reusable WinForms foundation.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Sasd.Ui.WinForms.Commands\Sasd.Ui.WinForms.Commands.csproj" />
+    <ProjectReference Include="..\..\..\src\Sasd.Ui.WinForms.Data\Sasd.Ui.WinForms.Data.csproj" />
+    <ProjectReference Include="..\..\..\src\Sasd.Ui.WinForms.Forms\Sasd.Ui.WinForms.Forms.csproj" />
+    <ProjectReference Include="..\..\..\src\Sasd.Ui.WinForms.Shell\Sasd.Ui.WinForms.Shell.csproj" />
+  </ItemGroup>
+</Project>

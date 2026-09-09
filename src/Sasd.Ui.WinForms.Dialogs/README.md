@@ -1,5 +1,10 @@
 # Sasd.Ui.WinForms.Dialogs
 
-**Reserved R1 module:** Dialog, error, notification, busy and progress presentation services.
+R0 implementation of the first replaceable dialog abstraction.
 
-The project file and implementation are added only when its R0/R1 acceptance criteria are scheduled. This placeholder keeps the architecture visible without claiming unfinished code.
+Currently included:
+
+- `ISasdDialogService`;
+- native `MessageBox` implementation for information, warning, error and confirmation flows.
+
+Still pending for R1: rich error details, progress/cancellation, busy presentation, notifications and consistent custom dialog forms.
