@@ -12,7 +12,11 @@ public sealed class SasdProgressDialog : SasdForm, IProgress<SasdProgressUpdate>
     private readonly ProgressBar progressBar;
     private readonly Button cancelButton;
     private readonly CancellationTokenSource cancellation = new();
+    private readonly object pendingLock = new();
+    private SasdProgressUpdate? pendingUpdate;
+    private DialogResult? pendingCompletion;
     private bool completed;
+    private bool disposed;
 
     /// <summary>Initialises the progress dialog.</summary>
     public SasdProgressDialog(string title, string initialMessage, bool allowCancellation = true)
@@ -70,6 +74,11 @@ public sealed class SasdProgressDialog : SasdForm, IProgress<SasdProgressUpdate>
         layout.Controls.Add(progressBar, 0, 1);
         layout.Controls.Add(cancelButton, 0, 2);
         Controls.Add(layout);
+
+        // InvokeRequired is not a reliable cross-thread test before a native handle
+        // exists. Remember updates reported during that startup window and apply the
+        // latest values once WinForms creates the dialog handle on the UI thread.
+        HandleCreated += OnHandleCreated;
     }
 
     /// <summary>Gets the token cancelled when the user requests cancellation.</summary>
@@ -79,14 +88,148 @@ public sealed class SasdProgressDialog : SasdForm, IProgress<SasdProgressUpdate>
     public void Report(SasdProgressUpdate value)
     {
         ArgumentNullException.ThrowIfNull(value);
-        if (IsDisposed || completed)
+        if (disposed)
         {
             return;
         }
 
-        if (InvokeRequired)
+        if (!IsHandleCreated)
         {
-            BeginInvoke(new Action(() => Report(value)));
+            QueueProgress(value);
+            return;
+        }
+
+        DispatchToUi(() => ApplyProgress(value));
+    }
+
+    /// <summary>Marks the operation complete and closes the dialog.</summary>
+    public void Complete(DialogResult result = DialogResult.OK)
+    {
+        if (disposed)
+        {
+            return;
+        }
+
+        if (!IsHandleCreated)
+        {
+            QueueCompletion(result);
+            return;
+        }
+
+        DispatchToUi(() => ApplyCompletion(result));
+    }
+
+    /// <inheritdoc />
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing && !disposed)
+        {
+            HandleCreated -= OnHandleCreated;
+
+            lock (pendingLock)
+            {
+                disposed = true;
+                pendingUpdate = null;
+                pendingCompletion = null;
+            }
+
+            cancellation.Dispose();
+        }
+
+        base.Dispose(disposing);
+    }
+
+    private void QueueProgress(SasdProgressUpdate value)
+    {
+        lock (pendingLock)
+        {
+            if (disposed || completed || pendingCompletion is not null)
+            {
+                return;
+            }
+
+            // Progress updates are state, not an audit trail. Keeping only the most
+            // recent startup value avoids an unbounded queue if a fast worker starts
+            // before the dialog becomes visible.
+            pendingUpdate = value;
+        }
+    }
+
+    private void QueueCompletion(DialogResult result)
+    {
+        lock (pendingLock)
+        {
+            if (disposed || completed || pendingCompletion is not null)
+            {
+                return;
+            }
+
+            pendingCompletion = result;
+        }
+    }
+
+    private void OnHandleCreated(object? sender, EventArgs e)
+    {
+        SasdProgressUpdate? update;
+        DialogResult? completion;
+
+        lock (pendingLock)
+        {
+            if (disposed)
+            {
+                return;
+            }
+
+            update = pendingUpdate;
+            completion = pendingCompletion;
+            pendingUpdate = null;
+            pendingCompletion = null;
+        }
+
+        if (update is not null)
+        {
+            ApplyProgress(update);
+        }
+
+        if (completion is { } result)
+        {
+            ApplyCompletion(result);
+        }
+    }
+
+    private void DispatchToUi(Action action)
+    {
+        if (disposed || IsDisposed || Disposing)
+        {
+            return;
+        }
+
+        if (!InvokeRequired)
+        {
+            action();
+            return;
+        }
+
+        try
+        {
+            BeginInvoke(action);
+        }
+        catch (InvalidOperationException)
+        {
+            // Closing the dialog can destroy the handle between the lifecycle check
+            // and BeginInvoke. Progress is transient, so shutdown races are ignored.
+        }
+        catch (ObjectDisposedException)
+        {
+            // Dispose can win the same race. Reporting progress after shutdown must
+            // not turn a successful application close into an unhandled exception.
+        }
+    }
+
+    private void ApplyProgress(SasdProgressUpdate value)
+    {
+        if (disposed || completed)
+        {
             return;
         }
 
@@ -106,39 +249,27 @@ public sealed class SasdProgressDialog : SasdForm, IProgress<SasdProgressUpdate>
         }
     }
 
-    /// <summary>Marks the operation complete and closes the dialog.</summary>
-    public void Complete(DialogResult result = DialogResult.OK)
+    private void ApplyCompletion(DialogResult result)
     {
-        if (IsDisposed || completed)
+        lock (pendingLock)
         {
-            return;
+            if (disposed || completed)
+            {
+                return;
+            }
+
+            completed = true;
+            pendingUpdate = null;
+            pendingCompletion = null;
         }
 
-        if (InvokeRequired)
-        {
-            BeginInvoke(new Action(() => Complete(result)));
-            return;
-        }
-
-        completed = true;
         DialogResult = result;
         Close();
     }
 
-    /// <inheritdoc />
-    protected override void Dispose(bool disposing)
-    {
-        if (disposing)
-        {
-            cancellation.Dispose();
-        }
-
-        base.Dispose(disposing);
-    }
-
     private void RequestCancellation()
     {
-        if (completed || cancellation.IsCancellationRequested)
+        if (disposed || completed || cancellation.IsCancellationRequested)
         {
             return;
         }
