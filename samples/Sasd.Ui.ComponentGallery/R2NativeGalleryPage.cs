@@ -62,11 +62,15 @@ internal sealed class R2NativeGalleryPage : UserControl
         pageLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
         pageLayout.Controls.Add(CreateIntro(), 0, 0);
 
+        // Give the split container a realistic design-time size before assigning minimum panel
+        // sizes/splitter distance. SplitContainer validates these properties immediately, even
+        // before it has been laid out by its eventual parent.
         var split = new SplitContainer
         {
             Dock = DockStyle.Fill,
             FixedPanel = FixedPanel.Panel2,
             Orientation = Orientation.Vertical,
+            Size = new Size(1040, 600),
             Panel1MinSize = 480,
             Panel2MinSize = 320,
             SplitterDistance = 690,
@@ -148,6 +152,7 @@ internal sealed class R2NativeGalleryPage : UserControl
             Dock = DockStyle.Fill,
             FixedPanel = FixedPanel.Panel2,
             Orientation = Orientation.Vertical,
+            Size = new Size(680, 420),
             Panel1MinSize = 320,
             Panel2MinSize = 180,
             SplitterDistance = 470,
@@ -258,7 +263,9 @@ internal sealed class R2NativeGalleryPage : UserControl
         using var mutedBrush = new SolidBrush(SystemColors.GrayText);
         using var borderPen = new Pen(SystemColors.ControlDark, 2F);
 
-        graphics.FillRoundedRectangle(accentBrush, new RectangleF(36, 36, 160, 84), 12F);
+        // Stay on APIs available in the .NET 8/System.Drawing baseline. The sample does not need a
+        // custom rounded-rectangle helper just to look slightly more decorative.
+        graphics.FillRectangle(accentBrush, new Rectangle(36, 36, 160, 84));
         graphics.DrawString("SASD", titleFont, Brushes.White, new PointF(62, 58));
         graphics.DrawString("Image Viewer", titleFont, textBrush, new PointF(228, 48));
         graphics.DrawString("Generated in memory — no file-system dependency", detailFont, mutedBrush, new PointF(230, 88));
@@ -343,13 +350,22 @@ internal sealed class R2NativeGalleryPage : UserControl
         }
     }
 
-    private static Label CreateSectionTitle(string text) => new()
+    private static Label CreateSectionTitle(string text)
     {
-        AutoSize = true,
-        Font = new Font(SystemFonts.DefaultFont, FontStyle.Bold),
-        Margin = new Padding(0, 6, 0, 6),
-        Text = text,
-    };
+        var label = new Label
+        {
+            AutoSize = true,
+            Margin = new Padding(0, 6, 0, 6),
+            Text = text,
+        };
+
+        // The sample explicitly owns the derived Font instance. Keeping ownership visible here
+        // demonstrates the same GDI-resource discipline expected from product controls.
+        Font boldFont = new(label.Font, FontStyle.Bold);
+        label.Font = boldFont;
+        label.Disposed += (_, _) => boldFont.Dispose();
+        return label;
+    }
 
     private static Button CreateButton(string text, Action action)
     {
