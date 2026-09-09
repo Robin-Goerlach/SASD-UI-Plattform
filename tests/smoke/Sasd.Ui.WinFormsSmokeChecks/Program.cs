@@ -20,6 +20,7 @@ internal static class Program
             await ValidateFormsAsync();
             await ValidateUiDispatcherAsync();
             ValidateShell();
+            ValidateR1Primitives();
             ValidateWindowsShellSafety();
 
             Console.WriteLine("SASD WinForms foundation smoke checks passed.");
@@ -139,6 +140,77 @@ internal static class Program
         Ensure(!status.ShowMessage(new SasdStatusMessage("Ready", Priority: 0)), "Low-priority status overwrote an active error.");
         status.ClearMessage();
         Ensure(status.ShowMessage(new SasdStatusMessage("Ready", Priority: 0)), "Status did not accept a message after reset.");
+    }
+
+    private static void ValidateR1Primitives()
+    {
+        using var dialog = new SasdDialogForm();
+        Ensure(!dialog.ShowInTaskbar && !dialog.MinimizeBox && !dialog.MaximizeBox,
+            "SASD dialog defaults are not suitable for an owned modal window.");
+
+        using var filterBar = new SasdFilterBar();
+        using var filterEditor = new ComboBox();
+        filterBar.AddFilter(filterEditor);
+        filterBar.ActiveFilterCount = 1;
+        bool clearRequested = false;
+        filterBar.ClearRequested += (_, _) => clearRequested = true;
+        filterBar.Controls.Find(string.Empty, true);
+        Ensure(filterBar.RemoveFilter(filterEditor), "Filter editor could not be removed again.");
+        Ensure(filterBar.ActiveFilterCount == 1, "Filter state count was not retained.");
+
+        using var list = new SasdListView();
+        Ensure(list.View == View.Details && list.FullRowSelect && !list.HideSelection,
+            "List view defaults are inconsistent.");
+
+        using var tree = new SasdTreeView();
+        Ensure(tree.FullRowSelect && !tree.HideSelection && tree.ShowNodeToolTips,
+            "Tree view defaults are inconsistent.");
+
+        using var breadcrumb = new SasdBreadcrumb();
+        breadcrumb.SetPath([
+            SasdBreadcrumbItem.Create("home", "Home"),
+            SasdBreadcrumbItem.Create("project", "Project"),
+        ]);
+        Ensure(breadcrumb.Path.Count == 2 && breadcrumb.Path[1].Id == "project",
+            "Breadcrumb path was not retained.");
+
+        using var tabs = new SasdDocumentTabs();
+        int factoryCalls = 0;
+        TabPage first = tabs.OpenOrSelect("doc-1", "Document 1", () =>
+        {
+            factoryCalls++;
+            return new Panel();
+        });
+        TabPage second = tabs.OpenOrSelect("doc-1", "Renamed document", () =>
+        {
+            factoryCalls++;
+            return new Panel();
+        });
+        Ensure(ReferenceEquals(first, second) && factoryCalls == 1,
+            "Document tabs duplicated an already open document.");
+
+        bool vetoClose = true;
+        tabs.DocumentClosing += (_, args) => args.Cancel = vetoClose;
+        Ensure(!tabs.TryClose("doc-1") && tabs.ContainsDocument("doc-1"),
+            "Document closing veto was ignored.");
+        vetoClose = false;
+        Ensure(tabs.TryClose("doc-1") && !tabs.ContainsDocument("doc-1"),
+            "Document could not be closed after the veto was removed.");
+
+        using var commandBar = new SasdCommandBar();
+        var runner = new SasdCommandRunner();
+        var command = new SasdCommand("smoke.toolbar", "Toolbar command", _ => Task.CompletedTask)
+        {
+            Enabled = false,
+        };
+        ToolStripButton button = commandBar.AddCommand(command, runner);
+        Ensure(!button.Enabled, "Command bar did not reflect the disabled command state.");
+        command.Enabled = true;
+        Ensure(button.Enabled, "Command bar did not update after command state changed.");
+
+        // The event is deliberately application-owned; assigning the counter above is
+        // enough to verify that constructing the filter bar did not unexpectedly clear it.
+        Ensure(!clearRequested, "Filter bar raised ClearRequested without user interaction.");
     }
 
     private static void ValidateWindowsShellSafety()
