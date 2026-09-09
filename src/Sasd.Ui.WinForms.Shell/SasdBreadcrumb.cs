@@ -29,7 +29,7 @@ public sealed class SasdBreadcrumbNavigateEventArgs : EventArgs
 public sealed class SasdBreadcrumb : UserControl
 {
     private readonly FlowLayoutPanel pathHost;
-    private IReadOnlyList<SasdBreadcrumbItem> path = Array.Empty<SasdBreadcrumbItem>();
+    private SasdBreadcrumbItem[] path = [];
 
     /// <summary>Initialises the breadcrumb control.</summary>
     public SasdBreadcrumb()
@@ -60,7 +60,7 @@ public sealed class SasdBreadcrumb : UserControl
     public void SetPath(IEnumerable<SasdBreadcrumbItem> items)
     {
         ArgumentNullException.ThrowIfNull(items);
-        var materialized = items.ToArray();
+        SasdBreadcrumbItem[] materialized = items.ToArray();
         if (materialized.Any(item => string.IsNullOrWhiteSpace(item.Id) || string.IsNullOrWhiteSpace(item.Text)))
         {
             throw new ArgumentException("Breadcrumb items require non-empty identifiers and text.", nameof(items));
