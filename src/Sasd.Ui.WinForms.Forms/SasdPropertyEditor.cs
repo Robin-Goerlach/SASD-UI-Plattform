@@ -201,7 +201,8 @@ public sealed class SasdPropertyEditor : UserControl
         public SasdPropertyObjectView(object component, string filterText, bool forceReadOnly)
         {
             this.component = component;
-            descriptor = TypeDescriptor.GetProvider(component).GetTypeDescriptor(component);
+            descriptor = TypeDescriptor.GetProvider(component).GetTypeDescriptor(component)
+                ?? throw new InvalidOperationException($"No type descriptor is available for {component.GetType().FullName}.");
             this.filterText = filterText.Trim();
             this.forceReadOnly = forceReadOnly;
         }
@@ -209,7 +210,7 @@ public sealed class SasdPropertyEditor : UserControl
         public AttributeCollection GetAttributes() => descriptor.GetAttributes();
         public string? GetClassName() => descriptor.GetClassName();
         public string? GetComponentName() => descriptor.GetComponentName();
-        public TypeConverter GetConverter() => descriptor.GetConverter();
+        public TypeConverter GetConverter() => descriptor.GetConverter() ?? new TypeConverter();
         public EventDescriptor? GetDefaultEvent() => descriptor.GetDefaultEvent();
         public PropertyDescriptor? GetDefaultProperty() => descriptor.GetDefaultProperty();
         public object? GetEditor(Type editorBaseType) => descriptor.GetEditor(editorBaseType);
