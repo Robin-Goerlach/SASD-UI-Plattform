@@ -167,7 +167,7 @@ internal sealed class R2NativeGalleryPage : UserControl
         return root;
     }
 
-    private Control CreateInspectorWorkspace()
+    private static Control CreateInspectorWorkspace()
     {
         var root = new TableLayoutPanel
         {
@@ -396,7 +396,7 @@ internal sealed class R2NativeGalleryPage : UserControl
         [Category("Behaviour")]
         [Description("Read-only application-managed value.")]
         [ReadOnly(true)]
-        public string Environment => "Development";
+        public static string Environment => "Development";
 
         [Browsable(false)]
         public Guid InternalId { get; } = Guid.NewGuid();
