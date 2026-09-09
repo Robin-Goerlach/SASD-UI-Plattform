@@ -193,7 +193,7 @@ public sealed class SasdDragDropService : ISasdDragDropService
         foreach (string extension in extensions)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(extension);
-            result.Add(extension.StartsWith(".", StringComparison.Ordinal) ? extension : $".{extension}");
+            result.Add(extension.StartsWith('.') ? extension : $".{extension}");
         }
 
         return result;
