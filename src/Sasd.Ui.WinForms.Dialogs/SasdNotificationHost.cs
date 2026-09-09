@@ -34,6 +34,7 @@ public sealed class SasdNotificationHost : UserControl
     private readonly Label messageLabel;
     private readonly Button dismissButton;
     private readonly System.Windows.Forms.Timer lifetimeTimer;
+    private readonly int ownerThreadId;
     private ISasdNotificationService? notificationService;
     private SasdNotification? currentNotification;
     private bool disposed;
@@ -41,6 +42,11 @@ public sealed class SasdNotificationHost : UserControl
     /// <summary>Creates a hidden notification host.</summary>
     public SasdNotificationHost()
     {
+        // WinForms controls are expected to be constructed on their owning UI thread.
+        // Remember that thread so early service publications can be handled safely even
+        // before the control has created a native window handle.
+        ownerThreadId = Environment.CurrentManagedThreadId;
+
         AutoSize = true;
         AutoSizeMode = AutoSizeMode.GrowAndShrink;
         AccessibleName = "Application notification";
@@ -120,6 +126,7 @@ public sealed class SasdNotificationHost : UserControl
 
     /// <summary>
     /// Gets or sets the lifetime used when a notification does not provide one explicitly.
+    /// A non-positive value keeps such notifications visible until they are replaced or dismissed.
     /// </summary>
     [Browsable(false)]
     public TimeSpan DefaultLifetime { get; set; } = TimeSpan.FromSeconds(5);
@@ -233,9 +240,14 @@ public sealed class SasdNotificationHost : UserControl
 
         if (!IsHandleCreated)
         {
-            // InvokeRequired is ambiguous before handle creation. Notifications are
-            // transient, so ignoring a publication during startup is safer than
-            // touching WinForms controls from an unknown worker thread.
+            // InvokeRequired can return false on a worker thread before handle creation.
+            // Direct execution is therefore allowed only on the thread that constructed
+            // this WinForms control. Worker-thread publications wait until a handle exists.
+            if (Environment.CurrentManagedThreadId == ownerThreadId)
+            {
+                action();
+            }
+
             return;
         }
 
