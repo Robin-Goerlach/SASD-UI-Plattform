@@ -1,0 +1,209 @@
+using System.ComponentModel;
+
+namespace Sasd.Ui.WinForms.Data;
+
+/// <summary>Represents one user-visible active filter.</summary>
+public sealed record SasdActiveFilter(string Key, string Label, string Value)
+{
+    /// <summary>Creates a validated filter value for <see cref="SasdFilterBar"/>.</summary>
+    public static SasdActiveFilter Create(string key, string label, string value)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(key);
+        ArgumentException.ThrowIfNullOrWhiteSpace(label);
+        ArgumentNullException.ThrowIfNull(value);
+
+        if (key.Length > 200)
+        {
+            throw new ArgumentOutOfRangeException(nameof(key), "Filter keys may contain at most 200 characters.");
+        }
+
+        return new SasdActiveFilter(key, label, value);
+    }
+
+    /// <summary>Gets the compact text shown inside the filter bar.</summary>
+    public string DisplayText => string.IsNullOrEmpty(Value) ? Label : $"{Label}: {Value}";
+}
+
+/// <summary>
+/// Displays the currently active filters as removable chips and provides one
+/// predictable place for a clear-all action.
+/// </summary>
+/// <remarks>
+/// <para>
+/// This control intentionally does not evaluate predicates. The consuming
+/// application remains responsible for translating user choices into its own
+/// database, API or in-memory filtering logic.
+/// </para>
+/// <para>
+/// Filter identity is based on <see cref="SasdActiveFilter.Key"/>. Adding a filter
+/// with an existing key replaces the old value instead of creating duplicates.
+/// </para>
+/// </remarks>
+[DefaultEvent(nameof(FiltersChanged))]
+public class SasdFilterBar : UserControl
+{
+    private readonly FlowLayoutPanel filterHost;
+    private readonly Button clearAllButton;
+    private readonly List<SasdActiveFilter> activeFilters = [];
+
+    /// <summary>Initialises the filter bar.</summary>
+    public SasdFilterBar()
+    {
+        AutoScaleMode = AutoScaleMode.Dpi;
+        AutoSize = true;
+        AutoSizeMode = AutoSizeMode.GrowAndShrink;
+        MinimumSize = new Size(180, 34);
+        AccessibleName = "Active filters";
+
+        filterHost = new FlowLayoutPanel
+        {
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            Margin = Padding.Empty,
+            Padding = Padding.Empty,
+            WrapContents = true,
+        };
+
+        clearAllButton = new Button
+        {
+            AccessibleName = "Clear all filters",
+            AutoSize = true,
+            FlatStyle = FlatStyle.System,
+            Margin = new Padding(6, 0, 0, 0),
+            Text = "Clear filters",
+            Visible = false,
+        };
+        clearAllButton.Click += (_, _) => ClearFilters();
+
+        Controls.Add(filterHost);
+        Controls.Add(clearAllButton);
+        clearAllButton.Dock = DockStyle.Right;
+    }
+
+    /// <summary>Occurs after a filter is added, replaced, removed or cleared.</summary>
+    public event EventHandler? FiltersChanged;
+
+    /// <summary>Gets a snapshot of the active filters in display order.</summary>
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public IReadOnlyList<SasdActiveFilter> ActiveFilters => activeFilters.ToArray();
+
+    /// <summary>Gets the number of active filters.</summary>
+    [Browsable(false)]
+    public int FilterCount => activeFilters.Count;
+
+    /// <summary>Adds a filter or replaces the existing filter with the same key.</summary>
+    public void AddOrUpdateFilter(string key, string label, string value) =>
+        AddOrUpdateFilter(SasdActiveFilter.Create(key, label, value));
+
+    /// <summary>Adds a filter or replaces the existing filter with the same key.</summary>
+    public void AddOrUpdateFilter(SasdActiveFilter filter)
+    {
+        ArgumentNullException.ThrowIfNull(filter);
+        SasdActiveFilter validated = SasdActiveFilter.Create(filter.Key, filter.Label, filter.Value);
+
+        int index = activeFilters.FindIndex(item =>
+            string.Equals(item.Key, validated.Key, StringComparison.OrdinalIgnoreCase));
+
+        if (index >= 0)
+        {
+            activeFilters[index] = validated;
+        }
+        else
+        {
+            activeFilters.Add(validated);
+        }
+
+        RebuildFilterControls();
+        FiltersChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Removes one filter by its stable key.</summary>
+    public bool RemoveFilter(string key)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(key);
+
+        int index = activeFilters.FindIndex(item =>
+            string.Equals(item.Key, key, StringComparison.OrdinalIgnoreCase));
+        if (index < 0)
+        {
+            return false;
+        }
+
+        activeFilters.RemoveAt(index);
+        RebuildFilterControls();
+        FiltersChanged?.Invoke(this, EventArgs.Empty);
+        return true;
+    }
+
+    /// <summary>Removes all active filters.</summary>
+    public void ClearFilters()
+    {
+        if (activeFilters.Count == 0)
+        {
+            return;
+        }
+
+        activeFilters.Clear();
+        RebuildFilterControls();
+        FiltersChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void RebuildFilterControls()
+    {
+        // Controls.Clear() would detach controls without disposing them. Explicitly
+        // disposing the generated chip controls avoids accumulating native handles
+        // when a filter changes repeatedly during a long-running application session.
+        Control[] oldControls = filterHost.Controls.Cast<Control>().ToArray();
+        filterHost.Controls.Clear();
+        foreach (Control control in oldControls)
+        {
+            control.Dispose();
+        }
+
+        foreach (SasdActiveFilter filter in activeFilters)
+        {
+            filterHost.Controls.Add(CreateFilterChip(filter));
+        }
+
+        clearAllButton.Visible = activeFilters.Count > 0;
+    }
+
+    private Control CreateFilterChip(SasdActiveFilter filter)
+    {
+        var chip = new FlowLayoutPanel
+        {
+            AccessibleName = filter.DisplayText,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            BackColor = SystemColors.ControlLight,
+            FlowDirection = FlowDirection.LeftToRight,
+            Margin = new Padding(0, 0, 6, 4),
+            Padding = new Padding(6, 3, 2, 3),
+            WrapContents = false,
+        };
+
+        chip.Controls.Add(new Label
+        {
+            AutoSize = true,
+            Margin = new Padding(0, 4, 4, 0),
+            Text = filter.DisplayText,
+        });
+
+        var removeButton = new Button
+        {
+            AccessibleName = $"Remove filter {filter.DisplayText}",
+            AutoSize = true,
+            FlatStyle = FlatStyle.System,
+            Margin = Padding.Empty,
+            MinimumSize = new Size(26, 24),
+            Text = "×",
+        };
+        removeButton.Click += (_, _) => RemoveFilter(filter.Key);
+        chip.Controls.Add(removeButton);
+
+        return chip;
+    }
+}

@@ -19,6 +19,8 @@ internal static class Program
             await ValidateCsvAndGridStateAsync();
             await ValidateFormsAsync();
             await ValidateUiDispatcherAsync();
+            ValidateFilterBar();
+            ValidateDialogForm();
             ValidateShell();
             ValidateWindowsShellSafety();
 
@@ -85,8 +87,14 @@ internal static class Program
         Ensure(csv.Contains("Name,Note", StringComparison.Ordinal), "CSV header is missing.");
         Ensure(csv.Contains("\"Contains, comma and \"\"quote\"\"\"", StringComparison.Ordinal), "CSV escaping is incorrect.");
 
-        var query = new SasdDataQuery(0, 100, [SasdSortDescriptor.Create("Name", SasdSortDirection.Ascending)], "example");
+        var query = new SasdDataQuery(
+            0,
+            100,
+            [SasdSortDescriptor.Create("Name", SasdSortDirection.Ascending)],
+            "example",
+            [SasdFilterDescriptor.Create("Status", SasdFilterOperator.Equals, "Active")]);
         Ensure(ReferenceEquals(query, query.Validate()), "Valid data query was unexpectedly replaced.");
+        Ensure(query.Filters is { Count: 1 }, "Filter descriptor was not retained by the data query.");
     }
 
     private static async Task ValidateFormsAsync()
@@ -124,6 +132,34 @@ internal static class Program
         await EnsureThrowsAsync<ObjectDisposedException>(
             () => SasdUiDispatcher.InvokeAsync(control, static () => { }),
             "Dispatcher accepted a disposed control.");
+    }
+
+    private static void ValidateFilterBar()
+    {
+        using var filterBar = new SasdFilterBar();
+        int changes = 0;
+        filterBar.FiltersChanged += (_, _) => changes++;
+
+        filterBar.AddOrUpdateFilter("status", "Status", "Active");
+        filterBar.AddOrUpdateFilter("region", "Region", "EU");
+        filterBar.AddOrUpdateFilter("STATUS", "Status", "Inactive");
+
+        Ensure(filterBar.FilterCount == 2, "Updating an existing filter created a duplicate.");
+        Ensure(filterBar.ActiveFilters[0].Value == "Inactive", "Existing filter was not replaced case-insensitively.");
+        Ensure(filterBar.RemoveFilter("region"), "Existing filter could not be removed.");
+        Ensure(!filterBar.RemoveFilter("missing"), "Missing filter was reported as removed.");
+        filterBar.ClearFilters();
+        Ensure(filterBar.FilterCount == 0, "Filter bar did not clear all filters.");
+        Ensure(changes == 5, "Filter change notifications were not raised predictably.");
+    }
+
+    private static void ValidateDialogForm()
+    {
+        using var dialog = new SasdDialogForm();
+        Ensure(dialog.AutoScaleMode == AutoScaleMode.Dpi, "Dialog form must retain DPI scaling.");
+        Ensure(dialog.KeyPreview, "Dialog form must retain keyboard preview.");
+        Ensure(!dialog.ShowInTaskbar, "Dialog form unexpectedly creates a taskbar entry.");
+        Ensure(!dialog.MinimizeBox && !dialog.MaximizeBox, "Dialog form exposes inappropriate window commands.");
     }
 
     private static void ValidateShell()
