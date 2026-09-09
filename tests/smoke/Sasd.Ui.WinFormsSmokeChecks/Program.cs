@@ -22,6 +22,7 @@ internal static class Program
             ValidateShell();
             ValidateR1Primitives();
             ValidateWindowsShellSafety();
+            ValidateDragDropBoundary();
 
             Console.WriteLine("SASD WinForms foundation smoke checks passed.");
             return 0;
@@ -227,6 +228,47 @@ internal static class Program
         var unsupportedUri = shell.OpenUri(new Uri("file:///C:/Windows/System32/cmd.exe"));
         Ensure(!unsupportedUri.Succeeded && unsupportedUri.ErrorCode == "URI_SCHEME_NOT_ALLOWED",
             "Unsupported URI scheme was accepted.");
+    }
+
+    private static void ValidateDragDropBoundary()
+    {
+        string root = Path.Combine(Path.GetTempPath(), "sasd-ui-drop-smoke", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(root);
+
+        try
+        {
+            string allowedFile = Path.Combine(root, "sample.txt");
+            string blockedFile = Path.Combine(root, "sample.exe");
+            File.WriteAllText(allowedFile, "safe test content");
+            File.WriteAllText(blockedFile, "not an executable; extension policy only");
+
+            var options = new SasdFileDropOptions(
+                AllowedExtensions: [".txt"],
+                MaxItems: 2,
+                MaxFileBytes: 1024,
+                RequireAllItemsAccepted: true);
+
+            SasdFileDropEvaluation accepted = SasdDragDropService.Evaluate([allowedFile], options);
+            Ensure(accepted.IsAccepted && accepted.AcceptedPaths.Count == 1 && accepted.RejectedItems.Count == 0,
+                "Allowed drag-drop file was rejected.");
+
+            SasdFileDropEvaluation mixed = SasdDragDropService.Evaluate([allowedFile, blockedFile], options);
+            Ensure(!mixed.IsAccepted && mixed.RejectedItems.Any(item => item.ErrorCode == "DROP_EXTENSION_NOT_ALLOWED"),
+                "Rejected drag-drop extension did not block an all-or-nothing payload.");
+
+            using var target = new Panel { AllowDrop = false };
+            var service = new SasdDragDropService();
+            using (SasdFileDropBinding binding = service.Attach(target, options))
+            {
+                Ensure(target.AllowDrop, "Drag-drop binding did not enable the target control.");
+            }
+
+            Ensure(!target.AllowDrop, "Drag-drop binding did not restore the previous AllowDrop value.");
+        }
+        finally
+        {
+            Directory.Delete(root, true);
+        }
     }
 
     private static async Task EnsureThrowsAsync<TException>(Func<Task> action, string message)
