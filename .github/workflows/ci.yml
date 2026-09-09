@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: windows-latest
@@ -27,7 +31,7 @@ jobs:
         run: dotnet restore SASD.Ui.Platform.sln
 
       - name: Build
-        run: dotnet build SASD.Ui.Platform.sln --configuration Release --no-restore
+        run: dotnet build SASD.Ui.Platform.sln --configuration Release --no-restore -p:TreatWarningsAsErrors=true
 
       - name: Core smoke checks
         run: dotnet run --project tests/smoke/Sasd.Ui.SmokeChecks/Sasd.Ui.SmokeChecks.csproj --configuration Release --no-build
