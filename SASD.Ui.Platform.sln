@@ -14,6 +14,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sasd.Ui.WinForms.Data", "sr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sasd.Ui.WinForms.Dialogs", "src\Sasd.Ui.WinForms.Dialogs\Sasd.Ui.WinForms.Dialogs.csproj", "{72775DB1-2146-47B0-815E-A47168D22BFE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sasd.Ui.WinForms.Commands", "src\Sasd.Ui.WinForms.Commands\Sasd.Ui.WinForms.Commands.csproj", "{43B408A8-61C5-4EEA-8A22-BFBA13D7289F}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sasd.Ui.WinForms.State", "src\Sasd.Ui.WinForms.State\Sasd.Ui.WinForms.State.csproj", "{B975B797-CECC-45D1-A37E-659985312AB7}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sasd.Ui.WinForms.Krypton", "src\Sasd.Ui.WinForms.Krypton\Sasd.Ui.WinForms.Krypton.csproj", "{4E39BAB6-60AF-41D1-94C4-D8D2B0DBA459}"
@@ -52,6 +54,10 @@ Global
         {72775DB1-2146-47B0-815E-A47168D22BFE}.Debug|Any CPU.Build.0 = Debug|Any CPU
         {72775DB1-2146-47B0-815E-A47168D22BFE}.Release|Any CPU.ActiveCfg = Release|Any CPU
         {72775DB1-2146-47B0-815E-A47168D22BFE}.Release|Any CPU.Build.0 = Release|Any CPU
+        {43B408A8-61C5-4EEA-8A22-BFBA13D7289F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+        {43B408A8-61C5-4EEA-8A22-BFBA13D7289F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+        {43B408A8-61C5-4EEA-8A22-BFBA13D7289F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+        {43B408A8-61C5-4EEA-8A22-BFBA13D7289F}.Release|Any CPU.Build.0 = Release|Any CPU
         {B975B797-CECC-45D1-A37E-659985312AB7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
         {B975B797-CECC-45D1-A37E-659985312AB7}.Debug|Any CPU.Build.0 = Debug|Any CPU
         {B975B797-CECC-45D1-A37E-659985312AB7}.Release|Any CPU.ActiveCfg = Release|Any CPU
