@@ -136,6 +136,13 @@ try {
         '-p:TreatWarningsAsErrors=true'
     )
 
+    Invoke-DotNetStep -Name 'Dialog threading smoke checks' -Arguments @(
+        'run',
+        '--project', 'tests/smoke/Sasd.Ui.DialogSmokeChecks/Sasd.Ui.DialogSmokeChecks.csproj',
+        '--configuration', 'Release',
+        '-p:TreatWarningsAsErrors=true'
+    )
+
     Invoke-DotNetStep -Name 'Native R2 smoke checks' -Arguments @(
         'run',
         '--project', 'tests/smoke/Sasd.Ui.NativeR2SmokeChecks/Sasd.Ui.NativeR2SmokeChecks.csproj',
