@@ -21,6 +21,9 @@ internal static class Program
             await ValidateUiDispatcherAsync();
             ValidateFilterBar();
             ValidateDialogForm();
+            ValidateBreadcrumb();
+            ValidateDocumentTabs();
+            ValidateListAndTreeDefaults();
             ValidateShell();
             ValidateWindowsShellSafety();
 
@@ -160,6 +163,54 @@ internal static class Program
         Ensure(dialog.KeyPreview, "Dialog form must retain keyboard preview.");
         Ensure(!dialog.ShowInTaskbar, "Dialog form unexpectedly creates a taskbar entry.");
         Ensure(!dialog.MinimizeBox && !dialog.MaximizeBox, "Dialog form exposes inappropriate window commands.");
+    }
+
+    private static void ValidateBreadcrumb()
+    {
+        using var breadcrumb = new SasdBreadcrumb();
+        breadcrumb.SetPath([
+            SasdBreadcrumbItem.Create("customers", "Customers"),
+            SasdBreadcrumbItem.Create("customer-42", "Example AG"),
+        ]);
+
+        Ensure(breadcrumb.ItemCount == 2, "Breadcrumb did not retain the complete path.");
+        Ensure(breadcrumb.Items[1].Id == "customer-42", "Breadcrumb path order changed unexpectedly.");
+        breadcrumb.ClearPath();
+        Ensure(breadcrumb.ItemCount == 0, "Breadcrumb path did not clear.");
+    }
+
+    private static void ValidateDocumentTabs()
+    {
+        using var tabs = new SasdDocumentTabs();
+        int opened = 0;
+        int closed = 0;
+        tabs.DocumentOpened += (_, _) => opened++;
+        tabs.DocumentClosed += (_, _) => closed++;
+
+        Control first = tabs.OpenOrSelect("one", "First", static () => new Panel());
+        Control same = tabs.OpenOrSelect("ONE", "First renamed", static () => new Label());
+        tabs.OpenOrSelect("two", "Second", static () => new Panel());
+
+        Ensure(ReferenceEquals(first, same), "Opening the same document id created duplicate content.");
+        Ensure(tabs.DocumentCount == 2 && opened == 2, "Document tab count or open notifications are incorrect.");
+        Ensure(tabs.SelectDocument("one"), "Existing document could not be selected.");
+        Ensure(string.Equals(tabs.SelectedDocumentId, "one", StringComparison.OrdinalIgnoreCase), "Selected document id is incorrect.");
+        Ensure(tabs.SetDocumentTitle("two", "Second renamed"), "Document title could not be changed.");
+        Ensure(tabs.CloseDocument("one"), "Existing document could not be closed.");
+        Ensure(first.IsDisposed, "Closed document content was not disposed.");
+        Ensure(closed == 1, "Document close notification was not raised once.");
+        tabs.CloseAllDocuments();
+        Ensure(tabs.DocumentCount == 0, "Document tabs did not close all documents.");
+    }
+
+    private static void ValidateListAndTreeDefaults()
+    {
+        using var list = new SasdListView();
+        Ensure(list.View == View.Details && list.FullRowSelect, "ListView business defaults are incomplete.");
+        Ensure(!list.HideSelection && !list.MultiSelect, "ListView selection defaults are unsafe or inconsistent.");
+
+        using var tree = new SasdTreeView();
+        Ensure(!tree.HideSelection && tree.ShowNodeToolTips, "TreeView selection or tooltip defaults are incorrect.");
     }
 
     private static void ValidateShell()
