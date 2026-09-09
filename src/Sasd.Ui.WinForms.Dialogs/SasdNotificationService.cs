@@ -3,9 +3,16 @@ namespace Sasd.Ui.WinForms.Dialogs;
 /// <summary>Semantic severity used by non-modal application notifications.</summary>
 public enum SasdNotificationSeverity
 {
+    /// <summary>Neutral information that does not require immediate user action.</summary>
     Information,
+
+    /// <summary>Positive feedback confirming that an operation completed successfully.</summary>
     Success,
+
+    /// <summary>A recoverable condition that deserves user attention.</summary>
     Warning,
+
+    /// <summary>An operation failure or other important problem visible to the user.</summary>
     Error,
 }
 
