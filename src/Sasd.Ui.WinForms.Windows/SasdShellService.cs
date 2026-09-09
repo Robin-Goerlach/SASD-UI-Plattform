@@ -31,7 +31,23 @@ public sealed class SasdShellService : ISasdShellService
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
 
-        var fullPath = Path.GetFullPath(path);
+        string fullPath;
+        try
+        {
+            // Resolve to an absolute path before existence checks. Invalid user input
+            // is reported as a recoverable result rather than escaping as an exception.
+            fullPath = Path.GetFullPath(path);
+        }
+        catch (Exception exception) when (
+            exception is ArgumentException or IOException or NotSupportedException or UnauthorizedAccessException)
+        {
+            return UiOperationResult.Failure(
+                "The requested file or folder path is invalid.",
+                exception.Message,
+                "PATH_INVALID",
+                exception);
+        }
+
         if (!File.Exists(fullPath) && !Directory.Exists(fullPath))
         {
             return UiOperationResult.Failure(

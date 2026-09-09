@@ -1,8 +1,10 @@
 using System.Text;
+using Sasd.Ui.WinForms;
 using Sasd.Ui.WinForms.Commands;
 using Sasd.Ui.WinForms.Data;
 using Sasd.Ui.WinForms.Forms;
 using Sasd.Ui.WinForms.Shell;
+using Sasd.Ui.WinForms.Windows;
 
 namespace Sasd.Ui.WinFormsSmokeChecks;
 
@@ -16,7 +18,9 @@ internal static class Program
             await ValidateCommandsAsync();
             await ValidateCsvAndGridStateAsync();
             await ValidateFormsAsync();
+            await ValidateUiDispatcherAsync();
             ValidateShell();
+            ValidateWindowsShellSafety();
 
             Console.WriteLine("SASD WinForms foundation smoke checks passed.");
             return 0;
@@ -101,6 +105,27 @@ internal static class Program
         Ensure(valid.IsValid, "Required-field validation did not recover after input.");
     }
 
+    private static async Task ValidateUiDispatcherAsync()
+    {
+        using var control = new Control();
+
+        // A missing handle is ambiguous in WinForms: InvokeRequired can return false
+        // even from a worker thread. The SASD dispatcher rejects this unsafe state.
+        await EnsureThrowsAsync<InvalidOperationException>(
+            () => SasdUiDispatcher.InvokeAsync(control, static () => { }),
+            "Dispatcher accepted a control without a native handle.");
+
+        control.CreateControl();
+        bool executed = false;
+        await SasdUiDispatcher.InvokeAsync(control, () => executed = true);
+        Ensure(executed, "Dispatcher did not execute work on a created control.");
+
+        control.Dispose();
+        await EnsureThrowsAsync<ObjectDisposedException>(
+            () => SasdUiDispatcher.InvokeAsync(control, static () => { }),
+            "Dispatcher accepted a disposed control.");
+    }
+
     private static void ValidateShell()
     {
         using var host = new SasdNavigationHost();
@@ -114,6 +139,38 @@ internal static class Program
         Ensure(!status.ShowMessage(new SasdStatusMessage("Ready", Priority: 0)), "Low-priority status overwrote an active error.");
         status.ClearMessage();
         Ensure(status.ShowMessage(new SasdStatusMessage("Ready", Priority: 0)), "Status did not accept a message after reset.");
+    }
+
+    private static void ValidateWindowsShellSafety()
+    {
+        var shell = new SasdShellService();
+
+        var invalidPath = shell.OpenPath("\0");
+        Ensure(!invalidPath.Succeeded && invalidPath.ErrorCode == "PATH_INVALID",
+            "Invalid path input escaped the shell safety boundary.");
+
+        var missingPath = shell.OpenPath(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N")));
+        Ensure(!missingPath.Succeeded && missingPath.ErrorCode == "PATH_NOT_FOUND",
+            "Missing path was not reported as a recoverable result.");
+
+        var unsupportedUri = shell.OpenUri(new Uri("file:///C:/Windows/System32/cmd.exe"));
+        Ensure(!unsupportedUri.Succeeded && unsupportedUri.ErrorCode == "URI_SCHEME_NOT_ALLOWED",
+            "Unsupported URI scheme was accepted.");
+    }
+
+    private static async Task EnsureThrowsAsync<TException>(Func<Task> action, string message)
+        where TException : Exception
+    {
+        try
+        {
+            await action();
+        }
+        catch (TException)
+        {
+            return;
+        }
+
+        throw new InvalidOperationException(message);
     }
 
     private static void Ensure(bool condition, string message)
