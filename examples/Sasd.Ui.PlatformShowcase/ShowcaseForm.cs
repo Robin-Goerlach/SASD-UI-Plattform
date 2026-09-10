@@ -52,6 +52,7 @@ internal sealed class ShowcaseForm : SasdShellForm
         NavigationHost.RegisterPage("overview", "Overview", CreateOverviewPage);
         NavigationHost.RegisterPage("forms", "Forms & validation", CreateFormsPage);
         NavigationHost.RegisterPage("data", "Data & grid", CreateDataPage);
+        NavigationHost.RegisterPage("controls", "Controls lab", CreateControlsLabPage);
         NavigationHost.RegisterPage("feedback", "Dialogs & feedback", CreateFeedbackPage);
         NavigationHost.RegisterPage("state", "State & recent items", CreateStatePage);
         NavigationHost.RegisterPage("windows", "Windows integration", CreateWindowsPage);
@@ -140,6 +141,8 @@ internal sealed class ShowcaseForm : SasdShellForm
     private Control CreateFormsPage() => new FormsPage(PublishStatus);
 
     private Control CreateDataPage() => new DataPage(PublishStatus);
+
+    private Control CreateControlsLabPage() => new ControlsLabPage(PublishStatus);
 
     private Control CreateFeedbackPage() =>
         new FeedbackPage(dialogService, notificationService, PublishStatus);
