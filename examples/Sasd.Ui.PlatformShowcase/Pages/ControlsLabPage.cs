@@ -172,10 +172,25 @@ internal sealed class ControlsLabPage : UserControl
         shell.Nodes.Add("Documents");
         tree.ExpandAll();
         tree.AfterSelect += (_, args) =>
+        {
+            // TreeViewEventArgs.Node is nullable in the framework contract. A normal user
+            // selection supplies a node, but the example still handles a missing node rather
+            // than weakening nullable analysis with the null-forgiving operator.
+            TreeNode? selectedNode = args.Node;
+            if (selectedNode is null)
+            {
+                publishStatus(
+                    "Tree selection was cleared.",
+                    SasdStatusSeverity.Information,
+                    TimeSpan.FromSeconds(2));
+                return;
+            }
+
             publishStatus(
-                $"Tree selection: {args.Node.Text}",
+                $"Tree selection: {selectedNode.Text}",
                 SasdStatusSeverity.Information,
                 TimeSpan.FromSeconds(2));
+        };
 
         var split = new SplitContainer
         {
