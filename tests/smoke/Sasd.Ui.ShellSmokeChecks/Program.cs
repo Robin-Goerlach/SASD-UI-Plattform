@@ -1,3 +1,4 @@
+using System.Reflection;
 using Sasd.Ui.WinForms.Commands;
 using Sasd.Ui.WinForms.Dialogs;
 using Sasd.Ui.WinForms.Shell;
@@ -15,6 +16,7 @@ internal static class Program
             await ValidateShortcutBindingAsync();
             ValidateStatusServiceAndBinding();
             ValidateShellComposition();
+            ValidateBreadcrumbAccessibilityAndLifecycle();
             ValidateDocumentTabsKeyboardAndAccessibility();
             ValidateNotificationHost();
 
@@ -154,6 +156,97 @@ internal static class Program
         Ensure(shell.CommandManager.Count == 1, "Shell command registry retained an unregistered command.");
     }
 
+    private static void ValidateBreadcrumbAccessibilityAndLifecycle()
+    {
+        using var form = new Form
+        {
+            ClientSize = new Size(640, 180),
+            Location = new Point(-32000, -32000),
+            ShowInTaskbar = false,
+            StartPosition = FormStartPosition.Manual,
+            Text = "SASD breadcrumb smoke",
+        };
+        using var breadcrumb = new SasdBreadcrumb { Dock = DockStyle.Top };
+        form.Controls.Add(breadcrumb);
+
+        // Host the breadcrumb in a real but off-screen WinForms window. This gives the
+        // generated LinkLabel controls normal handle/focus semantics without SendKeys or
+        // process-global input injection on a developer or CI desktop.
+        form.Show();
+
+        Ensure(breadcrumb.AccessibleRole == AccessibleRole.Grouping && breadcrumb.AccessibleName == "Breadcrumb",
+            "Breadcrumb does not expose stable group-level accessibility semantics.");
+        Ensure(breadcrumb.AccessibleDescription == "No breadcrumb locations.",
+            "Empty breadcrumb does not expose an explicit accessible empty state.");
+
+        breadcrumb.SetPath([
+            SasdBreadcrumbItem.Create("root", "Customers"),
+            SasdBreadcrumbItem.Create("customer-42", "Example AG"),
+            SasdBreadcrumbItem.Create("contract-7", "Contract 7"),
+        ]);
+
+        FlowLayoutPanel host = breadcrumb.Controls.OfType<FlowLayoutPanel>().Single();
+        Ensure(host.AccessibleRole == AccessibleRole.Grouping && host.AccessibleName == "Breadcrumb path" && !host.TabStop,
+            "Breadcrumb path host does not expose a non-interactive accessible grouping.");
+        Ensure(breadcrumb.AccessibleDescription?.Contains("3 breadcrumb locations", StringComparison.Ordinal) == true &&
+               breadcrumb.AccessibleDescription.Contains("Current location: Contract 7", StringComparison.Ordinal),
+            "Breadcrumb accessible state does not describe the path size/current location.");
+
+        LinkLabel[] links = host.Controls.OfType<LinkLabel>().ToArray();
+        Label current = host.Controls.OfType<Label>()
+            .Single(label => label.AccessibleRole == AccessibleRole.StaticText);
+        Label[] separators = host.Controls.OfType<Label>()
+            .Where(label => label.AccessibleRole == AccessibleRole.Separator)
+            .ToArray();
+
+        Ensure(links.Length == 2 && links.All(static link =>
+                link.AccessibleRole == AccessibleRole.Link &&
+                link.TabStop &&
+                !string.IsNullOrWhiteSpace(link.AccessibleDescription)),
+            "Navigable breadcrumb locations do not expose selectable link semantics.");
+        Ensure(separators.Length == 2 && separators.All(static separator => !separator.TabStop),
+            "Decorative breadcrumb separators entered keyboard navigation.");
+        Ensure(current.AccessibleName == "Current location Contract 7" && !current.TabStop,
+            "Current breadcrumb location is not exposed as non-interactive static text.");
+
+        links[0].Select();
+        Ensure(links[0].Focused,
+            "A breadcrumb navigation link could not receive focus in a real WinForms host.");
+
+        SasdBreadcrumbItem? invokedItem = null;
+        int invocations = 0;
+        breadcrumb.ItemInvoked += (_, args) =>
+        {
+            invocations++;
+            invokedItem = args.Item;
+        };
+
+        // LinkLabel owns its native keyboard/mouse activation behavior. Invoke the protected
+        // LinkClicked boundary through reflection rather than adding a test-only public hook
+        // to product code; this verifies that the generated link is wired to the SASD event
+        // with the correct stable application-owned breadcrumb item.
+        RaiseLinkClicked(links[0]);
+        Ensure(invocations == 1 && invokedItem?.Id == "root",
+            "Breadcrumb link invocation did not publish the expected stable path item exactly once.");
+
+        Control[] generatedControls = host.Controls.Cast<Control>().ToArray();
+        breadcrumb.SetPath([
+            SasdBreadcrumbItem.Create("root", "Customers"),
+            SasdBreadcrumbItem.Create("customer-99", "New Customer"),
+        ]);
+        Ensure(generatedControls.All(static control => control.IsDisposed),
+            "Breadcrumb rebuild detached generated controls without disposing them.");
+        Ensure(breadcrumb.AccessibleDescription?.Contains("2 breadcrumb locations", StringComparison.Ordinal) == true &&
+               breadcrumb.AccessibleDescription.Contains("Current location: New Customer", StringComparison.Ordinal),
+            "Breadcrumb accessible state did not refresh after path replacement.");
+
+        breadcrumb.ClearPath();
+        Ensure(breadcrumb.ItemCount == 0 && breadcrumb.AccessibleDescription == "No breadcrumb locations.",
+            "Clearing the breadcrumb did not restore its accessible empty state.");
+
+        form.Hide();
+    }
+
     private static void ValidateDocumentTabsKeyboardAndAccessibility()
     {
         using var form = new Form
@@ -243,6 +336,24 @@ internal static class Program
         host.Unbind();
         service.Publish("Detached notification");
         Ensure(shown == 1, "Notification host continued receiving events after Unbind.");
+    }
+
+    private static void RaiseLinkClicked(LinkLabel link)
+    {
+        MethodInfo? onLinkClicked = typeof(LinkLabel).GetMethod(
+            "OnLinkClicked",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        if (onLinkClicked is null)
+        {
+            throw new InvalidOperationException("Could not locate the protected LinkLabel.OnLinkClicked method.");
+        }
+
+        if (link.Links.Count == 0)
+        {
+            throw new InvalidOperationException("Generated breadcrumb LinkLabel does not expose a link area.");
+        }
+
+        onLinkClicked.Invoke(link, [new LinkLabelLinkClickedEventArgs(link.Links[0])]);
     }
 
     private static void EnsureThrows<TException>(Action action, string message)
