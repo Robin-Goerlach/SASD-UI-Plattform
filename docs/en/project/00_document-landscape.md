@@ -16,6 +16,8 @@ The documentation landscape prevents contradictory standalone files and unnecess
 
 When documents conflict, the higher-ranked normative document takes precedence. A detected conflict is not interpreted silently; it is resolved through a documented change.
 
+The current implemented-versus-evidenced view is maintained separately in [`11_component-evidence-matrix.md`](11_component-evidence-matrix.md). That matrix is an evidence index, not a higher-ranked specification: it must reflect source, Gallery/Showcase and test reality without silently redefining product requirements.
+
 ## 3. Document Types
 
 | Type | Content | Trigger for Change |
@@ -27,6 +29,7 @@ When documents conflict, the higher-ranked normative document takes precedence. 
 | Guideline | Day-to-day development rules | Repeated quality deviation |
 | Runbook/support | Diagnosis and maintenance | New operational case or incident |
 | Reference | Component API and examples | New or changed public function |
+| Evidence matrix | Implemented surface mapped to executable/manual evidence and explicit gaps | Component, sample, smoke-test or acceptance evidence changes |
 
 ## 4. Maintenance Responsibilities
 
