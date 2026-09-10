@@ -100,16 +100,28 @@ internal static class Program
         using var overlay = new SasdBusyOverlay();
         Ensure(!overlay.Visible && !overlay.UseWaitCursor,
             "A new busy overlay should not block the application.");
+        Ensure(overlay.AccessibleRole == AccessibleRole.Grouping,
+            "Busy overlay does not expose a stable accessible grouping role.");
+        Ensure(overlay.AccessibleDescription is null,
+            "Hidden busy overlay unexpectedly exposes active busy-state text.");
 
         overlay.BeginBusy("Loading customers…");
         Ensure(overlay.Visible && overlay.UseWaitCursor,
             "Busy overlay did not enter its blocking state.");
         Ensure(overlay.Message == "Loading customers…",
             "Busy overlay did not retain the supplied user-facing message.");
+        Ensure(overlay.AccessibleDescription == "Loading customers…",
+            "Busy overlay did not expose its current message through accessible text.");
+
+        overlay.Message = "Still working…";
+        Ensure(overlay.AccessibleDescription == "Still working…",
+            "Changing a visible busy message did not refresh accessible text.");
 
         overlay.EndBusy();
         Ensure(!overlay.Visible && !overlay.UseWaitCursor,
             "Busy overlay did not restore its idle state.");
+        Ensure(overlay.AccessibleDescription is null,
+            "Busy overlay kept stale accessible text after leaving the busy state.");
     }
 
     private static void ValidateNotificationHostLifecycle()
