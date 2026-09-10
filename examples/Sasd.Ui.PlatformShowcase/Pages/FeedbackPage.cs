@@ -137,9 +137,13 @@ internal sealed class FeedbackPage : UserControl
 
     private async void OnSimulateWorkClick(object? sender, EventArgs e)
     {
-        if (sender is Control trigger)
+        // Keep one stable reference for the whole operation. Besides avoiding C# pattern-variable
+        // scope surprises, this makes it explicit that the same initiating control is disabled and
+        // later re-enabled even when the awaited operation fails.
+        Control? triggerControl = sender as Control;
+        if (triggerControl is not null)
         {
-            trigger.Enabled = false;
+            triggerControl.Enabled = false;
         }
 
         busyOverlay.BeginBusy("Running example operation…");
@@ -156,9 +160,9 @@ internal sealed class FeedbackPage : UserControl
         finally
         {
             busyOverlay.EndBusy();
-            if (sender is Control trigger)
+            if (triggerControl is not null && !triggerControl.IsDisposed)
             {
-                trigger.Enabled = true;
+                triggerControl.Enabled = true;
             }
         }
     }
