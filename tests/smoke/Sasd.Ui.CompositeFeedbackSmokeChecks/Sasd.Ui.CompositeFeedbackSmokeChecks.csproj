@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <RootNamespace>Sasd.Ui.CompositeFeedbackSmokeChecks</RootNamespace>
+    <AssemblyName>Sasd.Ui.CompositeFeedbackSmokeChecks</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Sasd.Ui.WinForms.Data\Sasd.Ui.WinForms.Data.csproj" />
+    <ProjectReference Include="..\..\..\src\Sasd.Ui.WinForms.Dialogs\Sasd.Ui.WinForms.Dialogs.csproj" />
+    <ProjectReference Include="..\..\..\src\Sasd.Ui.WinForms.Forms\Sasd.Ui.WinForms.Forms.csproj" />
+  </ItemGroup>
+</Project>
