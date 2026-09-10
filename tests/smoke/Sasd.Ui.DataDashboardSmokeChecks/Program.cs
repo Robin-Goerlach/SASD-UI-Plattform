@@ -96,18 +96,39 @@ internal static class Program
     {
         using var pager = new SasdPager();
 
+        Ensure(pager.AutoScaleMode == AutoScaleMode.Dpi,
+            "Pager is not configured for DPI-aware scaling.");
+        Ensure(pager.AccessibleRole == AccessibleRole.Grouping && pager.AccessibleName == "Paging controls",
+            "Pager does not expose stable group-level accessibility semantics.");
+        Ensure(pager.AccessibleDescription?.Contains("No rows", StringComparison.Ordinal) == true,
+            "Empty pager does not expose an accessible empty-result description.");
+
+        Button previousButton = GetPrivateField<Button>(pager, "previousButton");
+        Button nextButton = GetPrivateField<Button>(pager, "nextButton");
+        Label pageLabel = GetPrivateField<Label>(pager, "pageLabel");
+        ComboBox pageSize = GetPrivateField<ComboBox>(pager, "pageSizeComboBox");
+
+        Ensure(previousButton.AccessibleName == "Previous page" && nextButton.AccessibleName == "Next page",
+            "Pager navigation buttons do not expose descriptive accessible names.");
+        Ensure(pageSize.AccessibleName == "Rows per page",
+            "Pager page-size selector does not expose a descriptive accessible name.");
+
         // The component must clamp stale persisted/application page indices when the
         // total row count shrinks. This is a public state contract and does not need a
         // displayed window to verify.
         pager.SetState(currentPageIndex: 8, currentPageSize: 25, knownTotalCount: 62);
         Ensure(pager.PageIndex == 2, "Pager did not clamp the current page to the final available page.");
         Ensure(pager.PageSize == 25 && pager.TotalCount == 62, "Pager did not retain the supplied page metadata.");
+        Ensure(pager.AccessibleDescription?.Contains("Page 3 of 3", StringComparison.Ordinal) == true &&
+               pager.AccessibleDescription.Contains("Rows 51 through 62 of 62", StringComparison.Ordinal),
+            "Pager accessible description did not follow the clamped loaded state.");
+        Ensure(pageLabel.AccessibleDescription == pager.AccessibleDescription,
+            "Visible pager range and group-level accessible state diverged.");
 
         SasdPageRequestedEventArgs? requested = null;
         pager.PageRequested += (_, args) => requested = args;
         pager.SetState(currentPageIndex: 1, currentPageSize: 25, knownTotalCount: 100);
 
-        Button nextButton = GetPrivateField<Button>(pager, "nextButton");
         nextButton.PerformClick();
         Ensure(requested is { PageIndex: 2, PageSize: 25 }, "Pager Next did not request the expected page.");
 
@@ -116,7 +137,6 @@ internal static class Program
         // page zero so a previous offset cannot point beyond the new result set.
         requested = null;
         pager.SetState(currentPageIndex: 1, currentPageSize: 37, knownTotalCount: 120);
-        ComboBox pageSize = GetPrivateField<ComboBox>(pager, "pageSizeComboBox");
         Ensure(pageSize.Items.Contains(37), "Pager did not preserve a custom application page size.");
         pageSize.SelectedItem = 50;
         Ensure(requested is { PageIndex: 0, PageSize: 50 }, "Changing page size did not request the first page with the new size.");

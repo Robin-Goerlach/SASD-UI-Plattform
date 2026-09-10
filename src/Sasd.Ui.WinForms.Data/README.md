@@ -9,7 +9,7 @@ Reusable data-presentation components and application-neutral query/state helper
 - `SasdEmptyState` with optional primary action;
 - `SasdDataGrid` with conservative business-application defaults;
 - `SasdGridController<T>` and paging/query contracts without database or ORM coupling;
-- `SasdPager`;
+- `SasdPager` with DPI-aware layout, explicit paging-group semantics, descriptive navigation/page-size accessibility text, and a current page/range description derived from loaded state;
 - CSV export;
 - persisted grid layout state;
 - `SasdListView` and `SasdTreeView` defaults.

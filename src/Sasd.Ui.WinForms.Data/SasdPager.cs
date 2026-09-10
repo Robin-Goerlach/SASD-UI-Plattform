@@ -38,8 +38,11 @@ public class SasdPager : UserControl
     /// <summary>Initialises the pager.</summary>
     public SasdPager()
     {
+        AutoScaleMode = AutoScaleMode.Dpi;
         AutoSize = true;
         AutoSizeMode = AutoSizeMode.GrowAndShrink;
+        AccessibleRole = AccessibleRole.Grouping;
+        AccessibleName = "Paging controls";
 
         var layout = new FlowLayoutPanel
         {
@@ -50,13 +53,32 @@ public class SasdPager : UserControl
             WrapContents = false,
         };
 
-        previousButton = new Button { AutoSize = true, Text = "Previous" };
-        nextButton = new Button { AutoSize = true, Text = "Next" };
-        pageLabel = new Label { AutoSize = true, Margin = new Padding(10, 7, 10, 0) };
+        previousButton = new Button
+        {
+            AutoSize = true,
+            Text = "Previous",
+            AccessibleName = "Previous page",
+            AccessibleDescription = "Go to the previous page of rows.",
+        };
+        nextButton = new Button
+        {
+            AutoSize = true,
+            Text = "Next",
+            AccessibleName = "Next page",
+            AccessibleDescription = "Go to the next page of rows.",
+        };
+        pageLabel = new Label
+        {
+            AutoSize = true,
+            Margin = new Padding(10, 7, 10, 0),
+            AccessibleName = "Current row range",
+        };
         pageSizeComboBox = new ComboBox
         {
             DropDownStyle = ComboBoxStyle.DropDownList,
             Width = 72,
+            AccessibleName = "Rows per page",
+            AccessibleDescription = "Select how many rows are shown on each page.",
         };
         pageSizeComboBox.Items.AddRange([10, 25, 50, 100]);
         pageSizeComboBox.SelectedItem = pageSize;
@@ -68,7 +90,12 @@ public class SasdPager : UserControl
         layout.Controls.Add(previousButton);
         layout.Controls.Add(pageLabel);
         layout.Controls.Add(nextButton);
-        layout.Controls.Add(new Label { AutoSize = true, Margin = new Padding(18, 7, 6, 0), Text = "Rows" });
+        layout.Controls.Add(new Label
+        {
+            AutoSize = true,
+            Margin = new Padding(18, 7, 6, 0),
+            Text = "Rows",
+        });
         layout.Controls.Add(pageSizeComboBox);
         Controls.Add(layout);
         UpdateState();
@@ -147,5 +174,14 @@ public class SasdPager : UserControl
         pageLabel.Text = $"{first}–{last} of {totalCount}";
         previousButton.Enabled = pageIndex > 0;
         nextButton.Enabled = pageIndex < PageCount - 1;
+
+        // The visible compact range is useful for sighted users, while the group-level
+        // description provides the same state in explicit terms for assistive technology.
+        // Keep it derived solely from the pager's current state so it cannot drift from
+        // button enablement or the selected page size.
+        AccessibleDescription = totalCount == 0
+            ? $"No rows. Page 1 of 1. {pageSize} rows per page."
+            : $"Page {pageIndex + 1} of {PageCount}. Rows {first} through {last} of {totalCount}. {pageSize} rows per page.";
+        pageLabel.AccessibleDescription = AccessibleDescription;
     }
 }
