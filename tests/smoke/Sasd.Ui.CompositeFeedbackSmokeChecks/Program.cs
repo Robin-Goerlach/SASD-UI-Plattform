@@ -149,7 +149,11 @@ internal static class Program
         Ensure(host.CurrentNotification is null && shown == 0,
             "Pre-handle worker publication mutated the UI instead of being deferred.");
 
-        host.CreateControl();
+        // Control.CreateControl does not promise to allocate a native handle for an
+        // unparented UserControl. Accessing Handle is the public WinForms operation that
+        // guarantees handle creation on this STA owner thread and therefore exercises the
+        // real OnHandleCreated flush path deterministically.
+        _ = host.Handle;
         Ensure(host.IsHandleCreated, "Notification host did not create its native handle on the owner thread.");
         Ensure(host.CurrentNotification?.Message == "Latest startup notification" && shown == 1,
             "Latest pre-handle worker notification was not flushed exactly once at HandleCreated.");
@@ -170,7 +174,7 @@ internal static class Program
         Ensure(ownerWinsShown == 1 && ownerWinsHost.CurrentNotification?.Message == "Owner value",
             "Owner-thread notification did not supersede pending startup feedback.");
 
-        ownerWinsHost.CreateControl();
+        _ = ownerWinsHost.Handle;
         Ensure(ownerWinsShown == 1 && ownerWinsHost.CurrentNotification?.Message == "Owner value",
             "Stale pending notification resurfaced after the owner-thread value was shown.");
     }
