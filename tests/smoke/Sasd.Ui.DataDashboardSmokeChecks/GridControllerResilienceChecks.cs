@@ -123,11 +123,14 @@ internal static class GridControllerResilienceChecks
         Button nextButton = GetPrivateField<Button>(pager, "nextButton");
         nextButton.PerformClick();
 
-        Ensure(failures == 1 && failure is not null,
+        Ensure(failures == 1,
             "Failed pager-driven load did not publish exactly one LoadFailed event.");
-        Ensure(failure.Exception is InvalidOperationException && failure.Exception.Message == FailingPageSource.ErrorMessage,
+        SasdGridLoadFailedEventArgs observedFailure = failure
+            ?? throw new InvalidOperationException("Failed pager-driven load did not provide failure event data.");
+        Ensure(observedFailure.Exception is InvalidOperationException &&
+               observedFailure.Exception.Message == FailingPageSource.ErrorMessage,
             "LoadFailed did not preserve the application data-source exception for technical handling.");
-        Ensure(failure.PageIndex == 1 && failure.PageSize == 2,
+        Ensure(observedFailure.PageIndex == 1 && observedFailure.PageSize == 2,
             "LoadFailed did not describe the page request that failed.");
         Ensure(!controller.IsLoading,
             "Controller remained in loading state after an event-driven failure.");
