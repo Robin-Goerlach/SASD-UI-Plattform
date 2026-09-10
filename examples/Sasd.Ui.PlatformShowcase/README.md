@@ -28,13 +28,29 @@ pwsh ./build/verify.ps1
 | --- | --- |
 | Overview | `SasdShellForm`, navigation, command bar, status service, `SasdKpiCard`, `SasdSparkline` |
 | Forms & validation | `SasdFieldLayout`, `SasdValidationCoordinator`, `SasdValidationSummary`, ErrorProvider integration |
-| Data & grid | `SasdSearchBox`, `SasdFilterBar`, `SasdDataGrid`, `SasdGridColumnChooser`, `SasdDataGridState`, `SasdGridViewDefinition` |
+| Data & grid | `SasdSearchBox`, `SasdFilterBar`, `SasdDataGrid`, `SasdGridColumnChooser`, `SasdDataGridState`, `SasdGridViewDefinition`, in-memory `SasdCsvExporter` preview |
 | Controls lab | `SasdSectionPanel`, `SasdBreadcrumb`, `SasdDocumentTabs`, `SasdListView`, `SasdTreeView`, `SasdEmptyState`, `SasdPager` |
-| Dialogs & feedback | `SasdDialogService`, `SasdNotificationService`, `SasdNotificationHost`, `SasdBusyOverlay` |
+| Dialogs & feedback | `SasdDialogService`, application-owned `SasdDialogForm`, `SasdProgressDialog`, `SasdNotificationService`, `SasdNotificationHost`, `SasdBusyOverlay` |
 | State & recent items | `SasdStateStore`, versioned JSON state sections, `SasdRecentItemsService` |
-| Windows integration | file/folder dialogs, clipboard, safe shell URI handling, policy-validated drag-and-drop |
+| Windows integration | file/folder dialogs, clipboard, safe shell URI handling, `SasdTrayService`, `SasdSystemIconService`, policy-validated drag-and-drop |
 | R2 native controls | `SasdPropertyEditor`, `SasdImageViewer`, `SasdKpiCard`, image ownership and zoom behaviour |
-| Self test | public-API checks for search, filters, grid state, KPI/accessibility, image ownership, property editor, themes and state round-trip |
+| Self test | public-API checks for base controls, dialog defaults, search/filters, grid state, `SasdGridController<T>`, CSV escaping, KPI/accessibility, image ownership, property editor, semantic icons, hidden tray defaults, progress, themes and state round-trip |
+
+The showcase does not try to give every small type a separate page. Related controls are grouped into realistic interaction surfaces, while the **Self test** page covers additional public contracts that are easier to verify programmatically than visually.
+
+## Suggested manual test tour
+
+A useful first pass is:
+
+1. switch between Light, Dark and High Contrast from the command bar and with the shortcuts below;
+2. enter invalid and valid form values and inspect the validation summary;
+3. search/filter the grid, hide a column, preview CSV, save a view, change the layout and restore it;
+4. exercise breadcrumbs, list/tree defaults, paging and document open/close ownership in **Controls lab**;
+5. open the information/warning/error/confirmation dialogs, the custom `SasdDialogForm`, notifications, busy overlay and cancellable progress dialog;
+6. save/load/remove UI state and add/reload/clear recent items;
+7. explicitly show/hide the tray icon, inspect semantic icons, test clipboard/dialog/shell operations and drop accepted/rejected files;
+8. change image zoom modes, replace/clear the generated image and toggle the property editor read-only projection;
+9. finish with **Self test** and inspect the visible PASS/FAIL list.
 
 ## Theme shortcuts
 
@@ -63,9 +79,10 @@ The Windows page deliberately keeps side effects explicit:
 - drag-and-drop validates path metadata and an extension/size policy but does not trust file contents;
 - clipboard actions happen only after pressing their buttons;
 - the repository URL opens only after pressing **Open repository**;
+- the tray icon remains hidden until **Show tray icon** is pressed, and its Exit event does not terminate the showcase;
 - the showcase starts no background service and performs no network request by itself.
 
-The **Self test** page is deliberately safer still: it does not open modal dialogs, launch external programs or access the network. Its StateStore check writes and removes only its dedicated test section.
+The **Self test** page is deliberately safer still: it does not open modal dialogs, show a tray icon, launch external programs or access the network. Its StateStore check writes and removes only its dedicated test section.
 
 ## Why the code is explicit
 
