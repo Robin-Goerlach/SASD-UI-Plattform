@@ -79,25 +79,32 @@ internal static class NavigationHostLifecycleChecks
 
         try
         {
-            Ensure(host.Navigate("a") && firstA is not null,
-                "Navigation host did not create the first cached Page A view.");
-            Ensure(host.Navigate("b") && firstB is not null,
-                "Navigation host did not create the first cached Page B view.");
-            Ensure(!firstA.IsDisposed,
+            Ensure(host.Navigate("a"),
+                "Navigation host could not navigate to the first cached Page A view.");
+            TrackingPanel observedFirstA = firstA
+                ?? throw new InvalidOperationException("Page A factory did not provide its first view.");
+
+            Ensure(host.Navigate("b"),
+                "Navigation host could not navigate to the first cached Page B view.");
+            TrackingPanel observedFirstB = firstB
+                ?? throw new InvalidOperationException("Page B factory did not provide its first view.");
+            Ensure(!observedFirstA.IsDisposed,
                 "Cached inactive Page A was disposed while caching remained enabled.");
 
             // true -> false is an ownership transition. Inactive cached views must be released
             // immediately, while the currently displayed view remains alive until navigation
             // actually leaves it.
             host.CachePages = false;
-            Ensure(firstA.IsDisposed,
+            Ensure(observedFirstA.IsDisposed,
                 "Disabling page caching retained an inactive cached view.");
-            Ensure(!firstB.IsDisposed,
+            Ensure(!observedFirstB.IsDisposed,
                 "Disabling page caching disposed the currently displayed view prematurely.");
 
-            Ensure(host.Navigate("a") && secondA is not null,
-                "Navigation with caching disabled did not create a replacement Page A view.");
-            Ensure(firstB.IsDisposed,
+            Ensure(host.Navigate("a"),
+                "Navigation with caching disabled could not return to Page A.");
+            TrackingPanel observedSecondA = secondA
+                ?? throw new InvalidOperationException("Page A factory did not create its replacement view.");
+            Ensure(observedFirstB.IsDisposed,
                 "Leaving the current page with caching disabled did not dispose that view.");
             Ensure(aCreations == 2,
                 "Page A factory count does not match the expected cache-disabled recreation.");
@@ -106,16 +113,18 @@ internal static class NavigationHostLifecycleChecks
             // that adoption, the next navigation could detach it while skipping both disposal
             // and cache retention because the policy had just changed to true.
             host.CachePages = true;
-            Ensure(host.Navigate("b") && secondB is not null,
-                "Re-enabling caching did not create the new Page B view.");
-            Ensure(!secondA.IsDisposed,
+            Ensure(host.Navigate("b"),
+                "Re-enabling caching could not navigate to Page B.");
+            TrackingPanel observedSecondB = secondB
+                ?? throw new InvalidOperationException("Page B factory did not create its replacement view.");
+            Ensure(!observedSecondA.IsDisposed,
                 "Current Page A was lost instead of being adopted when caching was enabled.");
 
             Ensure(host.Navigate("a"),
                 "Navigation host could not return to the adopted Page A view.");
-            Ensure(aCreations == 2 && !secondA.IsDisposed,
+            Ensure(aCreations == 2 && !observedSecondA.IsDisposed,
                 "Revisiting Page A did not reuse the view adopted during false-to-true cache transition.");
-            Ensure(!secondB.IsDisposed,
+            Ensure(!observedSecondB.IsDisposed,
                 "Inactive Page B was disposed even though caching was enabled.");
         }
         finally
@@ -152,18 +161,22 @@ internal static class NavigationHostLifecycleChecks
         });
         host.RegisterPage("b", "Page B", static () => new Panel());
 
-        Ensure(host.Navigate("a") && first is not null,
-            "Disposed-cache recovery setup did not create Page A.");
+        Ensure(host.Navigate("a"),
+            "Disposed-cache recovery setup could not navigate to Page A.");
+        TrackingPanel observedFirst = first
+            ?? throw new InvalidOperationException("Disposed-cache recovery Page A factory did not return a view.");
         Ensure(host.Navigate("b"),
             "Disposed-cache recovery setup did not move Page A into the inactive cache.");
 
         // Factory-created views belong to the host, so application code should not dispose a
         // cached view. Recovering from that misuse is nevertheless safer than attempting to
         // reattach a disposed WinForms control to the live content tree.
-        first.Dispose();
-        Ensure(host.Navigate("a") && replacement is not null,
+        observedFirst.Dispose();
+        Ensure(host.Navigate("a"),
             "Navigation host did not recover from an unexpectedly disposed cached view.");
-        Ensure(creations == 2 && !replacement.IsDisposed,
+        TrackingPanel observedReplacement = replacement
+            ?? throw new InvalidOperationException("Disposed cached view was not replaced by the page factory.");
+        Ensure(creations == 2 && !observedReplacement.IsDisposed,
             "Disposed cached view was reused instead of being replaced by the page factory.");
     }
 
