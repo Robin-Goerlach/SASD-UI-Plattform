@@ -84,7 +84,18 @@ internal static class Program
         Button cancelButton = ReadPrivateField<Button>(dialog, "cancelButton");
 
         Ensure(!dialog.CancellationToken.IsCancellationRequested, "Progress dialog starts in a cancelled state.");
-        cancelButton.PerformClick();
+
+        dialog.Shown += (_, _) =>
+        {
+            // PerformClick models the actual control interaction only after the button is
+            // visible/selectable. Calling PerformClick on an unshown control is not a faithful
+            // WinForms user-interaction test and may legitimately do nothing.
+            cancelButton.PerformClick();
+            dialog.Complete(DialogResult.Cancel);
+        };
+
+        DialogResult result = dialog.ShowDialog();
+        Ensure(result == DialogResult.Cancel, "Cancellation smoke dialog did not close with the expected result.");
         Ensure(dialog.CancellationToken.IsCancellationRequested, "Cancel button did not cancel the exposed token.");
         Ensure(!cancelButton.Enabled, "Cancel button remained enabled after cancellation was requested.");
     }
