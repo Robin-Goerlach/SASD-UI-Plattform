@@ -29,6 +29,7 @@ pwsh ./build/verify.ps1
 | Overview | `SasdShellForm`, navigation, command bar, status service, `SasdKpiCard`, `SasdSparkline` |
 | Forms & validation | `SasdFieldLayout`, `SasdValidationCoordinator`, `SasdValidationSummary`, ErrorProvider integration |
 | Data & grid | `SasdSearchBox`, `SasdFilterBar`, `SasdDataGrid`, `SasdGridColumnChooser`, `SasdDataGridState`, `SasdGridViewDefinition` |
+| Controls lab | `SasdSectionPanel`, `SasdBreadcrumb`, `SasdDocumentTabs`, `SasdListView`, `SasdTreeView`, `SasdEmptyState`, `SasdPager` |
 | Dialogs & feedback | `SasdDialogService`, `SasdNotificationService`, `SasdNotificationHost`, `SasdBusyOverlay` |
 | State & recent items | `SasdStateStore`, versioned JSON state sections, `SasdRecentItemsService` |
 | Windows integration | file/folder dialogs, clipboard, safe shell URI handling, policy-validated drag-and-drop |
@@ -63,6 +64,8 @@ The Windows page deliberately keeps side effects explicit:
 - clipboard actions happen only after pressing their buttons;
 - the repository URL opens only after pressing **Open repository**;
 - the showcase starts no background service and performs no network request by itself.
+
+The **Self test** page is deliberately safer still: it does not open modal dialogs, launch external programs or access the network. Its StateStore check writes and removes only its dedicated test section.
 
 ## Why the code is explicit
 
