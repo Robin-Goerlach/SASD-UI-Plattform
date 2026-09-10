@@ -89,7 +89,7 @@ internal static class Program
         Ensure(form.SearchBox.SearchText == "release" && searchChanges == 1,
             "The search box did not retain and publish its search text change.");
 
-        ValidateSearchBoxKeyboardAndAccessibility(form, searchChanges);
+        ValidateSearchBoxKeyboardAndAccessibility(form, () => searchChanges);
 
         form.Hide();
         form.Dispose();
@@ -98,7 +98,9 @@ internal static class Program
             "The form did not dispose its owned keyboard-route controls.");
     }
 
-    private static void ValidateSearchBoxKeyboardAndAccessibility(KeyboardScenarioForm form, int searchChangesBeforeClear)
+    private static void ValidateSearchBoxKeyboardAndAccessibility(
+        KeyboardScenarioForm form,
+        Func<int> getSearchChangeCount)
     {
         SasdSearchBox searchBox = form.SearchBox;
         TextBox editor = searchBox.Controls.OfType<TextBox>().Single();
@@ -136,8 +138,8 @@ internal static class Program
         clearButton.PerformClick();
         Ensure(searchBox.SearchText.Length == 0,
             "Search clear action did not clear the current search text.");
-        Ensure(searchChangesBeforeClear + 1 == 2,
-            "Search test setup did not establish the expected change-event count.");
+        Ensure(getSearchChangeCount() == 2,
+            "Search clear action did not publish exactly one additional text-change notification.");
         Ensure(!clearButton.Visible && !clearButton.CanSelect,
             "Empty search box left an inapplicable clear action in keyboard navigation.");
     }
