@@ -27,6 +27,20 @@ The smoke executables intentionally avoid a large test-framework dependency duri
 - Do not use sleeps as synchronization. Prefer events, task completion sources or direct synchronous state checks.
 - A smoke check should exit non-zero on failure and print the original exception/meaningful assertion message.
 
+## Async WinForms smoke synchronization
+
+Creating WinForms controls can install a `WindowsFormsSynchronizationContext` before a visible application message loop is running. That makes otherwise ordinary `await` usage dangerous in console-style smoke executables: a continuation can capture the WinForms context and wait forever because no thread is pumping it.
+
+- Do not assume `[STAThread]` alone provides a functioning UI message loop.
+- If a test creates WinForms controls and then awaits asynchronous work on the same thread, first decide whether the continuation requires a real WinForms synchronization context.
+- For a short worker operation that deliberately does **not** marshal back to the UI, it is acceptable for the STA smoke thread to wait synchronously with `GetAwaiter().GetResult()` and then continue UI assertions on that same owner thread.
+- When production behavior intentionally captures the UI context, run the test body inside a real, invisible `ApplicationContext` message loop and exit that context deterministically when the test completes.
+- Do not fix a hanging test by changing correct production `ConfigureAwait(true)` behavior, disabling cross-thread safety, calling `Application.DoEvents()`, or adding `Thread.Sleep()`.
+- `Control.CreateControl()` does not guarantee native handle creation for every unparented composite control. If a lifecycle test specifically requires `HandleCreated`, use a public operation whose WinForms contract actually creates the handle (for example, accessing `Control.Handle`) and keep that operation on the control owner thread.
+- Keep worker-thread test actions narrowly scoped so they cannot accidentally touch child controls while the owner STA thread is blocked.
+
+These rules exist to preserve the production threading contract in tests rather than making the product accommodate an artificial console-test environment.
+
 ## Architecture checks
 
 `tests/architecture/` protects structural boundaries. Changes there deserve extra caution.
