@@ -15,6 +15,8 @@ public class SasdBusyOverlay : UserControl
         BackColor = SystemColors.Control;
         TabStop = false;
         Visible = false;
+        AccessibleRole = AccessibleRole.Grouping;
+        AccessibleName = "Busy state";
 
         var content = new TableLayoutPanel
         {
@@ -63,7 +65,16 @@ public class SasdBusyOverlay : UserControl
     public string Message
     {
         get => messageLabel.Text;
-        set => messageLabel.Text = value;
+        set
+        {
+            messageLabel.Text = value ?? string.Empty;
+            if (Visible)
+            {
+                AccessibleDescription = string.IsNullOrWhiteSpace(messageLabel.Text)
+                    ? "Application is busy."
+                    : messageLabel.Text.Trim();
+            }
+        }
     }
 
     /// <summary>Shows the overlay and brings it in front of sibling controls.</summary>
@@ -77,6 +88,9 @@ public class SasdBusyOverlay : UserControl
         Visible = true;
         BringToFront();
         UseWaitCursor = true;
+        AccessibleDescription = string.IsNullOrWhiteSpace(Message)
+            ? "Application is busy."
+            : Message.Trim();
     }
 
     /// <summary>Hides the overlay and restores the normal cursor.</summary>
@@ -84,5 +98,6 @@ public class SasdBusyOverlay : UserControl
     {
         UseWaitCursor = false;
         Visible = false;
+        AccessibleDescription = null;
     }
 }
