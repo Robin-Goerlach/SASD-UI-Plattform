@@ -108,12 +108,13 @@ public class SasdValidationSummary : UserControl
         }
 
         // Keep the accessible text derived from the same messages that are visible.
-        // This is intentionally a plain summary, not a claim of live-region/UIA support;
-        // formal screen-reader behavior still belongs to manual/UIA acceptance work.
+        // The list contains only the string messages inserted by ShowResult, so a direct
+        // string projection is both deterministic and culture-independent. This remains
+        // plain accessible text; formal live-region/UIA behavior belongs to later evidence.
         var messages = new string[messageList.Items.Count];
         for (int index = 0; index < messageList.Items.Count; index++)
         {
-            messages[index] = Convert.ToString(messageList.Items[index]) ?? string.Empty;
+            messages[index] = messageList.Items[index] as string ?? string.Empty;
         }
 
         AccessibleDescription = $"{headingLabel.Text} {string.Join(" ", messages)}".Trim();
