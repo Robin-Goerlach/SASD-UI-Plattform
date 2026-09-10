@@ -5,7 +5,7 @@ Reusable data-presentation components and application-neutral query/state helper
 ## Implemented R1 foundation
 
 - `SasdSearchBox` with DPI-aware layout, explicit search/editor/clear accessibility semantics and a keyboard-reachable clear action that is removed from navigation while empty;
-- `SasdFilterBar` and neutral filter descriptors;
+- `SasdFilterBar` with neutral filter descriptors, explicit grouping/action accessibility semantics, a current-filter accessible summary, and deterministic disposal of regenerated chip controls;
 - `SasdEmptyState` with optional primary action;
 - `SasdDataGrid` with conservative business-application defaults;
 - `SasdGridController<T>` and paging/query contracts without database or ORM coupling;
@@ -13,6 +13,12 @@ Reusable data-presentation components and application-neutral query/state helper
 - CSV export;
 - persisted grid layout state;
 - `SasdListView` and `SasdTreeView` defaults.
+
+### Filter-bar accessibility and lifecycle
+
+`SasdFilterBar` exposes the complete active-filter area and the generated chip list as accessible groupings. Its accessible description follows the current filter set so assistive technologies are not forced to infer active state from visual chip styling or the multiplication-sign glyph used by remove buttons. Individual remove actions and the clear-all action have descriptive accessible text independent of their visual captions.
+
+Filter chips are presentation objects owned by the filter bar. Rebuilding the filter set explicitly disposes the generated controls being replaced rather than merely detaching them. This ownership rule matters on long-running data screens where filter state may change repeatedly and prevents abandoned WinForms controls/native resources from accumulating over time.
 
 ### Grid-controller lifecycle and failure handling
 

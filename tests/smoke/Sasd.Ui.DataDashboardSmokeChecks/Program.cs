@@ -31,9 +31,22 @@ internal static class Program
     private static void ValidateFilterBatchReplacement()
     {
         using var filterBar = new SasdFilterBar();
+        Ensure(filterBar.AccessibleRole == AccessibleRole.Grouping && filterBar.AccessibleName == "Active filters",
+            "Filter bar does not expose stable group-level accessibility semantics.");
+        Ensure(filterBar.AccessibleDescription == "No active filters.",
+            "Empty filter bar does not expose an explicit accessible empty state.");
+
+        FlowLayoutPanel filterHost = filterBar.Controls.OfType<FlowLayoutPanel>().Single();
+        Button clearAllButton = filterBar.Controls.OfType<Button>().Single();
+        Ensure(filterHost.AccessibleRole == AccessibleRole.Grouping && filterHost.AccessibleName == "Active filter list",
+            "Filter chip host does not expose a meaningful accessible grouping.");
+        Ensure(clearAllButton.AccessibleName == "Clear all filters" &&
+               !string.IsNullOrWhiteSpace(clearAllButton.AccessibleDescription) &&
+               !clearAllButton.Visible,
+            "Clear-all action accessibility or empty-state visibility is incorrect.");
+
         int changes = 0;
         filterBar.FiltersChanged += (_, _) => changes++;
-
         filterBar.SetFilters([
             SasdActiveFilter.Create("status", "Status", "Active"),
             SasdActiveFilter.Create("region", "Region", "EU"),
@@ -43,6 +56,40 @@ internal static class Program
         Ensure(changes == 1, "Batch filter replacement raised more than one change notification.");
         Ensure(filterBar.FilterCount == 2, "Batch filter replacement did not de-duplicate keys case-insensitively.");
         Ensure(filterBar.ActiveFilters[0].Value == "Inactive", "Later duplicate filter value did not replace the earlier value.");
+        Ensure(clearAllButton.Visible,
+            "Clear-all action did not become available after filters were added.");
+        Ensure(filterBar.AccessibleDescription?.Contains("2 active filters", StringComparison.Ordinal) == true &&
+               filterBar.AccessibleDescription.Contains("Status: Inactive", StringComparison.Ordinal) &&
+               filterBar.AccessibleDescription.Contains("Region: EU", StringComparison.Ordinal),
+            "Filter bar accessible state does not describe the active filter set.");
+
+        FlowLayoutPanel[] initialChips = filterHost.Controls.OfType<FlowLayoutPanel>().ToArray();
+        Ensure(initialChips.Length == 2 && initialChips.All(static chip => chip.AccessibleRole == AccessibleRole.Grouping),
+            "Generated filter chips do not expose grouping semantics.");
+        Ensure(initialChips.All(static chip =>
+                chip.Controls.OfType<Button>().Single().AccessibleName?.StartsWith("Remove filter ", StringComparison.Ordinal) == true &&
+                !string.IsNullOrWhiteSpace(chip.Controls.OfType<Button>().Single().AccessibleDescription)),
+            "Generated filter remove actions do not expose descriptive accessibility text.");
+
+        // Rebuilding a filter must dispose the generated visual chips it replaces. This is
+        // especially important for long-running data screens where filters are changed often;
+        // detached-but-undisposed controls would otherwise accumulate native resources.
+        filterBar.AddOrUpdateFilter("status", "Status", "Pending");
+        Ensure(changes == 2 && filterBar.ActiveFilters[0].Value == "Pending",
+            "Updating a filter did not preserve the existing mutation/event contract.");
+        Ensure(initialChips.All(static chip => chip.IsDisposed),
+            "Filter-bar rebuild detached old chips without disposing them.");
+        Ensure(filterBar.AccessibleDescription?.Contains("Status: Pending", StringComparison.Ordinal) == true,
+            "Filter-bar accessible state did not refresh after a filter replacement.");
+
+        FlowLayoutPanel[] currentChips = filterHost.Controls.OfType<FlowLayoutPanel>().ToArray();
+        filterBar.ClearFilters();
+        Ensure(changes == 3 && filterBar.FilterCount == 0,
+            "Clearing the filter bar did not publish exactly one mutation.");
+        Ensure(currentChips.All(static chip => chip.IsDisposed),
+            "Clearing filters left generated chip controls undisposed.");
+        Ensure(filterBar.AccessibleDescription == "No active filters." && !clearAllButton.Visible,
+            "Clearing filters did not restore the accessible/visual empty state.");
     }
 
     private static void ValidateSavedGridView()
