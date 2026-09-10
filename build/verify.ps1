@@ -16,6 +16,10 @@ $referenceProjects = @(
     @{
         Name = 'Workbench reference application'
         Project = 'samples/Sasd.Ui.Sample.Workbench/Sasd.Ui.Sample.Workbench.csproj'
+    },
+    @{
+        Name = 'Integrated platform showcase'
+        Project = 'examples/Sasd.Ui.PlatformShowcase/Sasd.Ui.PlatformShowcase.csproj'
     }
 )
 
@@ -46,10 +50,10 @@ try {
             'SASD.Ui.Platform.sln'
         )
 
-        # Reference applications are intentionally kept outside the hand-maintained
-        # classic solution while they are still small consumer pilots. Restoring each
-        # one explicitly proves that samples do not accidentally depend on solution-only
-        # state or manually copied binaries.
+        # Reference/example applications are intentionally kept outside the hand-maintained
+        # classic solution while they are still small consumer pilots. Restoring each one
+        # explicitly proves that consumers do not accidentally depend on solution-only state
+        # or manually copied binaries.
         foreach ($reference in $referenceProjects) {
             Invoke-DotNetStep -Name "Restore $($reference.Name)" -Arguments @(
                 'restore',
