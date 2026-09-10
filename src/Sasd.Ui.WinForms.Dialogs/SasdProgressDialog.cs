@@ -76,9 +76,12 @@ public sealed class SasdProgressDialog : SasdForm, IProgress<SasdProgressUpdate>
         Controls.Add(layout);
 
         // InvokeRequired is not a reliable cross-thread test before a native handle
-        // exists. Remember updates reported during that startup window and apply the
-        // latest values once WinForms creates the dialog handle on the UI thread.
+        // exists. Progress may safely be applied as soon as the UI thread creates the
+        // handle, but closing the form from HandleCreated itself is unsafe because the
+        // WinForms show lifecycle has not completed yet. Queued completion is therefore
+        // drained later from Shown, when Close() has normal form semantics.
         HandleCreated += OnHandleCreated;
+        Shown += OnShown;
     }
 
     /// <summary>Gets the token cancelled when the user requests cancellation.</summary>
@@ -110,7 +113,10 @@ public sealed class SasdProgressDialog : SasdForm, IProgress<SasdProgressUpdate>
             return;
         }
 
-        if (!IsHandleCreated)
+        // A handle can exist before the form is actually visible. Calling Close while
+        // the native handle is still being created/showed can interfere with WinForms'
+        // internal lifecycle. Buffer completion until Shown in that startup window.
+        if (!IsHandleCreated || !Visible)
         {
             QueueCompletion(result);
             return;
@@ -125,6 +131,7 @@ public sealed class SasdProgressDialog : SasdForm, IProgress<SasdProgressUpdate>
         if (disposing && !disposed)
         {
             HandleCreated -= OnHandleCreated;
+            Shown -= OnShown;
 
             lock (pendingLock)
             {
@@ -171,7 +178,6 @@ public sealed class SasdProgressDialog : SasdForm, IProgress<SasdProgressUpdate>
     private void OnHandleCreated(object? sender, EventArgs e)
     {
         SasdProgressUpdate? update;
-        DialogResult? completion;
 
         lock (pendingLock)
         {
@@ -181,18 +187,35 @@ public sealed class SasdProgressDialog : SasdForm, IProgress<SasdProgressUpdate>
             }
 
             update = pendingUpdate;
-            completion = pendingCompletion;
             pendingUpdate = null;
-            pendingCompletion = null;
         }
 
         if (update is not null)
         {
             ApplyProgress(update);
         }
+    }
+
+    private void OnShown(object? sender, EventArgs e)
+    {
+        DialogResult? completion;
+
+        lock (pendingLock)
+        {
+            if (disposed || completed)
+            {
+                return;
+            }
+
+            completion = pendingCompletion;
+            pendingCompletion = null;
+        }
 
         if (completion is { } result)
         {
+            // Shown runs on the UI thread after WinForms has completed the initial
+            // handle/show sequence. A fast operation that already completed may now
+            // close the dialog without racing native handle creation.
             ApplyCompletion(result);
         }
     }
