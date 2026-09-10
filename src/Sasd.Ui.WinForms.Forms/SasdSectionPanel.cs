@@ -10,12 +10,16 @@ namespace Sasd.Ui.WinForms.Forms;
 [DefaultProperty(nameof(SectionTitle))]
 public class SasdSectionPanel : GroupBox
 {
-    /// <summary>Initialises a section with SASD spacing defaults.</summary>
+    /// <summary>Initialises a section with SASD spacing and accessibility defaults.</summary>
     public SasdSectionPanel()
     {
         Padding = new Padding(12, 20, 12, 12);
         Margin = new Padding(0, 0, 0, 12);
         TabStop = false;
+
+        // Keep the native GroupBox implementation, but make the semantic intent explicit
+        // rather than depending on framework-specific inference of the default role.
+        AccessibleRole = AccessibleRole.Grouping;
     }
 
     /// <summary>Gets or sets the title shown for the section.</summary>
