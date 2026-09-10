@@ -246,7 +246,7 @@ public sealed class SasdGridController<T> : IDisposable
     }
 
     private SasdDataQuery CreateQuery() =>
-        new(
+        new SasdDataQuery(
             checked(PageIndex * PageSize),
             PageSize,
             Sort,
