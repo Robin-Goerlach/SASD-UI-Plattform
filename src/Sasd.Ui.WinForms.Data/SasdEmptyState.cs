@@ -12,6 +12,7 @@ public class SasdEmptyState : UserControl
     private readonly Label titleLabel;
     private readonly Label messageLabel;
     private readonly Button actionButton;
+    private readonly Font titleFont;
 
     /// <summary>Initialises the empty-state control.</summary>
     public SasdEmptyState()
@@ -19,6 +20,9 @@ public class SasdEmptyState : UserControl
         AutoScaleMode = AutoScaleMode.Dpi;
         MinimumSize = new Size(240, 150);
         Padding = new Padding(24);
+        AccessibleRole = AccessibleRole.Grouping;
+        AccessibleName = "Nothing here yet";
+        AccessibleDescription = "There are no items to display.";
 
         var layout = new TableLayoutPanel
         {
@@ -31,10 +35,14 @@ public class SasdEmptyState : UserControl
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 
         Font prototype = SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont;
+        // This composite control creates the bold font, so it also owns its lifetime.
+        // Keeping the owned resource in a field makes that contract explicit and avoids
+        // relying on child-control disposal semantics for a GDI object we allocated.
+        titleFont = new Font(prototype, FontStyle.Bold);
         titleLabel = new Label
         {
             AutoSize = true,
-            Font = new Font(prototype, FontStyle.Bold),
+            Font = titleFont,
             Text = "Nothing here yet",
         };
         messageLabel = new Label
@@ -46,6 +54,7 @@ public class SasdEmptyState : UserControl
         };
         actionButton = new Button
         {
+            AccessibleName = "Create item",
             AutoSize = true,
             MinimumSize = new Size(110, 30),
             Text = "Create item",
@@ -67,7 +76,13 @@ public class SasdEmptyState : UserControl
     public string Title
     {
         get => titleLabel.Text;
-        set => titleLabel.Text = value ?? string.Empty;
+        set
+        {
+            titleLabel.Text = value ?? string.Empty;
+            AccessibleName = string.IsNullOrWhiteSpace(titleLabel.Text)
+                ? "Empty state"
+                : titleLabel.Text.Trim();
+        }
     }
 
     /// <summary>Gets or sets the explanatory message.</summary>
@@ -76,7 +91,13 @@ public class SasdEmptyState : UserControl
     public string Message
     {
         get => messageLabel.Text;
-        set => messageLabel.Text = value ?? string.Empty;
+        set
+        {
+            messageLabel.Text = value ?? string.Empty;
+            AccessibleDescription = string.IsNullOrWhiteSpace(messageLabel.Text)
+                ? null
+                : messageLabel.Text.Trim();
+        }
     }
 
     /// <summary>Gets or sets the action-button text.</summary>
@@ -85,7 +106,13 @@ public class SasdEmptyState : UserControl
     public string ActionText
     {
         get => actionButton.Text;
-        set => actionButton.Text = value ?? string.Empty;
+        set
+        {
+            actionButton.Text = value ?? string.Empty;
+            actionButton.AccessibleName = string.IsNullOrWhiteSpace(actionButton.Text)
+                ? "Empty state action"
+                : actionButton.Text.Trim();
+        }
     }
 
     /// <summary>Gets or sets whether the action button is visible.</summary>
@@ -95,5 +122,18 @@ public class SasdEmptyState : UserControl
     {
         get => actionButton.Visible;
         set => actionButton.Visible = value;
+    }
+
+    /// <inheritdoc />
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            // titleFont is created by this control and is not shared with callers.
+            // Dispose it deterministically with the composite-control lifecycle.
+            titleFont.Dispose();
+        }
+
+        base.Dispose(disposing);
     }
 }
