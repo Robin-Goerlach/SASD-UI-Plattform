@@ -7,13 +7,14 @@ namespace Sasd.Ui.CompositeFeedbackSmokeChecks;
 internal static class Program
 {
     [STAThread]
-    private static int Main()
+    private static async Task<int> Main()
     {
         try
         {
             ValidateEmptyState();
             ValidateValidationSummary();
             ValidateBusyOverlay();
+            await ValidateNotificationPreHandleDispatchAsync();
             ValidateNotificationHostLifecycle();
 
             Console.WriteLine("SASD composite feedback smoke checks passed.");
@@ -122,6 +123,53 @@ internal static class Program
             "Busy overlay did not restore its idle state.");
         Ensure(overlay.AccessibleDescription is null,
             "Busy overlay kept stale accessible text after leaving the busy state.");
+    }
+
+    private static async Task ValidateNotificationPreHandleDispatchAsync()
+    {
+        var service = new SasdNotificationService();
+        using var host = new SasdNotificationHost { DefaultLifetime = TimeSpan.Zero };
+        int shown = 0;
+        host.NotificationShown += (_, _) => shown++;
+        host.Bind(service);
+
+        // Startup services can publish from a worker before the form/control hierarchy has
+        // created native handles. InvokeRequired is ambiguous in that state, so the host must
+        // not touch child controls from the worker and must not silently lose the notification.
+        await Task.Run(() =>
+        {
+            service.Publish("Earlier startup notification");
+            service.Publish("Latest startup notification");
+        });
+
+        Ensure(!host.IsHandleCreated, "Notification host unexpectedly created a handle on the worker thread.");
+        Ensure(host.CurrentNotification is null && shown == 0,
+            "Pre-handle worker publication mutated the UI instead of being deferred.");
+
+        host.CreateControl();
+        Ensure(host.IsHandleCreated, "Notification host did not create its native handle on the owner thread.");
+        Ensure(host.CurrentNotification?.Message == "Latest startup notification" && shown == 1,
+            "Latest pre-handle worker notification was not flushed exactly once at HandleCreated.");
+
+        host.Dismiss();
+
+        // The R1 host intentionally keeps only the latest notification. If the UI thread
+        // explicitly shows a notification before handle creation, it must supersede an older
+        // worker publication rather than allowing that stale value to reappear afterwards.
+        using var ownerWinsHost = new SasdNotificationHost { DefaultLifetime = TimeSpan.Zero };
+        var ownerWinsService = new SasdNotificationService();
+        int ownerWinsShown = 0;
+        ownerWinsHost.NotificationShown += (_, _) => ownerWinsShown++;
+        ownerWinsHost.Bind(ownerWinsService);
+
+        await Task.Run(() => ownerWinsService.Publish("Worker value"));
+        ownerWinsHost.ShowNotification(new SasdNotification("Owner value"));
+        Ensure(ownerWinsShown == 1 && ownerWinsHost.CurrentNotification?.Message == "Owner value",
+            "Owner-thread notification did not supersede pending startup feedback.");
+
+        ownerWinsHost.CreateControl();
+        Ensure(ownerWinsShown == 1 && ownerWinsHost.CurrentNotification?.Message == "Owner value",
+            "Stale pending notification resurfaced after the owner-thread value was shown.");
     }
 
     private static void ValidateNotificationHostLifecycle()
