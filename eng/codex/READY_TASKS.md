@@ -36,16 +36,16 @@ run the broad verification gate before declaring the work complete.
 
 ## Current ready tasks
 
-### Issue #26 — UI lifecycle endurance checks
+### Issue #28 — Component coverage matrix
 
-Good first Codex task. It is intentionally dependency-free and should exercise existing ownership, disposal and event-lifecycle contracts rather than invent new architecture.
+Recommended next Codex task. It maps implemented public R1/R2 surfaces to Gallery, Showcase, smoke-test and manual acceptance evidence. This should give the next development cycle a factual view of what is implemented versus what is merely missing release-gate evidence.
 
 Expected outcome:
 
-- repeatable lifecycle/endurance smoke coverage;
-- concrete product fixes only when a real defect is demonstrated;
-- no timing-sensitive micro-benchmarks;
-- full Windows verification.
+- one maintainable evidence matrix;
+- direct repository paths for each source of evidence;
+- obvious dependency-free coverage gaps may be filled;
+- missing DPI/Designer/accessibility/UIA evidence must remain visibly missing rather than being inferred.
 
 ### Issue #27 — NuGet packaging dry-run
 
@@ -58,21 +58,19 @@ Expected outcome:
 - centrally consistent package metadata;
 - no package publication.
 
-### Issue #28 — Component coverage matrix
+## Recently completed
 
-Repository-evidence task that maps implemented public R1/R2 surfaces to Gallery, Showcase, smoke-test and manual acceptance evidence.
+### Issue #26 — UI lifecycle endurance checks
 
-Expected outcome:
+Completed by PR #31. The canonical Windows gate now repeats representative create/use/dispose cycles for image ownership, document-tab ownership/event lifecycle and hidden tray-service disposal without introducing timing thresholds, handle-count assumptions or a new dependency.
 
-- one maintainable evidence matrix;
-- obvious dependency-free coverage gaps may be filled;
-- missing DPI/Designer/accessibility/UIA evidence must remain visibly missing rather than being inferred.
+This completion is intentionally recorded here only as short queue context. Durable test behavior lives in `tests/smoke/Sasd.Ui.LifecycleSmokeChecks/` and `build/verify.ps1`.
 
 ## Suggested order
 
-Use **#26 first**, then **#28**, then **#27**.
+Use **#28 next**, then **#27**.
 
-The order is deliberate: lifecycle hardening gives immediate product-quality value; the coverage matrix then shows what evidence is truly missing; packaging comes after the current behavior and evidence are better understood.
+The order is deliberate: lifecycle hardening is now in the shared gate, so the coverage matrix should identify the remaining evidence gaps before packaging work starts. Packaging can then reflect the package surface we actually intend to stabilize rather than driving architecture by accident.
 
 Do not run these issues concurrently if they touch the same verification files or project metadata. Small, serial pull requests are easier to review and keep the repository gate meaningful.
 
