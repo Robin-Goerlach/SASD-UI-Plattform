@@ -134,6 +134,13 @@ try {
         '--configuration', 'Release'
     )
 
+    Invoke-DotNetStep -Name 'Forms smoke checks' -Arguments @(
+        'run',
+        '--project', 'tests/smoke/Sasd.Ui.FormsSmokeChecks/Sasd.Ui.FormsSmokeChecks.csproj',
+        '--configuration', 'Release',
+        '-p:TreatWarningsAsErrors=true'
+    )
+
     Invoke-DotNetStep -Name 'Composite feedback smoke checks' -Arguments @(
         'run',
         '--project', 'tests/smoke/Sasd.Ui.CompositeFeedbackSmokeChecks/Sasd.Ui.CompositeFeedbackSmokeChecks.csproj',
