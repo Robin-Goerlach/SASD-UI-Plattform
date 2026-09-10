@@ -16,7 +16,15 @@ internal static class Program
             await ValidatePersistenceAndRecoveryAsync(root);
             await ValidateIncrementalMigrationAsync(root);
             await ValidateRecentItemsAsync(root);
-            await ValidateFormStateAsync(root);
+
+            // The preceding file/state checks are intentionally asynchronous and may resume
+            // on a pool thread because a console smoke executable has no UI message loop.
+            // Form-state behavior, however, must run on a real STA WinForms context: the
+            // production RestoreAsync method deliberately preserves its UI synchronization
+            // context before touching the Form. Use a small invisible ApplicationContext
+            // rather than weakening product ConfigureAwait behavior or calling DoEvents.
+            await RunInStaMessageLoopAsync(() => ValidateFormStateAsync(root));
+
             Console.WriteLine("SASD UI state smoke checks passed.");
             return 0;
         }
@@ -188,10 +196,10 @@ internal static class Program
         };
 
         await service.SaveAsync(form);
-        SasdWindowState? saved = await store.LoadAsync<SasdWindowState>("window:main-window");
-        Ensure(saved is not null, "Form-state service did not persist a keyed form.");
-        Ensure(saved.X == expectedBounds.X && saved.Y == expectedBounds.Y &&
-               saved.Width == expectedBounds.Width && saved.Height == expectedBounds.Height,
+        SasdWindowState persisted = await store.LoadAsync<SasdWindowState>("window:main-window")
+            ?? throw new InvalidOperationException("Form-state service did not persist a keyed form.");
+        Ensure(persisted.X == expectedBounds.X && persisted.Y == expectedBounds.Y &&
+               persisted.Width == expectedBounds.Width && persisted.Height == expectedBounds.Height,
             "Form-state service persisted unexpected normal window bounds.");
 
         form.Bounds = new Rectangle(workingArea.Left + 80, workingArea.Top + 80, 360, 240);
@@ -209,6 +217,68 @@ internal static class Program
         Rectangle intersection = Rectangle.Intersect(form.Bounds, workingArea);
         Ensure(intersection.Width >= 80 && intersection.Height >= 40,
             "Window-state safety did not bring an off-screen window back onto the current desktop.");
+    }
+
+    private static Task RunInStaMessageLoopAsync(Func<Task> action)
+    {
+        ArgumentNullException.ThrowIfNull(action);
+
+        var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var thread = new Thread(() =>
+        {
+            using var context = new ApplicationContext();
+            bool started = false;
+            EventHandler? idleHandler = null;
+
+            idleHandler = async (_, _) =>
+            {
+                if (started)
+                {
+                    return;
+                }
+
+                started = true;
+                Application.Idle -= idleHandler;
+                try
+                {
+                    // Application.Run has now installed the WinForms message-loop context.
+                    // Awaiting here is intentional: production continuations that require the
+                    // UI context can marshal back naturally while the invisible loop keeps pumping.
+                    await action();
+                    completion.TrySetResult();
+                }
+                catch (Exception exception)
+                {
+                    completion.TrySetException(exception);
+                }
+                finally
+                {
+                    context.ExitThread();
+                }
+            };
+
+            Application.Idle += idleHandler;
+            try
+            {
+                Application.Run(context);
+            }
+            catch (Exception exception)
+            {
+                completion.TrySetException(exception);
+            }
+            finally
+            {
+                Application.Idle -= idleHandler;
+            }
+        })
+        {
+            IsBackground = true,
+            Name = "SASD UI state smoke STA",
+        };
+
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        return completion.Task;
     }
 
     private static void Ensure(bool condition, string message)
