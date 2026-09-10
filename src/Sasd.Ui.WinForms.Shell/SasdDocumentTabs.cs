@@ -24,7 +24,7 @@ public sealed class SasdDocumentEventArgs : EventArgs
 }
 
 /// <summary>
-/// Provides a small document-tab host with stable ids and predictable disposal.
+/// Provides a small document-tab host with stable ids, keyboard switching and predictable disposal.
 /// </summary>
 /// <remarks>
 /// The host owns controls returned by the content factory. Closing a document
@@ -40,10 +40,14 @@ public class SasdDocumentTabs : UserControl
     public SasdDocumentTabs()
     {
         AutoScaleMode = AutoScaleMode.Dpi;
+        AccessibleRole = AccessibleRole.Grouping;
         AccessibleName = "Documents";
+        AccessibleDescription = "Open application documents arranged in tabs.";
 
         tabControl = new TabControl
         {
+            AccessibleName = "Document tabs",
+            AccessibleRole = AccessibleRole.PageTabList,
             Dock = DockStyle.Fill,
             Multiline = false,
         };
@@ -79,7 +83,11 @@ public class SasdDocumentTabs : UserControl
 
         if (documents.TryGetValue(documentId, out DocumentEntry? existing))
         {
+            // The visible and accessible titles are one semantic value. Keeping both in sync is
+            // important when an application reopens an already-present document under a newly
+            // resolved title (for example after a rename in a tree/workbench surface).
             existing.Page.Text = title;
+            existing.Page.AccessibleName = title;
             tabControl.SelectedTab = existing.Page;
             return existing.Content;
         }
@@ -115,7 +123,7 @@ public class SasdDocumentTabs : UserControl
         return true;
     }
 
-    /// <summary>Updates the visible title of an existing document.</summary>
+    /// <summary>Updates the visible and accessible title of an existing document.</summary>
     public bool SetDocumentTitle(string documentId, string title)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(documentId);
@@ -156,6 +164,24 @@ public class SasdDocumentTabs : UserControl
     }
 
     /// <inheritdoc />
+    protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+    {
+        Keys keyCode = keyData & Keys.KeyCode;
+        Keys modifiers = keyData & Keys.Modifiers;
+        if (keyCode == Keys.Tab &&
+            (modifiers == Keys.Control || modifiers == (Keys.Control | Keys.Shift)))
+        {
+            bool moveForward = modifiers == Keys.Control;
+            if (SelectAdjacentDocument(moveForward))
+            {
+                return true;
+            }
+        }
+
+        return base.ProcessCmdKey(ref msg, keyData);
+    }
+
+    /// <inheritdoc />
     protected override void Dispose(bool disposing)
     {
         if (disposing)
@@ -166,6 +192,22 @@ public class SasdDocumentTabs : UserControl
         }
 
         base.Dispose(disposing);
+    }
+
+    private bool SelectAdjacentDocument(bool moveForward)
+    {
+        if (tabControl.TabCount <= 1)
+        {
+            // Do not consume Ctrl+Tab when there is nothing to switch. A surrounding host may
+            // legitimately use the key combination for a broader navigation surface.
+            return false;
+        }
+
+        int currentIndex = Math.Max(0, tabControl.SelectedIndex);
+        int offset = moveForward ? 1 : -1;
+        int nextIndex = (currentIndex + offset + tabControl.TabCount) % tabControl.TabCount;
+        tabControl.SelectedIndex = nextIndex;
+        return true;
     }
 
     private void HandleSelectedIndexChanged(object? sender, EventArgs e)

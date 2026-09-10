@@ -1,5 +1,26 @@
 # Sasd.Ui.WinForms.Shell
 
-**Reserved R1 module:** Application shell, navigation, breadcrumbs, document tabs and status.
+Reusable application-shell, navigation, document and status components for SASD WinForms applications.
 
-The project file and implementation are added only when its R0/R1 acceptance criteria are scheduled. This placeholder keeps the architecture visible without claiming unfinished code.
+## Implemented R1 foundation
+
+- `SasdShellForm` composes the command bar, navigation host, status surface and global command manager without a service locator;
+- `SasdCommandBar` projects application commands into a standard toolbar surface;
+- `SasdNavigationHost` registers and selects application-owned navigation pages;
+- `SasdBreadcrumb` exposes a stable application-defined path without taking over routing;
+- `SasdDocumentTabs` owns factory-created document controls, keeps stable document ids, updates visible/accessibility titles together and supports Ctrl+Tab / Ctrl+Shift+Tab document switching;
+- `SasdStatusService`, `SasdStatusBinding` and `SasdStatusBar` provide priority-aware status feedback.
+
+## Document ownership and keyboard behavior
+
+`SasdDocumentTabs.OpenOrSelect(...)` takes ownership of a newly factory-created visual document control after it is accepted into the host. Closing that document disposes its `TabPage` and therefore the owned content control. Business/domain state that must survive closing belongs outside the visual control.
+
+The host guarantees conventional Ctrl+Tab and Ctrl+Shift+Tab switching only when at least two documents are open. It deliberately does **not** impose a generic Ctrl+W close shortcut: applications need an explicit dirty/save/close-cancellation policy before a keyboard shortcut may safely close potentially unsaved work.
+
+Document titles are exposed both visually and through accessibility metadata. Reopening an existing stable id with a different title updates the same owned document rather than creating duplicate content.
+
+## Boundaries
+
+The Shell module coordinates presentation components only. Applications retain ownership of routing decisions, business state, persistence, unsaved-work policy and the command implementations registered with the shell.
+
+The module contains no database/ORM integration, network/background service, telemetry or vendor-specific shell implementation. Platform keyboard behavior is limited to interactions whose semantics can be guaranteed without application-domain knowledge.
