@@ -34,9 +34,12 @@ pwsh ./build/verify.ps1
 | State & recent items | `SasdStateStore`, versioned JSON state sections, `SasdRecentItemsService` |
 | Windows integration | file/folder dialogs, clipboard, safe shell URI handling, `SasdTrayService`, `SasdSystemIconService`, policy-validated drag-and-drop |
 | R2 native controls | `SasdPropertyEditor`, `SasdImageViewer`, `SasdKpiCard`, image ownership and zoom behaviour |
+| Acceptance lab | live DPI/theme/window snapshot plus an explicit keyboard focus route for manual scale, focus and High-Contrast observations |
 | Self test | public-API checks for base controls, dialog defaults, search/filters, grid state, `SasdGridController<T>`, CSV escaping, KPI/accessibility, image ownership, property editor, semantic icons, hidden tray defaults, progress, themes and state round-trip |
 
 The showcase does not try to give every small type a separate page. Related controls are grouped into realistic interaction surfaces, while the **Self test** page covers additional public contracts that are easier to verify programmatically than visually.
+
+The **Acceptance lab** has a different purpose: it assists human checks that depend on the actual Windows display configuration. It intentionally does not claim that a release gate passed merely because it can display the current DPI or because the focus route works on one machine.
 
 ## Suggested manual test tour
 
@@ -50,7 +53,10 @@ A useful first pass is:
 6. save/load/remove UI state and add/reload/clear recent items;
 7. explicitly show/hide the tray icon, inspect semantic icons, test clipboard/dialog/shell operations and drop accepted/rejected files;
 8. change image zoom modes, replace/clear the generated image and toggle the property editor read-only projection;
-9. finish with **Self test** and inspect the visible PASS/FAIL list.
+9. use **Acceptance lab** at the Windows display scales available to you, resize/move the window, then traverse the numbered focus route using Tab and Shift+Tab only;
+10. finish with **Self test** and inspect the visible PASS/FAIL list.
+
+For formal DPI/Designer/accessibility acceptance, copy the observations into the project evidence rather than treating the live Acceptance-lab snapshot as permanent proof. In particular, a manual pass at one DPI must not be generalized to 125/150/200 percent or mixed-monitor behavior that was not actually tested.
 
 ## Theme shortcuts
 
@@ -83,6 +89,8 @@ The Windows page deliberately keeps side effects explicit:
 - the showcase starts no background service and performs no network request by itself.
 
 The **Self test** page is deliberately safer still: it does not open modal dialogs, show a tray icon, launch external programs or access the network. Its StateStore check writes and removes only its dedicated test section.
+
+The **Acceptance lab** also remains local-only. It reads runtime UI/process information such as the current control DPI, window size and Windows High-Contrast flag; it does not inspect other applications or send the observations anywhere.
 
 ## Why the code is explicit
 
