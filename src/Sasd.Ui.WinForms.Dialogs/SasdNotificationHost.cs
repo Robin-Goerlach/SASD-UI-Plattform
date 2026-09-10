@@ -35,16 +35,19 @@ public sealed class SasdNotificationHost : UserControl
     private readonly Button dismissButton;
     private readonly System.Windows.Forms.Timer lifetimeTimer;
     private readonly int ownerThreadId;
+    private readonly object dispatchSync = new();
     private ISasdNotificationService? notificationService;
     private SasdNotification? currentNotification;
+    private SasdNotification? pendingNotification;
     private bool disposed;
 
     /// <summary>Creates a hidden notification host.</summary>
     public SasdNotificationHost()
     {
         // WinForms controls are expected to be constructed on their owning UI thread.
-        // Remember that thread so early service publications can be handled safely even
-        // before the control has created a native window handle.
+        // Remember that thread so owner-thread publications remain usable before a native
+        // handle exists and worker publications can be deferred without guessing from
+        // InvokeRequired (which is ambiguous before handle creation).
         ownerThreadId = Environment.CurrentManagedThreadId;
 
         AutoSize = true;
@@ -173,6 +176,15 @@ public sealed class SasdNotificationHost : UserControl
             notification.Severity,
             notification.Lifetime);
 
+        // An owner-thread publication before handle creation is already safe to project
+        // into managed child-control state. It also supersedes any older worker publication
+        // that was waiting for HandleCreated, because the R1 host deliberately models only
+        // the latest notification rather than an unbounded notification queue.
+        lock (dispatchSync)
+        {
+            pendingNotification = null;
+        }
+
         currentNotification = validated;
         severityLabel.Text = validated.Severity.ToString();
         titleLabel.Text = validated.Title ?? string.Empty;
@@ -210,6 +222,33 @@ public sealed class SasdNotificationHost : UserControl
     }
 
     /// <inheritdoc />
+    protected override void OnHandleCreated(EventArgs e)
+    {
+        base.OnHandleCreated(e);
+
+        SasdNotification? pending;
+        lock (dispatchSync)
+        {
+            if (disposed)
+            {
+                return;
+            }
+
+            pending = pendingNotification;
+            pendingNotification = null;
+        }
+
+        // HandleCreated is raised on the control's owner thread. Flushing here avoids
+        // BeginInvoke before a handle exists and gives startup worker publications a
+        // deterministic hand-off point. Only the latest pending notification is retained,
+        // matching the host's documented one-notification-at-a-time model.
+        if (pending is not null)
+        {
+            ShowNotification(pending);
+        }
+    }
+
+    /// <inheritdoc />
     protected override void Dispose(bool disposing)
     {
         if (disposing && !disposed)
@@ -218,20 +257,27 @@ public sealed class SasdNotificationHost : UserControl
             lifetimeTimer.Tick -= OnLifetimeTimerTick;
             lifetimeTimer.Dispose();
             dismissButton.Click -= OnDismissClick;
-            disposed = true;
+
+            lock (dispatchSync)
+            {
+                // A queued startup notification must not retain application data or become
+                // visible if a control is disposed before its handle is ever created.
+                pendingNotification = null;
+                disposed = true;
+            }
         }
 
         base.Dispose(disposing);
     }
 
     private void OnNotificationPublished(object? sender, SasdNotificationEventArgs e) =>
-        Dispatch(() => ShowNotification(e.Notification));
+        Dispatch(e.Notification);
 
     private void OnDismissClick(object? sender, EventArgs e) => Dismiss();
 
     private void OnLifetimeTimerTick(object? sender, EventArgs e) => Dismiss();
 
-    private void Dispatch(Action action)
+    private void Dispatch(SasdNotification notification)
     {
         if (disposed || IsDisposed || Disposing)
         {
@@ -241,25 +287,49 @@ public sealed class SasdNotificationHost : UserControl
         if (!IsHandleCreated)
         {
             // InvokeRequired can return false on a worker thread before handle creation.
-            // Direct execution is therefore allowed only on the thread that constructed
-            // this WinForms control. Worker-thread publications wait until a handle exists.
+            // Direct managed-control access is therefore allowed only on the constructor
+            // thread. Worker publications retain the latest value until HandleCreated.
             if (Environment.CurrentManagedThreadId == ownerThreadId)
             {
-                action();
+                ShowNotification(notification);
+                return;
             }
 
-            return;
+            lock (dispatchSync)
+            {
+                if (disposed || IsDisposed || Disposing)
+                {
+                    return;
+                }
+
+                // Recheck under the lock. The owner thread may have created the handle
+                // between the first IsHandleCreated test and acquiring dispatchSync.
+                if (!IsHandleCreated)
+                {
+                    pendingNotification = notification;
+                    return;
+                }
+            }
         }
 
         if (!InvokeRequired)
         {
-            action();
+            ShowNotification(notification);
             return;
         }
 
         try
         {
-            BeginInvoke(action);
+            BeginInvoke(() =>
+            {
+                // BeginInvoke can be accepted just before application shutdown and execute
+                // after Dispose has started. The callback therefore rechecks lifecycle state
+                // instead of letting a late transient notification surface an exception.
+                if (!disposed && !IsDisposed && !Disposing)
+                {
+                    ShowNotification(notification);
+                }
+            });
         }
         catch (InvalidOperationException)
         {
