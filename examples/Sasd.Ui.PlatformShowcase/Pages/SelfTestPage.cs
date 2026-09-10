@@ -1,3 +1,4 @@
+using Sasd.Ui.Core;
 using Sasd.Ui.WinForms.Data;
 using Sasd.Ui.WinForms.Forms;
 using Sasd.Ui.WinForms.Media;
@@ -146,8 +147,12 @@ internal sealed class SelfTestPage : UserControl
 
             await RunCheckAsync("Theme service has a valid current theme", () =>
             {
-                Ensure(themeService.Current is not null, "Theme service has no current definition.");
-                Ensure(!string.IsNullOrWhiteSpace(themeService.Current.Id), "Current theme has no stable identifier.");
+                // Store the property value once. A property can theoretically return a different
+                // result between calls, so C# nullable flow analysis correctly does not carry the
+                // first null-check across a second independent property access.
+                SasdThemeDefinition currentTheme = themeService.Current
+                    ?? throw new InvalidOperationException("Theme service has no current definition.");
+                Ensure(!string.IsNullOrWhiteSpace(currentTheme.Id), "Current theme has no stable identifier.");
                 return Task.CompletedTask;
             }, () => passed++, () => failed++);
 
