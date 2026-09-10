@@ -15,6 +15,7 @@ internal static class Program
             await ValidateShortcutBindingAsync();
             ValidateStatusServiceAndBinding();
             ValidateShellComposition();
+            ValidateDocumentTabsKeyboardAndAccessibility();
             ValidateNotificationHost();
 
             Console.WriteLine("SASD shell integration smoke checks passed.");
@@ -153,6 +154,46 @@ internal static class Program
         Ensure(shell.CommandManager.Count == 1, "Shell command registry retained an unregistered command.");
     }
 
+    private static void ValidateDocumentTabsKeyboardAndAccessibility()
+    {
+        using var tabs = new TestDocumentTabs();
+        Ensure(tabs.AccessibleRole == AccessibleRole.Grouping && tabs.AccessibleName == "Documents",
+            "Document host does not expose stable group-level accessibility semantics.");
+
+        TabControl tabControl = tabs.Controls.OfType<TabControl>().Single();
+        Ensure(tabControl.AccessibleRole == AccessibleRole.PageTabList && tabControl.AccessibleName == "Document tabs",
+            "Native document tab list does not expose explicit page-tab accessibility semantics.");
+
+        Control first = tabs.OpenOrSelect("one", "First", static () => new Panel());
+        Control same = tabs.OpenOrSelect("ONE", "First renamed", static () => new Label());
+        tabs.OpenOrSelect("two", "Second", static () => new Panel());
+
+        Ensure(ReferenceEquals(first, same),
+            "Reopening an existing document id created replacement content.");
+        Ensure(tabControl.TabPages[0].Text == "First renamed" &&
+               tabControl.TabPages[0].AccessibleName == "First renamed",
+            "Reopening an existing document with a new title left stale accessible tab text.");
+
+        tabs.SelectDocument("one");
+        int selectedEvents = 0;
+        tabs.DocumentSelected += (_, _) => selectedEvents++;
+
+        // SasdDocumentTabs guarantees the conventional Ctrl+Tab / Ctrl+Shift+Tab document
+        // switching path itself. A test subclass exposes ProcessCmdKey without injecting input
+        // into the process-global desktop session.
+        Ensure(tabs.RaiseCommandKey(Keys.Control | Keys.Tab),
+            "Ctrl+Tab was not handled while more than one document was open.");
+        Ensure(string.Equals(tabs.SelectedDocumentId, "two", StringComparison.OrdinalIgnoreCase),
+            "Ctrl+Tab did not select the next document.");
+
+        Ensure(tabs.RaiseCommandKey(Keys.Control | Keys.Shift | Keys.Tab),
+            "Ctrl+Shift+Tab was not handled while more than one document was open.");
+        Ensure(string.Equals(tabs.SelectedDocumentId, "one", StringComparison.OrdinalIgnoreCase),
+            "Ctrl+Shift+Tab did not select the previous document.");
+        Ensure(selectedEvents == 2,
+            "Keyboard document switching did not publish one selection event per actual change.");
+    }
+
     private static void ValidateNotificationHost()
     {
         using var host = new SasdNotificationHost();
@@ -215,6 +256,15 @@ internal static class Program
             var args = new KeyEventArgs(keys);
             OnKeyDown(args);
             return args;
+        }
+    }
+
+    private sealed class TestDocumentTabs : SasdDocumentTabs
+    {
+        public bool RaiseCommandKey(Keys keys)
+        {
+            Message message = default;
+            return ProcessCmdKey(ref message, keys);
         }
     }
 }
