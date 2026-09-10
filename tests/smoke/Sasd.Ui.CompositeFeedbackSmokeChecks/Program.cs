@@ -7,14 +7,14 @@ namespace Sasd.Ui.CompositeFeedbackSmokeChecks;
 internal static class Program
 {
     [STAThread]
-    private static async Task<int> Main()
+    private static int Main()
     {
         try
         {
             ValidateEmptyState();
             ValidateValidationSummary();
             ValidateBusyOverlay();
-            await ValidateNotificationPreHandleDispatchAsync();
+            ValidateNotificationPreHandleDispatch();
             ValidateNotificationHostLifecycle();
 
             Console.WriteLine("SASD composite feedback smoke checks passed.");
@@ -125,7 +125,7 @@ internal static class Program
             "Busy overlay kept stale accessible text after leaving the busy state.");
     }
 
-    private static async Task ValidateNotificationPreHandleDispatchAsync()
+    private static void ValidateNotificationPreHandleDispatch()
     {
         var service = new SasdNotificationService();
         using var host = new SasdNotificationHost { DefaultLifetime = TimeSpan.Zero };
@@ -133,14 +133,17 @@ internal static class Program
         host.NotificationShown += (_, _) => shown++;
         host.Bind(service);
 
-        // Startup services can publish from a worker before the form/control hierarchy has
-        // created native handles. InvokeRequired is ambiguous in that state, so the host must
-        // not touch child controls from the worker and must not silently lose the notification.
-        await Task.Run(() =>
+        // Creating WinForms controls can install a WindowsFormsSynchronizationContext even
+        // before Application.Run starts. Awaiting a worker task here would therefore try to
+        // resume through a message loop this smoke executable intentionally does not run.
+        // Blocking for this short, self-contained worker is deliberate: the worker touches
+        // only the notification service/pending slot, while every UI assertion remains on
+        // this STA owner thread.
+        Task.Run(() =>
         {
             service.Publish("Earlier startup notification");
             service.Publish("Latest startup notification");
-        });
+        }).GetAwaiter().GetResult();
 
         Ensure(!host.IsHandleCreated, "Notification host unexpectedly created a handle on the worker thread.");
         Ensure(host.CurrentNotification is null && shown == 0,
@@ -162,7 +165,7 @@ internal static class Program
         ownerWinsHost.NotificationShown += (_, _) => ownerWinsShown++;
         ownerWinsHost.Bind(ownerWinsService);
 
-        await Task.Run(() => ownerWinsService.Publish("Worker value"));
+        Task.Run(() => ownerWinsService.Publish("Worker value")).GetAwaiter().GetResult();
         ownerWinsHost.ShowNotification(new SasdNotification("Owner value"));
         Ensure(ownerWinsShown == 1 && ownerWinsHost.CurrentNotification?.Message == "Owner value",
             "Owner-thread notification did not supersede pending startup feedback.");
