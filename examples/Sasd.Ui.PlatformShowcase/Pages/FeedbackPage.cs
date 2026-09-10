@@ -3,7 +3,7 @@ using Sasd.Ui.WinForms.Shell;
 
 namespace Sasd.Ui.PlatformShowcase;
 
-/// <summary>Demonstrates modal dialogs, transient notifications and a busy overlay.</summary>
+/// <summary>Demonstrates modal dialogs, progress, transient notifications and a busy overlay.</summary>
 internal sealed class FeedbackPage : UserControl
 {
     private readonly ISasdDialogService dialogService;
@@ -36,7 +36,7 @@ internal sealed class FeedbackPage : UserControl
             Text =
                 "Dialogs and feedback\r\n\r\n" +
                 "Use modal dialogs for decisions or important details, transient notifications for non-critical feedback, " +
-                "and the busy overlay when a region must temporarily stop accepting input.",
+                "a cancellable progress dialog for longer application-owned work, and the busy overlay when a region must temporarily stop accepting input.",
         };
 
         var actions = new FlowLayoutPanel
@@ -58,6 +58,8 @@ internal sealed class FeedbackPage : UserControl
                 "Example failure",
                 "Technical details belong in the expandable details area.\r\nNo real exception occurred.")));
         actions.Controls.Add(CreateButton("Confirm", ConfirmExample));
+        actions.Controls.Add(CreateButton("Custom SasdDialogForm", ShowCustomDialog));
+        actions.Controls.Add(CreateButton("Progress dialog", ShowProgressDialog));
         actions.Controls.Add(CreateButton("Info notification", () => PublishNotification(SasdNotificationSeverity.Information)));
         actions.Controls.Add(CreateButton("Success notification", () => PublishNotification(SasdNotificationSeverity.Success)));
         actions.Controls.Add(CreateButton("Warning notification", () => PublishNotification(SasdNotificationSeverity.Warning)));
@@ -80,7 +82,8 @@ internal sealed class FeedbackPage : UserControl
             AutoSize = true,
             MaximumSize = new Size(900, 0),
             Text =
-                "The simulated work uses Task.Delay only to make the busy state visible. " +
+                "The busy-overlay example uses Task.Delay only to make the busy state visible. " +
+                "The progress-dialog example deliberately reports from a worker task so the dialog's UI-thread boundary can be exercised. " +
                 "A real application would await its own cancellable service operation.",
         });
         content.Controls.Add(busyOverlay);
@@ -124,6 +127,61 @@ internal sealed class FeedbackPage : UserControl
             confirmed ? "Example action confirmed." : "Example action cancelled.",
             confirmed ? SasdStatusSeverity.Success : SasdStatusSeverity.Information,
             TimeSpan.FromSeconds(4));
+    }
+
+    private void ShowCustomDialog()
+    {
+        using var dialog = new ShowcaseInputDialog();
+        DialogResult result = dialog.ShowDialog(this);
+        publishStatus(
+            result == DialogResult.OK
+                ? $"Custom dialog accepted: {dialog.Value}"
+                : "Custom dialog cancelled.",
+            result == DialogResult.OK ? SasdStatusSeverity.Success : SasdStatusSeverity.Information,
+            TimeSpan.FromSeconds(5));
+    }
+
+    private void ShowProgressDialog()
+    {
+        using var progressDialog = new SasdProgressDialog(
+            "Progress example",
+            "Preparing example operation…",
+            allowCancellation: true);
+
+        progressDialog.Shown += (_, _) =>
+        {
+            // The worker deliberately reports through the public IProgress implementation from
+            // outside the UI thread. This makes the sample exercise the same marshalling boundary
+            // a real service operation would rely on, without requiring any external backend.
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    for (int percent = 0; percent <= 100; percent += 10)
+                    {
+                        progressDialog.CancellationToken.ThrowIfCancellationRequested();
+                        progressDialog.Report(new SasdProgressUpdate(
+                            $"Processing demonstration step {percent / 10 + 1} of 11…",
+                            percent));
+                        await Task.Delay(
+                            TimeSpan.FromMilliseconds(120),
+                            progressDialog.CancellationToken).ConfigureAwait(false);
+                    }
+
+                    progressDialog.Complete(DialogResult.OK);
+                }
+                catch (OperationCanceledException)
+                {
+                    progressDialog.Complete(DialogResult.Cancel);
+                }
+            });
+        };
+
+        DialogResult result = progressDialog.ShowDialog(this);
+        publishStatus(
+            result == DialogResult.OK ? "Progress example completed." : "Progress example cancelled.",
+            result == DialogResult.OK ? SasdStatusSeverity.Success : SasdStatusSeverity.Information,
+            TimeSpan.FromSeconds(5));
     }
 
     private void PublishNotification(SasdNotificationSeverity severity)
