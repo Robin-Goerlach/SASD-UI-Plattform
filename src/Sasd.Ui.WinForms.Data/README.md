@@ -4,7 +4,7 @@ Reusable data-presentation components and application-neutral query/state helper
 
 ## Implemented R1 foundation
 
-- `SasdSearchBox` with DPI-aware layout, explicit search/editor/clear accessibility semantics and a keyboard-reachable clear action that is removed from navigation while empty;
+- `SasdSearchBox` with DPI-aware/accessibility-aware editor/clear UI, immediate text-state events, a UI-thread debounce, explicit search-request commits and Enter/Escape keyboard behavior;
 - `SasdFilterBar` with neutral filter descriptors, explicit grouping/action accessibility semantics, a current-filter accessible summary, and deterministic disposal of regenerated chip controls;
 - `SasdEmptyState` with optional primary action;
 - `SasdDataGrid` with conservative business-application defaults;
@@ -13,6 +13,16 @@ Reusable data-presentation components and application-neutral query/state helper
 - CSV export;
 - persisted grid layout state;
 - `SasdListView` and `SasdTreeView` defaults.
+
+### Search-box edit and request contract
+
+`SasdSearchBox.SearchTextChanged` remains the immediate edit/state event. Application code that performs filtering, queries or other potentially expensive work should normally subscribe to `SearchRequested` instead. By default, edited text is committed after a 300 ms quiet period. The delay is controlled by `DebounceMilliseconds`; setting it to zero requests on each text change.
+
+The debounce uses a component-owned `System.Windows.Forms.Timer`, so it stays on the WinForms UI message loop and introduces no worker thread or hidden background service. The timer is restarted on each edit and stopped before publishing, making one quiet edit state produce one request. It is explicitly disposed with the control.
+
+`RequestSearch()` commits the current text immediately and cancels its pending debounce. Enter performs the same commit while the native editor owns focus. `ClearSearch()`, the clear button and Escape on a non-empty search clear the text and immediately request the empty state so stale filtered results are not left visible for the debounce interval. An already-empty search does not claim Escape, leaving a containing dialog free to use its normal Cancel/Escape behavior.
+
+`SasdSearchRequestedEventArgs.SearchText` is a snapshot of the exact editor text at publication time. Search interpretation and normalization remain application/controller responsibilities; the UI component does not create SQL, ORM expressions or domain queries.
 
 ### Filter-bar accessibility and lifecycle
 

@@ -11,6 +11,7 @@ internal static class Program
         try
         {
             ValidateTabTraversalAndShortcut();
+            SearchBoxRequestChecks.Run();
             Console.WriteLine("SASD keyboard acceptance smoke checks passed.");
             return 0;
         }
@@ -80,7 +81,7 @@ internal static class Program
         command.Enabled = false;
         KeyEventArgs disabledShortcut = form.RouteKeyDown(Keys.Control | Keys.Shift | Keys.R);
         Ensure(!disabledShortcut.Handled && !disabledShortcut.SuppressKeyPress,
-            "A disabled command incorrectly claimed its keyboard shortcut.");
+            "A disabled command incorrectly claimed its global shortcut.");
         Ensure(shortcutExecutions == 1, "A disabled keyboard command was executed.");
 
         int searchChanges = 0;
@@ -105,6 +106,13 @@ internal static class Program
         KeyboardSearchBox searchBox = form.SearchBox;
         TextBox editor = searchBox.Controls.OfType<TextBox>().Single();
         Button clearButton = searchBox.Controls.OfType<Button>().Single();
+        int searchRequests = 0;
+        string? lastRequestedText = null;
+        searchBox.SearchRequested += (_, args) =>
+        {
+            searchRequests++;
+            lastRequestedText = args.SearchText;
+        };
 
         Ensure(searchBox.AccessibleRole == AccessibleRole.Grouping && searchBox.AccessibleName == "Search",
             "Search box does not expose stable group-level accessibility semantics.");
@@ -133,16 +141,36 @@ internal static class Program
         Ensure(ReferenceEquals(searchBox.ActiveControl, editor),
             "Shift+Tab from the search clear action did not return to the editor.");
 
-        // PerformClick exercises the same public Button action after proving that keyboard
-        // traversal can reach it. Clearing should raise the normal SearchTextChanged event and
-        // remove the now-meaningless action from the active keyboard/accessibility surface.
+        // Enter is a deliberate local commit shortcut while the search editor owns focus. It
+        // flushes the pending debounce rather than allowing an enclosing form's default button
+        // to accidentally become the search action.
+        Ensure(searchBox.RouteCommandKey(Keys.Enter),
+            "Search editor did not claim Enter for an immediate search request.");
+        Ensure(searchRequests == 1 && lastRequestedText == "release",
+            "Enter did not commit the current search text exactly once.");
+
+        // PerformClick exercises the same public clear action after proving that keyboard
+        // traversal can reach it. Clearing raises the immediate text-change event and one
+        // immediate empty-state search request, then removes the inapplicable action from the
+        // keyboard/accessibility surface.
         clearButton.PerformClick();
         Ensure(searchBox.SearchText.Length == 0,
             "Search clear action did not clear the current search text.");
         Ensure(getSearchChangeCount() == 2,
             "Search clear action did not publish exactly one additional text-change notification.");
+        Ensure(searchRequests == 2 && lastRequestedText == string.Empty,
+            "Search clear action did not request the empty search state exactly once.");
         Ensure(!clearButton.Visible && !clearButton.CanSelect,
             "Empty search box left an inapplicable clear action in keyboard navigation.");
+
+        searchBox.SearchText = "escape";
+        searchBox.FocusSearch();
+        Ensure(searchBox.RouteCommandKey(Keys.Escape),
+            "Non-empty search did not claim Escape for clearing.");
+        Ensure(searchBox.SearchText.Length == 0 && getSearchChangeCount() == 4,
+            "Escape did not clear the search through the normal text-change contract.");
+        Ensure(searchRequests == 3 && lastRequestedText == string.Empty,
+            "Escape did not replace the pending debounce with one empty-state request.");
     }
 
     private static void Ensure(bool condition, string message)
@@ -235,12 +263,18 @@ internal static class Program
     }
 
     /// <summary>
-    /// Test-only adapter exposing the inherited protected dialog-key route. Keeping the adapter
-    /// in test code avoids adding a product API solely for automation while exercising the same
-    /// immediate container path a native TextBox uses for Tab/Shift+Tab processing.
+    /// Test-only adapter exposing inherited protected key routes. Keeping the adapter in test
+    /// code avoids adding a public automation hook while exercising the same immediate
+    /// container paths that native WinForms children use for Tab/Enter/Escape processing.
     /// </summary>
     private sealed class KeyboardSearchBox : SasdSearchBox
     {
         public bool RouteDialogKey(Keys keyData) => ProcessDialogKey(keyData);
+
+        public bool RouteCommandKey(Keys keyData)
+        {
+            Message message = default;
+            return ProcessCmdKey(ref message, keyData);
+        }
     }
 }
