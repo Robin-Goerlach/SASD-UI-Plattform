@@ -53,25 +53,32 @@ public class SasdFilterBar : UserControl
         AutoSize = true;
         AutoSizeMode = AutoSizeMode.GrowAndShrink;
         MinimumSize = new Size(180, 34);
+        AccessibleRole = AccessibleRole.Grouping;
         AccessibleName = "Active filters";
 
         filterHost = new FlowLayoutPanel
         {
+            AccessibleRole = AccessibleRole.Grouping,
+            AccessibleName = "Active filter list",
+            AccessibleDescription = "Filters currently applied to the data view.",
             AutoSize = true,
             AutoSizeMode = AutoSizeMode.GrowAndShrink,
             Dock = DockStyle.Fill,
             FlowDirection = FlowDirection.LeftToRight,
             Margin = Padding.Empty,
             Padding = Padding.Empty,
+            TabStop = false,
             WrapContents = true,
         };
 
         clearAllButton = new Button
         {
             AccessibleName = "Clear all filters",
+            AccessibleDescription = "Removes every active filter from the current view.",
             AutoSize = true,
             FlatStyle = FlatStyle.System,
             Margin = new Padding(6, 0, 0, 0),
+            TabIndex = 1,
             Text = "Clear filters",
             Visible = false,
         };
@@ -80,6 +87,7 @@ public class SasdFilterBar : UserControl
         Controls.Add(filterHost);
         Controls.Add(clearAllButton);
         clearAllButton.Dock = DockStyle.Right;
+        UpdateAccessibleState();
     }
 
     /// <summary>Occurs after a filter is added, replaced, removed, cleared or replaced as a set.</summary>
@@ -206,19 +214,23 @@ public class SasdFilterBar : UserControl
         }
 
         clearAllButton.Visible = activeFilters.Count > 0;
+        UpdateAccessibleState();
     }
 
     private FlowLayoutPanel CreateFilterChip(SasdActiveFilter filter)
     {
         var chip = new FlowLayoutPanel
         {
+            AccessibleRole = AccessibleRole.Grouping,
             AccessibleName = filter.DisplayText,
+            AccessibleDescription = $"Active filter {filter.DisplayText}.",
             AutoSize = true,
             AutoSizeMode = AutoSizeMode.GrowAndShrink,
             BackColor = SystemColors.ControlLight,
             FlowDirection = FlowDirection.LeftToRight,
             Margin = new Padding(0, 0, 6, 4),
             Padding = new Padding(6, 3, 2, 3),
+            TabStop = false,
             WrapContents = false,
         };
 
@@ -232,15 +244,30 @@ public class SasdFilterBar : UserControl
         var removeButton = new Button
         {
             AccessibleName = $"Remove filter {filter.DisplayText}",
+            AccessibleDescription = $"Removes the active filter {filter.DisplayText}.",
             AutoSize = true,
             FlatStyle = FlatStyle.System,
             Margin = Padding.Empty,
             MinimumSize = new Size(26, 24),
+            TabIndex = 0,
             Text = "×",
         };
         removeButton.Click += (_, _) => RemoveFilter(filter.Key);
         chip.Controls.Add(removeButton);
 
         return chip;
+    }
+
+    private void UpdateAccessibleState()
+    {
+        if (activeFilters.Count == 0)
+        {
+            AccessibleDescription = "No active filters.";
+            return;
+        }
+
+        string filters = string.Join("; ", activeFilters.Select(static filter => filter.DisplayText));
+        string noun = activeFilters.Count == 1 ? "filter" : "filters";
+        AccessibleDescription = $"{activeFilters.Count} active {noun}: {filters}.";
     }
 }
