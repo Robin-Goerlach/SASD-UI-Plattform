@@ -11,7 +11,7 @@ internal static class Program
         try
         {
             ValidateQueuedProgressBeforeHandle();
-            ValidateQueuedCompletionBeforeHandle();
+            ValidateQueuedCompletionBeforeShow();
             ValidateReportingAfterDispose();
             ValidateCancellation();
 
@@ -48,15 +48,19 @@ internal static class Program
         Ensure(progressBar.Value == 100, "Queued percentage was not clamped to the progress bar range.");
     }
 
-    private static void ValidateQueuedCompletionBeforeHandle()
+    private static void ValidateQueuedCompletionBeforeShow()
     {
         using var dialog = new SasdProgressDialog("Test", "Completing...");
 
         RunWorker(() => dialog.Complete(DialogResult.Cancel));
-        Ensure(dialog.DialogResult == DialogResult.None, "Completion touched the dialog before handle creation.");
+        Ensure(dialog.DialogResult == DialogResult.None, "Completion touched the dialog before its show lifecycle began.");
 
-        _ = dialog.Handle;
-        Ensure(dialog.DialogResult == DialogResult.Cancel, "Queued completion result was not applied on handle creation.");
+        // A fast worker can complete before ShowDialog is entered. The dialog should still
+        // participate in a normal WinForms show sequence and then close from Shown, rather
+        // than attempting Close from HandleCreated while native handle creation is in flight.
+        DialogResult result = dialog.ShowDialog();
+        Ensure(result == DialogResult.Cancel, "Queued completion did not close the shown dialog with the requested result.");
+        Ensure(dialog.DialogResult == DialogResult.Cancel, "Queued completion result was not retained by the dialog.");
     }
 
     private static void ValidateReportingAfterDispose()
@@ -88,7 +92,7 @@ internal static class Program
     private static void RunWorker(Action action)
     {
         // Block the STA test thread while the worker performs only the public cross-thread call.
-        // No message pumping is needed because pre-handle calls are expected to buffer state.
+        // No message pumping is needed because pre-handle/pre-show calls are expected to buffer state.
         Task.Run(action).GetAwaiter().GetResult();
     }
 
