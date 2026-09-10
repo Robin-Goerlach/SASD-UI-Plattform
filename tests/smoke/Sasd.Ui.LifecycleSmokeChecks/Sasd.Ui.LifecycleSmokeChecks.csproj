@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <RootNamespace>Sasd.Ui.LifecycleSmokeChecks</RootNamespace>
+    <AssemblyName>Sasd.Ui.LifecycleSmokeChecks</AssemblyName>
+    <Description>Dependency-free repeated lifecycle and disposal checks for representative SASD WinForms components.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Sasd.Ui.WinForms.Media\Sasd.Ui.WinForms.Media.csproj" />
+    <ProjectReference Include="..\..\..\src\Sasd.Ui.WinForms.Shell\Sasd.Ui.WinForms.Shell.csproj" />
+    <ProjectReference Include="..\..\..\src\Sasd.Ui.WinForms.Windows\Sasd.Ui.WinForms.Windows.csproj" />
+  </ItemGroup>
+</Project>
