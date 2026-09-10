@@ -320,7 +320,16 @@ public sealed class SasdNotificationHost : UserControl
 
         try
         {
-            BeginInvoke(() => ShowNotification(notification));
+            BeginInvoke(() =>
+            {
+                // BeginInvoke can be accepted just before application shutdown and execute
+                // after Dispose has started. The callback therefore rechecks lifecycle state
+                // instead of letting a late transient notification surface an exception.
+                if (!disposed && !IsDisposed && !Disposing)
+                {
+                    ShowNotification(notification);
+                }
+            });
         }
         catch (InvalidOperationException)
         {
