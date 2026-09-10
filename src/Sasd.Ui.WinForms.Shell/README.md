@@ -6,10 +6,20 @@ Reusable application-shell, navigation, document and status components for SASD 
 
 - `SasdShellForm` composes the command bar, navigation host, status surface and global command manager without a service locator;
 - `SasdCommandBar` projects application commands into a standard toolbar surface;
-- `SasdNavigationHost` registers and selects application-owned navigation pages;
+- `SasdNavigationHost` registers application page factories, owns created views, exposes DPI/accessibility-aware navigation surfaces and supports explicit cached/non-cached view lifecycles;
 - `SasdBreadcrumb` exposes a stable application-defined path with explicit grouping/link/current-location accessibility semantics while leaving routing to the application;
 - `SasdDocumentTabs` owns factory-created document controls, keeps stable document ids, updates visible/accessibility titles together and supports Ctrl+Tab / Ctrl+Shift+Tab document switching;
 - `SasdStatusService`, `SasdStatusBinding` and `SasdStatusBar` provide priority-aware status feedback.
+
+## Navigation page ownership and cache policy
+
+Applications own the page factories registered through `SasdNavigationHost.RegisterPage(...)`. Once a factory successfully returns a visual `Control`, ownership of that control transfers to the navigation host. Applications should therefore keep business state outside the view when it must outlive the visual page and should not dispose cached page controls themselves.
+
+With `CachePages == false`, a view is disposed when navigation leaves it. With caching enabled, inactive views remain host-owned and are reused. Runtime changes of `CachePages` are supported as ownership transitions rather than treated as a performance-only hint: disabling caching immediately disposes inactive cached views while preserving the currently displayed child until navigation leaves it; enabling caching adopts the current view into the cache so the next navigation cannot detach it without an owner.
+
+The host also refuses to reattach an unexpectedly disposed cached view. If application code violates the ownership contract and disposes one, the stale cache entry is removed and the registered factory creates a replacement. Host disposal releases inactive cached views explicitly; the current visual child follows normal WinForms parent/child disposal.
+
+The navigation host, navigation list and content pane expose descriptive accessibility metadata, and the host opts into DPI scaling. These automated contracts do not replace the remaining real Designer, mixed-DPI, High-Contrast and UI Automation acceptance work.
 
 ## Breadcrumb presentation and ownership
 
