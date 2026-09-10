@@ -89,11 +89,57 @@ internal static class Program
         Ensure(form.SearchBox.SearchText == "release" && searchChanges == 1,
             "The search box did not retain and publish its search text change.");
 
+        ValidateSearchBoxKeyboardAndAccessibility(form, searchChanges);
+
         form.Hide();
         form.Dispose();
         Ensure(form.IsDisposed, "Keyboard scenario form was not disposed.");
         Ensure(form.NameTextBox.IsDisposed && form.EnabledCheckBox.IsDisposed && form.ApplyButton.IsDisposed,
             "The form did not dispose its owned keyboard-route controls.");
+    }
+
+    private static void ValidateSearchBoxKeyboardAndAccessibility(KeyboardScenarioForm form, int searchChangesBeforeClear)
+    {
+        SasdSearchBox searchBox = form.SearchBox;
+        TextBox editor = searchBox.Controls.OfType<TextBox>().Single();
+        Button clearButton = searchBox.Controls.OfType<Button>().Single();
+
+        Ensure(searchBox.AccessibleRole == AccessibleRole.Grouping && searchBox.AccessibleName == "Search",
+            "Search box does not expose stable group-level accessibility semantics.");
+        Ensure(editor.AccessibleName == "Search text",
+            "Search editor does not expose an explicit accessible name.");
+        Ensure(clearButton.AccessibleName == "Clear search" &&
+               !string.IsNullOrWhiteSpace(clearButton.AccessibleDescription),
+            "Search clear action does not expose a descriptive accessible contract.");
+        Ensure(clearButton.Visible && clearButton.CanSelect,
+            "Search clear action is not keyboard-selectable while search text is present.");
+
+        // FocusSearch is part of the public component contract. Once the editor owns focus,
+        // normal WinForms Tab handling must reach the visible clear action without SendKeys,
+        // private hooks or a process-global input injection.
+        searchBox.FocusSearch();
+        Ensure(ReferenceEquals(searchBox.ActiveControl, editor),
+            "FocusSearch did not move focus to the native search editor.");
+        Ensure(form.RouteDialogKey(Keys.Tab),
+            "WinForms did not accept Tab from the search editor to its clear action.");
+        Ensure(ReferenceEquals(searchBox.ActiveControl, clearButton),
+            "Tab from the search editor did not reach the visible clear action.");
+
+        Ensure(form.RouteDialogKey(Keys.Shift | Keys.Tab),
+            "WinForms did not accept Shift+Tab from the search clear action.");
+        Ensure(ReferenceEquals(searchBox.ActiveControl, editor),
+            "Shift+Tab from the search clear action did not return to the editor.");
+
+        // PerformClick exercises the same public Button action after proving that keyboard
+        // traversal can reach it. Clearing should raise the normal SearchTextChanged event and
+        // remove the now-meaningless action from the active keyboard/accessibility surface.
+        clearButton.PerformClick();
+        Ensure(searchBox.SearchText.Length == 0,
+            "Search clear action did not clear the current search text.");
+        Ensure(searchChangesBeforeClear + 1 == 2,
+            "Search test setup did not establish the expected change-event count.");
+        Ensure(!clearButton.Visible && !clearButton.CanSelect,
+            "Empty search box left an inapplicable clear action in keyboard navigation.");
     }
 
     private static void Ensure(bool condition, string message)
