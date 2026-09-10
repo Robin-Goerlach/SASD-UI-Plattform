@@ -4,7 +4,7 @@ Reusable data-presentation components and application-neutral query/state helper
 
 ## Implemented R1 foundation
 
-- `SasdSearchBox` with clear action;
+- `SasdSearchBox` with DPI-aware layout, explicit search/editor/clear accessibility semantics and a keyboard-reachable clear action that is removed from navigation while empty;
 - `SasdFilterBar` and neutral filter descriptors;
 - `SasdEmptyState` with optional primary action;
 - `SasdDataGrid` with conservative business-application defaults;

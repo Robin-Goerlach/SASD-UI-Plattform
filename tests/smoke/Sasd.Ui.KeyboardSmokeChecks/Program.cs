@@ -89,11 +89,60 @@ internal static class Program
         Ensure(form.SearchBox.SearchText == "release" && searchChanges == 1,
             "The search box did not retain and publish its search text change.");
 
+        ValidateSearchBoxKeyboardAndAccessibility(form, () => searchChanges);
+
         form.Hide();
         form.Dispose();
         Ensure(form.IsDisposed, "Keyboard scenario form was not disposed.");
         Ensure(form.NameTextBox.IsDisposed && form.EnabledCheckBox.IsDisposed && form.ApplyButton.IsDisposed,
             "The form did not dispose its owned keyboard-route controls.");
+    }
+
+    private static void ValidateSearchBoxKeyboardAndAccessibility(
+        KeyboardScenarioForm form,
+        Func<int> getSearchChangeCount)
+    {
+        KeyboardSearchBox searchBox = form.SearchBox;
+        TextBox editor = searchBox.Controls.OfType<TextBox>().Single();
+        Button clearButton = searchBox.Controls.OfType<Button>().Single();
+
+        Ensure(searchBox.AccessibleRole == AccessibleRole.Grouping && searchBox.AccessibleName == "Search",
+            "Search box does not expose stable group-level accessibility semantics.");
+        Ensure(editor.AccessibleName == "Search text",
+            "Search editor does not expose an explicit accessible name.");
+        Ensure(clearButton.AccessibleName == "Clear search" &&
+               !string.IsNullOrWhiteSpace(clearButton.AccessibleDescription),
+            "Search clear action does not expose a descriptive accessible contract.");
+        Ensure(clearButton.Visible && clearButton.CanSelect,
+            "Search clear action is not keyboard-selectable while search text is present.");
+
+        // FocusSearch is part of the public component contract. In a real key path the native
+        // editor delegates its dialog key to the immediate container (SasdSearchBox), not to
+        // the outer Form. The test subclass only exposes that protected WinForms path; it does
+        // not add product behavior or a public testing hook.
+        searchBox.FocusSearch();
+        Ensure(ReferenceEquals(searchBox.ActiveControl, editor),
+            "FocusSearch did not move focus to the native search editor.");
+        Ensure(searchBox.RouteDialogKey(Keys.Tab),
+            "WinForms did not accept Tab from the search editor to its clear action.");
+        Ensure(ReferenceEquals(searchBox.ActiveControl, clearButton),
+            "Tab from the search editor did not reach the visible clear action.");
+
+        Ensure(searchBox.RouteDialogKey(Keys.Shift | Keys.Tab),
+            "WinForms did not accept Shift+Tab from the search clear action.");
+        Ensure(ReferenceEquals(searchBox.ActiveControl, editor),
+            "Shift+Tab from the search clear action did not return to the editor.");
+
+        // PerformClick exercises the same public Button action after proving that keyboard
+        // traversal can reach it. Clearing should raise the normal SearchTextChanged event and
+        // remove the now-meaningless action from the active keyboard/accessibility surface.
+        clearButton.PerformClick();
+        Ensure(searchBox.SearchText.Length == 0,
+            "Search clear action did not clear the current search text.");
+        Ensure(getSearchChangeCount() == 2,
+            "Search clear action did not publish exactly one additional text-change notification.");
+        Ensure(!clearButton.Visible && !clearButton.CanSelect,
+            "Empty search box left an inapplicable clear action in keyboard navigation.");
     }
 
     private static void Ensure(bool condition, string message)
@@ -142,7 +191,7 @@ internal static class Program
                 Text = "Apply",
             };
 
-            SearchBox = new SasdSearchBox
+            SearchBox = new KeyboardSearchBox
             {
                 Dock = DockStyle.Top,
                 TabIndex = 3,
@@ -173,7 +222,7 @@ internal static class Program
 
         public Button ApplyButton { get; }
 
-        public SasdSearchBox SearchBox { get; }
+        public KeyboardSearchBox SearchBox { get; }
 
         public bool RouteDialogKey(Keys keyData) => ProcessDialogKey(keyData);
 
@@ -183,5 +232,15 @@ internal static class Program
             OnKeyDown(args);
             return args;
         }
+    }
+
+    /// <summary>
+    /// Test-only adapter exposing the inherited protected dialog-key route. Keeping the adapter
+    /// in test code avoids adding a product API solely for automation while exercising the same
+    /// immediate container path a native TextBox uses for Tab/Shift+Tab processing.
+    /// </summary>
+    private sealed class KeyboardSearchBox : SasdSearchBox
+    {
+        public bool RouteDialogKey(Keys keyData) => ProcessDialogKey(keyData);
     }
 }
