@@ -34,45 +34,35 @@ abstractions or micro-optimization. Add or strengthen behavioral checks and
 run the broad verification gate before declaring the work complete.
 ```
 
-## Current ready tasks
-
-### Issue #28 — Component coverage matrix
-
-Recommended next Codex task. It maps implemented public R1/R2 surfaces to Gallery, Showcase, smoke-test and manual acceptance evidence. This should give the next development cycle a factual view of what is implemented versus what is merely missing release-gate evidence.
-
-Expected outcome:
-
-- one maintainable evidence matrix;
-- direct repository paths for each source of evidence;
-- obvious dependency-free coverage gaps may be filled;
-- missing DPI/Designer/accessibility/UIA evidence must remain visibly missing rather than being inferred.
+## Current ready task
 
 ### Issue #27 — NuGet packaging dry-run
 
-Release-engineering task using normal SDK packaging capabilities. The task must stop before publication, signing credentials, external feeds or a package-boundary redesign.
+Current release-engineering task using normal SDK packaging capabilities. It validates the existing package graph without choosing a public release version and must stop before publication, signing credentials, external feeds or a package-boundary redesign.
 
 Expected outcome:
 
-- repeatable `dotnet pack` dry-run;
-- symbols and XML documentation where supported by the existing SDK/toolchain;
-- centrally consistent package metadata;
+- repeatable `dotnet pack` dry-run for the explicitly listed current product modules;
+- `.nupkg` and `.snupkg` output in a disposable ignored directory;
+- XML documentation and portable PDB presence verified from package contents;
+- centrally consistent authors/company/repository/license metadata;
 - no package publication.
 
 ## Recently completed
 
+### Issue #28 — Component coverage matrix
+
+Completed by PR #33. `docs/en/project/11_component-evidence-matrix.md` now separates implemented R1/R2 surfaces from direct Gallery, Showcase, smoke-test and still-pending manual acceptance evidence. Missing Designer, DPI, real Windows High Contrast, keyboard-only and UIA evidence stays explicit instead of being inferred from compilation.
+
 ### Issue #26 — UI lifecycle endurance checks
 
-Completed by PR #31. The canonical Windows gate now repeats representative create/use/dispose cycles for image ownership, document-tab ownership/event lifecycle and hidden tray-service disposal without introducing timing thresholds, handle-count assumptions or a new dependency.
+Completed by PR #31. The canonical Windows gate repeats representative create/use/dispose cycles for image ownership, document-tab ownership/event lifecycle and hidden tray-service disposal without introducing timing thresholds, handle-count assumptions or a new dependency.
 
-This completion is intentionally recorded here only as short queue context. Durable test behavior lives in `tests/smoke/Sasd.Ui.LifecycleSmokeChecks/` and `build/verify.ps1`.
+## After #27
 
-## Suggested order
+Use the evidence matrix rather than component count to choose the next small hardening task. The highest-value dependency-free gaps currently include direct behavioral coverage for `SasdGridController<T>`, `SasdPager`, `SasdRecentItemsService` and `SasdFormStateService`, followed by the manual keyboard/DPI/Designer/High-Contrast evidence that requires a controlled Windows environment.
 
-Use **#28 next**, then **#27**.
-
-The order is deliberate: lifecycle hardening is now in the shared gate, so the coverage matrix should identify the remaining evidence gaps before packaging work starts. Packaging can then reflect the package surface we actually intend to stabilize rather than driving architecture by accident.
-
-Do not run these issues concurrently if they touch the same verification files or project metadata. Small, serial pull requests are easier to review and keep the repository gate meaningful.
+Do not run overlapping tasks concurrently when they touch the same verification files or project metadata. Small, serial pull requests are easier to review and keep the repository gate meaningful.
 
 ## Completion contract for Codex
 
