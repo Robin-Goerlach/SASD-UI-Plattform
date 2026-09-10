@@ -2,10 +2,11 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <RootNamespace>Sasd.Ui.StateSmokeChecks</RootNamespace>
     <AssemblyName>Sasd.Ui.StateSmokeChecks</AssemblyName>
-    <Description>Dependency-free smoke checks for SASD UI-state persistence and recovery.</Description>
+    <Description>Dependency-free smoke checks for SASD UI-state persistence, recovery and window state.</Description>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\Sasd.Ui.WinForms.State\Sasd.Ui.WinForms.State.csproj" />
