@@ -156,11 +156,28 @@ internal static class Program
 
     private static void ValidateDocumentTabsKeyboardAndAccessibility()
     {
-        using var tabs = new TestDocumentTabs();
+        using var form = new Form
+        {
+            ClientSize = new Size(640, 360),
+            Location = new Point(-32000, -32000),
+            ShowInTaskbar = false,
+            StartPosition = FormStartPosition.Manual,
+            Text = "SASD document-tab smoke",
+        };
+        using var tabs = new TestDocumentTabs { Dock = DockStyle.Fill };
+        form.Controls.Add(tabs);
+
+        // Selection notifications originate from the native TabControl. Host it in a real,
+        // off-screen window so the smoke exercises the same handle lifecycle as an application
+        // rather than drawing conclusions from a handleless in-memory TabControl.
+        form.Show();
+
         Ensure(tabs.AccessibleRole == AccessibleRole.Grouping && tabs.AccessibleName == "Documents",
             "Document host does not expose stable group-level accessibility semantics.");
 
         TabControl tabControl = tabs.Controls.OfType<TabControl>().Single();
+        Ensure(tabControl.IsHandleCreated,
+            "Document tab list did not receive a native handle from its host window.");
         Ensure(tabControl.AccessibleRole == AccessibleRole.PageTabList && tabControl.AccessibleName == "Document tabs",
             "Native document tab list does not expose explicit page-tab accessibility semantics.");
 
@@ -191,7 +208,9 @@ internal static class Program
         Ensure(string.Equals(tabs.SelectedDocumentId, "one", StringComparison.OrdinalIgnoreCase),
             "Ctrl+Shift+Tab did not select the previous document.");
         Ensure(selectedEvents == 2,
-            "Keyboard document switching did not publish one selection event per actual change.");
+            $"Keyboard document switching published {selectedEvents} selection events instead of two.");
+
+        form.Hide();
     }
 
     private static void ValidateNotificationHost()
