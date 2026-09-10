@@ -6,13 +6,13 @@ namespace Sasd.Ui.DialogSmokeChecks;
 internal static class Program
 {
     [STAThread]
-    private static async Task<int> Main()
+    private static int Main()
     {
         try
         {
-            await ValidateQueuedProgressBeforeHandleAsync();
-            await ValidateQueuedCompletionBeforeHandleAsync();
-            await ValidateReportingAfterDisposeAsync();
+            ValidateQueuedProgressBeforeHandle();
+            ValidateQueuedCompletionBeforeHandle();
+            ValidateReportingAfterDispose();
             ValidateCancellation();
 
             Console.WriteLine("SASD dialog smoke checks passed.");
@@ -25,22 +25,22 @@ internal static class Program
         }
     }
 
-    private static async Task ValidateQueuedProgressBeforeHandleAsync()
+    private static void ValidateQueuedProgressBeforeHandle()
     {
         using var dialog = new SasdProgressDialog("Test", "Waiting...");
         Label messageLabel = ReadPrivateField<Label>(dialog, "messageLabel");
         ProgressBar progressBar = ReadPrivateField<ProgressBar>(dialog, "progressBar");
 
-        await Task.Run(() =>
+        RunWorker(() =>
         {
             dialog.Report(new SasdProgressUpdate("First update", 10));
             dialog.Report(new SasdProgressUpdate("Latest update", 150));
         });
 
-        // A worker must never mutate WinForms controls before their native handle
-        // exists. Only the latest state is buffered during this startup window.
+        // Keep handle creation on this executable's STA thread. An async console Main has no
+        // WinForms synchronization context, so an await could otherwise resume on a pool thread
+        // and make the smoke test itself violate the lifecycle rule it is intended to verify.
         Ensure(messageLabel.Text == "Waiting...", "Worker progress changed controls before handle creation.");
-
         _ = dialog.Handle;
 
         Ensure(messageLabel.Text == "Latest update", "Latest queued progress was not applied when the handle was created.");
@@ -48,18 +48,18 @@ internal static class Program
         Ensure(progressBar.Value == 100, "Queued percentage was not clamped to the progress bar range.");
     }
 
-    private static async Task ValidateQueuedCompletionBeforeHandleAsync()
+    private static void ValidateQueuedCompletionBeforeHandle()
     {
         using var dialog = new SasdProgressDialog("Test", "Completing...");
 
-        await Task.Run(() => dialog.Complete(DialogResult.Cancel));
+        RunWorker(() => dialog.Complete(DialogResult.Cancel));
         Ensure(dialog.DialogResult == DialogResult.None, "Completion touched the dialog before handle creation.");
 
         _ = dialog.Handle;
         Ensure(dialog.DialogResult == DialogResult.Cancel, "Queued completion result was not applied on handle creation.");
     }
 
-    private static async Task ValidateReportingAfterDisposeAsync()
+    private static void ValidateReportingAfterDispose()
     {
         var dialog = new SasdProgressDialog("Test", "Disposed test");
         dialog.Dispose();
@@ -67,7 +67,7 @@ internal static class Program
         // Late worker callbacks are common when application shutdown races with an
         // operation. They should be harmless rather than producing a cross-thread or
         // disposed-control exception after the window has already gone away.
-        await Task.Run(() =>
+        RunWorker(() =>
         {
             dialog.Report(new SasdProgressUpdate("Late", 50));
             dialog.Complete();
@@ -83,6 +83,13 @@ internal static class Program
         cancelButton.PerformClick();
         Ensure(dialog.CancellationToken.IsCancellationRequested, "Cancel button did not cancel the exposed token.");
         Ensure(!cancelButton.Enabled, "Cancel button remained enabled after cancellation was requested.");
+    }
+
+    private static void RunWorker(Action action)
+    {
+        // Block the STA test thread while the worker performs only the public cross-thread call.
+        // No message pumping is needed because pre-handle calls are expected to buffer state.
+        Task.Run(action).GetAwaiter().GetResult();
     }
 
     private static T ReadPrivateField<T>(object instance, string fieldName)
