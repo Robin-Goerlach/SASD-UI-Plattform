@@ -147,6 +147,13 @@ try {
         '-p:TreatWarningsAsErrors=true'
     )
 
+    Invoke-DotNetStep -Name 'Lifecycle endurance smoke checks' -Arguments @(
+        'run',
+        '--project', 'tests/smoke/Sasd.Ui.LifecycleSmokeChecks/Sasd.Ui.LifecycleSmokeChecks.csproj',
+        '--configuration', 'Release',
+        '-p:TreatWarningsAsErrors=true'
+    )
+
     Invoke-DotNetStep -Name 'Native R2 smoke checks' -Arguments @(
         'run',
         '--project', 'tests/smoke/Sasd.Ui.NativeR2SmokeChecks/Sasd.Ui.NativeR2SmokeChecks.csproj',
