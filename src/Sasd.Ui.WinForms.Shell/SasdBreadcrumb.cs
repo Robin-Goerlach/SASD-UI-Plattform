@@ -41,16 +41,22 @@ public class SasdBreadcrumb : UserControl
         AutoScaleMode = AutoScaleMode.Dpi;
         AutoSize = true;
         AutoSizeMode = AutoSizeMode.GrowAndShrink;
+        AccessibleRole = AccessibleRole.Grouping;
         AccessibleName = "Breadcrumb";
+        AccessibleDescription = "No breadcrumb locations.";
 
         host = new FlowLayoutPanel
         {
+            AccessibleRole = AccessibleRole.Grouping,
+            AccessibleName = "Breadcrumb path",
+            AccessibleDescription = "Navigation path from the root to the current location.",
             AutoSize = true,
             AutoSizeMode = AutoSizeMode.GrowAndShrink,
             Dock = DockStyle.Fill,
             FlowDirection = FlowDirection.LeftToRight,
             Margin = Padding.Empty,
             Padding = Padding.Empty,
+            TabStop = false,
             WrapContents = false,
         };
         Controls.Add(host);
@@ -125,8 +131,10 @@ public class SasdBreadcrumb : UserControl
 
     private void RebuildControls()
     {
-        // Generated controls are disposed explicitly because breadcrumbs can change
-        // frequently while navigating through a long-running workbench application.
+        // Generated controls are owned by the breadcrumb. Disposing them explicitly is
+        // important because navigation can rebuild this path many times during one long-
+        // running workbench session; merely detaching the old controls would retain their
+        // managed/native resources until some unrelated later collection.
         Control[] oldControls = host.Controls.Cast<Control>().ToArray();
         host.Controls.Clear();
         foreach (Control control in oldControls)
@@ -144,20 +152,25 @@ public class SasdBreadcrumb : UserControl
             {
                 host.Controls.Add(new Label
                 {
-                    AccessibleName = "Breadcrumb separator",
+                    AccessibleRole = AccessibleRole.Separator,
                     AutoSize = true,
                     Margin = new Padding(4, 4, 4, 0),
+                    TabStop = false,
                     Text = separatorText,
                 });
             }
         }
+
+        UpdateAccessibleState();
     }
 
     private LinkLabel CreateLink(SasdBreadcrumbItem item)
     {
         var link = new LinkLabel
         {
+            AccessibleRole = AccessibleRole.Link,
             AccessibleName = $"Navigate to {item.Text}",
+            AccessibleDescription = $"Navigates to the breadcrumb location {item.Text}.",
             AutoSize = true,
             Margin = new Padding(0, 4, 0, 0),
             TabStop = true,
@@ -169,9 +182,25 @@ public class SasdBreadcrumb : UserControl
 
     private static Label CreateCurrentLabel(SasdBreadcrumbItem item) => new()
     {
+        AccessibleRole = AccessibleRole.StaticText,
         AccessibleName = $"Current location {item.Text}",
+        AccessibleDescription = "Current breadcrumb location.",
         AutoSize = true,
         Margin = new Padding(0, 4, 0, 0),
+        TabStop = false,
         Text = item.Text,
     };
+
+    private void UpdateAccessibleState()
+    {
+        if (items.Count == 0)
+        {
+            AccessibleDescription = "No breadcrumb locations.";
+            return;
+        }
+
+        string noun = items.Count == 1 ? "location" : "locations";
+        AccessibleDescription =
+            $"{items.Count} breadcrumb {noun}. Current location: {items[^1].Text}.";
+    }
 }
