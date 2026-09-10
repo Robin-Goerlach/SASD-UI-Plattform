@@ -1,3 +1,4 @@
+using System.Reflection;
 using Sasd.Ui.WinForms.Data;
 
 namespace Sasd.Ui.DataDashboardSmokeChecks;
@@ -5,12 +6,14 @@ namespace Sasd.Ui.DataDashboardSmokeChecks;
 internal static class Program
 {
     [STAThread]
-    private static int Main()
+    private static async Task<int> Main()
     {
         try
         {
             ValidateFilterBatchReplacement();
             ValidateSavedGridView();
+            ValidatePager();
+            await ValidateGridControllerAsync();
             ValidateSparkline();
             ValidateKpiCard();
 
@@ -89,6 +92,89 @@ internal static class Program
             "Saved grid view accepted an empty name.");
     }
 
+    private static void ValidatePager()
+    {
+        using var pager = new SasdPager();
+
+        // The component must clamp stale persisted/application page indices when the
+        // total row count shrinks. This is a public state contract and does not need a
+        // displayed window to verify.
+        pager.SetState(currentPageIndex: 8, currentPageSize: 25, knownTotalCount: 62);
+        Ensure(pager.PageIndex == 2, "Pager did not clamp the current page to the final available page.");
+        Ensure(pager.PageSize == 25 && pager.TotalCount == 62, "Pager did not retain the supplied page metadata.");
+
+        SasdPageRequestedEventArgs? requested = null;
+        pager.PageRequested += (_, args) => requested = args;
+        pager.SetState(currentPageIndex: 1, currentPageSize: 25, knownTotalCount: 100);
+
+        Button nextButton = GetPrivateField<Button>(pager, "nextButton");
+        nextButton.PerformClick();
+        Ensure(requested is { PageIndex: 2, PageSize: 25 }, "Pager Next did not request the expected page.");
+
+        // Custom application page sizes remain supported even though the UI initially
+        // offers only the normal presets. Changing the selector resets navigation to
+        // page zero so a previous offset cannot point beyond the new result set.
+        requested = null;
+        pager.SetState(currentPageIndex: 1, currentPageSize: 37, knownTotalCount: 120);
+        ComboBox pageSize = GetPrivateField<ComboBox>(pager, "pageSizeComboBox");
+        Ensure(pageSize.Items.Contains(37), "Pager did not preserve a custom application page size.");
+        pageSize.SelectedItem = 50;
+        Ensure(requested is { PageIndex: 0, PageSize: 50 }, "Changing page size did not request the first page with the new size.");
+    }
+
+    private static async Task ValidateGridControllerAsync()
+    {
+        using var grid = new SasdDataGrid();
+        using var pager = new SasdPager();
+        var source = new RecordingPageSource(
+        [
+            new ExampleRow(1, "Alpha"),
+            new ExampleRow(2, "Beta"),
+            new ExampleRow(3, "Gamma"),
+            new ExampleRow(4, "Delta"),
+            new ExampleRow(5, "Epsilon"),
+        ]);
+        using var controller = new SasdGridController<ExampleRow>(grid, source, pageSize: 2);
+        controller.AttachPager(pager);
+
+        SasdGridPageLoadedEventArgs? loaded = null;
+        controller.PageLoaded += (_, args) => loaded = args;
+
+        await controller.LoadAsync();
+        Ensure(source.LastQuery is { Offset: 0, Limit: 2 }, "Grid controller did not request its initial page correctly.");
+        Ensure(grid.DataSource is BindingSource binding && binding.Count == 2,
+            "Grid controller did not bind the returned page to the grid.");
+        Ensure(pager.TotalCount == 5 && pager.PageSize == 2 && pager.PageIndex == 0,
+            "Grid controller did not synchronize the attached pager after loading.");
+        Ensure(loaded is { PageIndex: 0, PageSize: 2, TotalCount: 5 },
+            "Grid controller did not publish the expected page-loaded event.");
+
+        await controller.SearchAsync("  beta  ");
+        Ensure(controller.SearchText == "beta", "Grid controller did not normalize search text.");
+        Ensure(source.LastQuery?.SearchText == "beta" && source.LastQuery.Offset == 0,
+            "Grid controller did not reset paging and forward normalized search text.");
+
+        await controller.SortAsync("Name", SasdSortDirection.Descending);
+        Ensure(controller.PageIndex == 0, "Grid controller did not reset paging when sort changed.");
+        Ensure(source.LastQuery?.Sort is { Count: 1 } sort &&
+               sort[0] == SasdSortDescriptor.Create("Name", SasdSortDirection.Descending),
+            "Grid controller did not forward the requested sort descriptor.");
+
+        // Exercise the actual pager event path. The in-memory source completes
+        // synchronously, which keeps this smoke deterministic without sleeps or a UI
+        // message pump while still proving the controller/pager event wiring.
+        pager.SetState(currentPageIndex: 0, currentPageSize: 2, knownTotalCount: 5);
+        Button nextButton = GetPrivateField<Button>(pager, "nextButton");
+        nextButton.PerformClick();
+        Ensure(controller.PageIndex == 1 && source.LastQuery?.Offset == 2,
+            "Pager request did not drive the controller to the next data offset.");
+
+        controller.Dispose();
+        await EnsureThrowsAsync<ObjectDisposedException>(
+            () => controller.LoadAsync(),
+            "Disposed grid controller accepted a new load request.");
+    }
+
     private static void ValidateSparkline()
     {
         using var sparkline = new SasdSparkline();
@@ -140,6 +226,33 @@ internal static class Program
         Ensure(card.TrendValueCount == 0, "KPI card did not clear trend values.");
     }
 
+    private static T GetPrivateField<T>(object instance, string fieldName)
+        where T : class
+    {
+        FieldInfo? field = instance.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
+        if (field?.GetValue(instance) is not T value)
+        {
+            throw new InvalidOperationException($"Expected private field '{fieldName}' was not available for smoke inspection.");
+        }
+
+        return value;
+    }
+
+    private static async Task EnsureThrowsAsync<TException>(Func<Task> action, string message)
+        where TException : Exception
+    {
+        try
+        {
+            await action();
+        }
+        catch (TException)
+        {
+            return;
+        }
+
+        throw new InvalidOperationException(message);
+    }
+
     private static void EnsureThrows<TException>(Action action, string message)
         where TException : Exception
     {
@@ -160,6 +273,23 @@ internal static class Program
         if (!condition)
         {
             throw new InvalidOperationException(message);
+        }
+    }
+
+    private sealed record ExampleRow(int Id, string Name);
+
+    private sealed class RecordingPageSource(IReadOnlyList<ExampleRow> rows) : ISasdDataPageSource<ExampleRow>
+    {
+        public SasdDataQuery? LastQuery { get; private set; }
+
+        public Task<SasdDataPage<ExampleRow>> LoadAsync(
+            SasdDataQuery query,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            LastQuery = query;
+            IReadOnlyList<ExampleRow> page = rows.Skip(query.Offset).Take(query.Limit).ToArray();
+            return Task.FromResult(SasdDataPage<ExampleRow>.Create(page, rows.Count));
         }
     }
 }
