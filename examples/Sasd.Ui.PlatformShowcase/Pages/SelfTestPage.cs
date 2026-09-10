@@ -1,10 +1,13 @@
 using Sasd.Ui.Core;
+using Sasd.Ui.WinForms;
 using Sasd.Ui.WinForms.Data;
+using Sasd.Ui.WinForms.Dialogs;
 using Sasd.Ui.WinForms.Forms;
 using Sasd.Ui.WinForms.Media;
 using Sasd.Ui.WinForms.Shell;
 using Sasd.Ui.WinForms.State;
 using Sasd.Ui.WinForms.Theming;
+using Sasd.Ui.WinForms.Windows;
 
 namespace Sasd.Ui.PlatformShowcase;
 
@@ -37,11 +40,12 @@ internal sealed class SelfTestPage : UserControl
         var heading = new Label
         {
             AutoSize = true,
-            MaximumSize = new Size(900, 0),
+            MaximumSize = new Size(940, 0),
             Text =
                 "Showcase self test\r\n\r\n" +
-                "These checks exercise only public APIs and avoid modal dialogs or external processes. " +
-                "They complement repository smoke tests by making important component behaviour observable in the example application.",
+                "These checks exercise only public APIs and avoid modal dialogs, visible tray icons or external processes. " +
+                "They complement repository smoke tests by making important component behaviour observable in the example application. " +
+                "The other showcase pages remain the place for visual and interactive manual testing.",
         };
 
         runButton.AutoSize = true;
@@ -86,6 +90,22 @@ internal sealed class SelfTestPage : UserControl
 
         try
         {
+            await RunCheckAsync("SasdUserControl enables DPI scaling", () =>
+            {
+                using var control = new SasdUserControl();
+                Ensure(control.AutoScaleMode == AutoScaleMode.Dpi, "SasdUserControl did not enable DPI auto-scaling.");
+                return Task.CompletedTask;
+            }, () => passed++, () => failed++);
+
+            await RunCheckAsync("SasdDialogForm applies safe dialog defaults", () =>
+            {
+                using var dialog = new SasdDialogForm();
+                Ensure(!dialog.ShowInTaskbar, "Dialog form unexpectedly creates a taskbar entry.");
+                Ensure(!dialog.MinimizeBox, "Dialog form unexpectedly exposes a minimise button.");
+                Ensure(!dialog.MaximizeBox, "Dialog form unexpectedly exposes a maximise button.");
+                return Task.CompletedTask;
+            }, () => passed++, () => failed++);
+
             await RunCheckAsync("SearchBox stores text", () =>
             {
                 using var search = new SasdSearchBox { SearchText = "alpha" };
@@ -115,6 +135,45 @@ internal sealed class SelfTestPage : UserControl
                 return Task.CompletedTask;
             }, () => passed++, () => failed++);
 
+            await RunCheckAsync("Grid controller sends neutral page queries", async () =>
+            {
+                using var grid = new SasdDataGrid();
+                using var pager = new SasdPager();
+                var source = new RecordingPageSource();
+                using var controller = new SasdGridController<DemoCustomer>(grid, source, pageSize: 2);
+                SasdGridPageLoadedEventArgs? loaded = null;
+                controller.PageLoaded += (_, args) => loaded = args;
+                controller.AttachPager(pager);
+
+                await controller.SearchAsync("  Ada  ");
+
+                SasdDataQuery query = source.LastQuery
+                    ?? throw new InvalidOperationException("Grid controller did not call the page source.");
+                Ensure(query.SearchText == "Ada", "Grid controller did not trim/forward search text.");
+                Ensure(query.Offset == 0 && query.Limit == 2, "Grid controller produced unexpected paging bounds.");
+                Ensure(loaded?.TotalCount == 3, "Grid controller did not publish the page total.");
+            }, () => passed++, () => failed++);
+
+            await RunCheckAsync("CSV exporter quotes delimiter-containing values", async () =>
+            {
+                using var grid = new SasdDataGrid { AutoGenerateColumns = false };
+                grid.Columns.Add(new DataGridViewTextBoxColumn { Name = "name", HeaderText = "Name" });
+                grid.Columns.Add(new DataGridViewTextBoxColumn { Name = "value", HeaderText = "Value" });
+                grid.Rows.Add("Alpha", "one,two");
+
+                await using var stream = new MemoryStream();
+                await SasdCsvExporter.ExportAsync(
+                    grid,
+                    stream,
+                    new SasdCsvExportOptions(WriteUtf8Bom: false));
+                stream.Position = 0;
+                using var reader = new StreamReader(stream);
+                string csv = await reader.ReadToEndAsync();
+
+                Ensure(csv.Contains("Name,Value", StringComparison.Ordinal), "CSV header was not exported.");
+                Ensure(csv.Contains("Alpha,\"one,two\"", StringComparison.Ordinal), "CSV value was not escaped correctly.");
+            }, () => passed++, () => failed++);
+
             await RunCheckAsync("KPI card accepts trend values", () =>
             {
                 using var card = new SasdKpiCard { TitleText = "Self test", ValueText = "42" };
@@ -142,6 +201,32 @@ internal sealed class SelfTestPage : UserControl
                 editor.SelectedObject = settings;
                 editor.ForceReadOnly = true;
                 Ensure(ReferenceEquals(settings, editor.SelectedObject), "Property editor replaced the application-owned object.");
+                return Task.CompletedTask;
+            }, () => passed++, () => failed++);
+
+            await RunCheckAsync("Semantic icon service caches owned images", () =>
+            {
+                using var icons = new SasdSystemIconService();
+                Image first = icons.GetImage(SasdSemanticIcon.Information);
+                Image second = icons.GetImage(SasdSemanticIcon.Information);
+                Ensure(ReferenceEquals(first, second), "Icon service did not reuse the service-owned cached image.");
+                Ensure(first.Width > 0 && first.Height > 0, "Semantic icon has invalid dimensions.");
+                return Task.CompletedTask;
+            }, () => passed++, () => failed++);
+
+            await RunCheckAsync("Tray service starts hidden", () =>
+            {
+                using var tray = new SasdTrayService("SASD showcase self test");
+                Ensure(!tray.IsVisible, "Tray service became visible without an explicit Show call.");
+                Ensure(tray.Text == "SASD showcase self test", "Tray tooltip text was not retained.");
+                return Task.CompletedTask;
+            }, () => passed++, () => failed++);
+
+            await RunCheckAsync("Progress dialog accepts pre-show UI-thread state", () =>
+            {
+                using var progress = new SasdProgressDialog("Self test", "Initial");
+                progress.Report(new SasdProgressUpdate("Updated", 50));
+                Ensure(!progress.CancellationToken.IsCancellationRequested, "Progress dialog starts in a cancelled state.");
                 return Task.CompletedTask;
             }, () => passed++, () => failed++);
 
@@ -203,6 +288,29 @@ internal sealed class SelfTestPage : UserControl
         if (!condition)
         {
             throw new InvalidOperationException(message);
+        }
+    }
+
+    /// <summary>
+    /// Minimal application-owned page source used only to prove that the generic grid controller
+    /// forwards a vendor-neutral query rather than reaching into a database or service directly.
+    /// </summary>
+    private sealed class RecordingPageSource : ISasdDataPageSource<DemoCustomer>
+    {
+        public SasdDataQuery? LastQuery { get; private set; }
+
+        public Task<SasdDataPage<DemoCustomer>> LoadAsync(
+            SasdDataQuery query,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            LastQuery = query;
+            IReadOnlyList<DemoCustomer> items =
+            [
+                new("Ada Lovelace", "ada@example.test", "Active", 96),
+                new("Grace Hopper", "grace@example.test", "Active", 93),
+            ];
+            return Task.FromResult(SasdDataPage<DemoCustomer>.Create(items, totalCount: 3));
         }
     }
 }
