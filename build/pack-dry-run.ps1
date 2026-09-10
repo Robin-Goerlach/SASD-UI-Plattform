@@ -151,7 +151,7 @@ try {
             '--output', $resolvedOutput,
             '--include-symbols',
             '--no-restore',
-            '-p:PackageVersion=' + $Version,
+            "-p:PackageVersion=$Version",
             '-p:SymbolPackageFormat=snupkg',
             '-p:DebugType=portable',
             '-p:ContinuousIntegrationBuild=true',
