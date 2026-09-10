@@ -14,6 +14,7 @@ internal static class Program
             ValidateSavedGridView();
             ValidatePager();
             await ValidateGridControllerAsync();
+            GridControllerResilienceChecks.Run();
             ValidateSparkline();
             ValidateKpiCard();
 
