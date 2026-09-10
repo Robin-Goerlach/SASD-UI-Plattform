@@ -14,6 +14,16 @@ Reusable data-presentation components and application-neutral query/state helper
 - persisted grid layout state;
 - `SasdListView` and `SasdTreeView` defaults.
 
+### Grid-controller lifecycle and failure handling
+
+`SasdGridController<T>` keeps data access application-owned. A newly requested load cancels an older one, but each individual `LoadAsync` invocation retains ownership of its linked `CancellationTokenSource` until the application page source has actually returned. This avoids disposing cancellation registrations while a superseded source call is still unwinding.
+
+If a result set shrinks while the controller is positioned beyond the new final page, the controller performs at most one corrective request for the new final page. If the source changes again during that correction, the controller clamps its page state and exposes an empty page rather than repeatedly retrying or presenting records under the wrong page index. A later explicit refresh can then reload the stabilized source.
+
+Failures from explicit `LoadAsync`, `SearchAsync` and `SortAsync` calls remain normal task failures for the application to await and handle. Loads initiated by the controller's own WinForms pager/header event handlers cannot return a `Task` to application code, so non-cancellation failures are reported through `LoadFailed`. The event carries the technical exception for logging/diagnostics; applications should choose their own user-safe error presentation instead of displaying raw exception details.
+
+Disposing the controller detaches its WinForms event handlers and requests cancellation of an active load. The in-flight `LoadAsync` invocation remains responsible for disposing its own linked cancellation source after the application-owned source call completes.
+
 ## Native R2 foundation
 
 - `SasdGridColumnChooser` binds to a native `DataGridView` without taking ownership;
