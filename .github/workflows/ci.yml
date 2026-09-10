@@ -16,7 +16,7 @@ concurrency:
 jobs:
   build:
     runs-on: windows-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
@@ -31,6 +31,6 @@ jobs:
         shell: pwsh
         run: ./eng/codex/preflight.ps1
 
-      - name: Verify repository
+      - name: Verify repository and package dry-run
         shell: pwsh
-        run: ./build/verify.ps1
+        run: ./build/verify.ps1 -IncludePackDryRun

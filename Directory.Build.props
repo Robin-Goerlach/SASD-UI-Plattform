@@ -10,10 +10,18 @@
     <AnalysisLevel>latest-recommended</AnalysisLevel>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+
+    <!-- Common package identity belongs here so individual modules cannot silently drift
+         in company/license/repository metadata. Module-specific descriptions stay in the
+         project files because they describe the actual responsibility of each package. -->
     <Authors>SASD-GmbH</Authors>
     <Company>SASD-GmbH</Company>
     <Copyright>Copyright © 2026 SASD-GmbH</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <PackageProjectUrl>https://github.com/Robin-Goerlach/SASD-UI-Plattform</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Robin-Goerlach/SASD-UI-Plattform.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>sasd;ui;winforms;desktop</PackageTags>
   </PropertyGroup>
 </Project>

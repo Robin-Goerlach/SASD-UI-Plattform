@@ -1,7 +1,8 @@
 [CmdletBinding()]
 param(
     [switch]$SkipRestore,
-    [switch]$CompileOnly
+    [switch]$CompileOnly,
+    [switch]$IncludePackDryRun
 )
 
 Set-StrictMode -Version Latest
@@ -109,6 +110,13 @@ try {
             Write-Warning 'Non-Windows environment detected. WinForms runtime smoke checks are skipped.'
         }
 
+        # Packaging net8.0-windows projects from a non-Windows host is supported by
+        # EnableWindowsTargeting, but this verification path intentionally remains a
+        # compile-only contract. CI exercises packaging on the normal Windows runner.
+        if ($IncludePackDryRun) {
+            Write-Warning 'NuGet pack dry-run is skipped in CompileOnly/non-Windows verification. Run build/pack-dry-run.ps1 explicitly if packaging is required on this host.'
+        }
+
         Write-Host ""
         Write-Host 'Compile/architecture verification completed successfully.' -ForegroundColor Green
         return
@@ -173,6 +181,15 @@ try {
         '--project', 'tests/smoke/Sasd.Ui.KryptonSmokeChecks/Sasd.Ui.KryptonSmokeChecks.csproj',
         '--configuration', 'Release'
     )
+
+    if ($IncludePackDryRun) {
+        Write-Host ""
+        Write-Host '==> NuGet packaging dry-run' -ForegroundColor Cyan
+        # The solution was already restored at the start of this gate. Keeping restore
+        # out of the packaging step makes the extra CI evidence deterministic without
+        # making ordinary local verification pay the packaging cost unless requested.
+        & (Join-Path $PSScriptRoot 'pack-dry-run.ps1') -SkipRestore
+    }
 
     Write-Host ""
     Write-Host 'Full SASD UI Platform verification completed successfully.' -ForegroundColor Green
