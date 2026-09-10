@@ -80,8 +80,7 @@ internal static class GridControllerResilienceChecks
         // first request's linked CancellationTokenSource. The application-owned source is
         // still unwinding and may legitimately use its token until its Task completes.
         await controller.SearchAsync("newer");
-        Ensure(source.FirstCancellationObserved,
-            "A newer load did not request cancellation of the superseded data-source call.");
+        await source.FirstCancellationObserved;
         Ensure(controller.SearchText == "newer",
             "Newer search state was not retained after superseding the pending load.");
 
@@ -300,13 +299,15 @@ internal static class GridControllerResilienceChecks
     {
         private readonly TaskCompletionSource firstLoadStarted =
             new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource firstCancellationObserved =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
         private readonly TaskCompletionSource releaseFirstLoad =
             new(TaskCreationOptions.RunContinuationsAsynchronously);
         private int calls;
 
         public Task FirstLoadStarted => firstLoadStarted.Task;
 
-        public bool FirstCancellationObserved { get; private set; }
+        public Task FirstCancellationObserved => firstCancellationObserved.Task;
 
         public bool LateTokenRegistrationSucceeded { get; private set; }
 
@@ -320,9 +321,14 @@ internal static class GridControllerResilienceChecks
                 return SasdDataPage<ExampleRow>.Create([new ExampleRow(2, "Current")], 1);
             }
 
+            // Keep this registration alive for the complete first source call. It gives the
+            // smoke check a deterministic signal that the controller actually requested
+            // cancellation, independent of when the source later finishes unwinding.
+            using CancellationTokenRegistration cancellationObservation = cancellationToken.Register(
+                () => firstCancellationObserved.TrySetResult());
+
             firstLoadStarted.TrySetResult();
             await releaseFirstLoad.Task.ConfigureAwait(false);
-            FirstCancellationObserved = cancellationToken.IsCancellationRequested;
 
             // Register only after the newer request has already cancelled the token. This
             // models application cleanup that still legitimately touches its token before the
