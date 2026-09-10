@@ -5,7 +5,7 @@ using Sasd.Ui.WinForms.Shell;
 namespace Sasd.Ui.PlatformShowcase;
 
 /// <summary>
-/// Demonstrates search, active filters, DataGrid defaults, the column chooser and saved views.
+/// Demonstrates search, active filters, DataGrid defaults, CSV export, the column chooser and saved views.
 /// </summary>
 internal sealed class DataPage : UserControl
 {
@@ -18,6 +18,7 @@ internal sealed class DataPage : UserControl
     private readonly SasdGridColumnChooser columnChooser = new();
     private readonly ComboBox statusFilter = new();
     private readonly Label resultLabel = new();
+    private readonly TextBox csvPreview = new();
     private SasdGridViewDefinition? savedView;
 
     public DataPage(Action<string, SasdStatusSeverity, TimeSpan?> publishStatus)
@@ -32,6 +33,14 @@ internal sealed class DataPage : UserControl
         ConfigureFilterControls();
         columnChooser.Bind(grid);
 
+        csvPreview.AccessibleName = "CSV export preview";
+        csvPreview.Dock = DockStyle.Fill;
+        csvPreview.Multiline = true;
+        csvPreview.ReadOnly = true;
+        csvPreview.ScrollBars = ScrollBars.Both;
+        csvPreview.WordWrap = false;
+        csvPreview.Text = "Press Preview CSV to export the currently visible grid rows and columns to memory.";
+
         var heading = new Label
         {
             AutoSize = true,
@@ -39,7 +48,7 @@ internal sealed class DataPage : UserControl
             Text =
                 "Data and grid composition\r\n\r\n" +
                 "Search and status filters are application logic; the UI Platform provides predictable controls and neutral state. " +
-                "Hide columns with the chooser, save the current view, change the layout/search/filter, then restore the saved view.",
+                "Hide columns with the chooser, preview a CSV export, save the current view, change the layout/search/filter, then restore the saved view.",
         };
 
         var saveViewButton = new Button { AutoSize = true, Text = "Save view" };
@@ -48,6 +57,8 @@ internal sealed class DataPage : UserControl
         restoreViewButton.Click += (_, _) => RestoreView();
         var clearButton = new Button { AutoSize = true, Text = "Clear search/filter" };
         clearButton.Click += (_, _) => ClearSearchAndFilter();
+        var csvButton = new Button { AutoSize = true, Text = "Preview CSV" };
+        csvButton.Click += OnPreviewCsvClick;
 
         var actions = new FlowLayoutPanel
         {
@@ -59,6 +70,7 @@ internal sealed class DataPage : UserControl
         actions.Controls.Add(saveViewButton);
         actions.Controls.Add(restoreViewButton);
         actions.Controls.Add(clearButton);
+        actions.Controls.Add(csvButton);
         actions.Controls.Add(new Label { AutoSize = true, Margin = new Padding(14, 7, 4, 0), Text = "Status:" });
         actions.Controls.Add(statusFilter);
         actions.Controls.Add(resultLabel);
@@ -80,19 +92,21 @@ internal sealed class DataPage : UserControl
         {
             ColumnCount = 1,
             Dock = DockStyle.Fill,
-            RowCount = 5,
+            RowCount = 6,
         };
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
         layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 105F));
         layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
         layout.Controls.Add(heading, 0, 0);
         layout.Controls.Add(searchBox, 0, 1);
         layout.Controls.Add(filterBar, 0, 2);
         layout.Controls.Add(actions, 0, 3);
-        layout.Controls.Add(gridArea, 0, 4);
+        layout.Controls.Add(csvPreview, 0, 4);
+        layout.Controls.Add(gridArea, 0, 5);
         Controls.Add(layout);
 
         ApplyFilter();
@@ -231,6 +245,35 @@ internal sealed class DataPage : UserControl
         filterBar.ClearFilters();
         statusFilter.SelectedIndex = 0;
         ApplyFilter();
+    }
+
+    private async void OnPreviewCsvClick(object? sender, EventArgs e)
+    {
+        Button? button = sender as Button;
+        if (button is not null)
+        {
+            button.Enabled = false;
+        }
+
+        try
+        {
+            await using var stream = new MemoryStream();
+            await SasdCsvExporter.ExportAsync(grid, stream);
+            stream.Position = 0;
+            using var reader = new StreamReader(stream, detectEncodingFromByteOrderMarks: true);
+            csvPreview.Text = await reader.ReadToEndAsync();
+            publishStatus(
+                $"CSV preview generated from {grid.Rows.Cast<DataGridViewRow>().Count(row => !row.IsNewRow)} visible row(s).",
+                SasdStatusSeverity.Success,
+                TimeSpan.FromSeconds(4));
+        }
+        finally
+        {
+            if (button is not null && !button.IsDisposed)
+            {
+                button.Enabled = true;
+            }
+        }
     }
 
     private static List<DemoCustomer> CreateCustomers() =>
