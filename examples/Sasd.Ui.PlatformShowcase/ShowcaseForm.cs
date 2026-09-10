@@ -57,6 +57,7 @@ internal sealed class ShowcaseForm : SasdShellForm
         NavigationHost.RegisterPage("state", "State & recent items", CreateStatePage);
         NavigationHost.RegisterPage("windows", "Windows integration", CreateWindowsPage);
         NavigationHost.RegisterPage("advanced", "R2 native controls", CreateAdvancedPage);
+        NavigationHost.RegisterPage("acceptance", "Acceptance lab", CreateAcceptanceLabPage);
         NavigationHost.RegisterPage("self-test", "Self test", CreateSelfTestPage);
         NavigationHost.Navigated += OnNavigated;
 
@@ -154,6 +155,8 @@ internal sealed class ShowcaseForm : SasdShellForm
         new WindowsPage(fileDialogService, clipboardService, dragDropService, PublishStatus);
 
     private Control CreateAdvancedPage() => new AdvancedPage(PublishStatus);
+
+    private Control CreateAcceptanceLabPage() => new AcceptanceLabPage(themeService, PublishStatus);
 
     private Control CreateSelfTestPage() =>
         new SelfTestPage(stateStore, themeService, PublishStatus);
