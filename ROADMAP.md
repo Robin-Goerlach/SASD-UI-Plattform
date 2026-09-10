@@ -1,7 +1,7 @@
 # Roadmap – SASD UI Platform
 
-**As of:** 2026-09-09  
-**Version:** 0.3  
+**As of:** 2026-09-10  
+**Version:** 0.4  
 **Horizon:** R0 through R3; no artificial calendar dates without reliable capacity planning
 
 ## 1. Roadmap Principles
@@ -27,10 +27,10 @@ The status below distinguishes **implemented code** from **completed release gat
 | --- | --- | --- | --- |
 | R0.1 | Functionally implemented; release-engineering gate still open | .NET 8 solution, central package/build configuration, strict warning-free CI, architecture checks, ADR/licence process, one-command verification | NuGet packaging, public-API baseline, SBOM/release automation |
 | R0.2 | Pilot implemented; decision gate still open | native theme/form baseline, isolated `Krypton.Toolkit` adapter, Krypton smoke check, automated vendor-boundary enforcement | Visual Studio Designer matrix, multi-DPI/focus/high-contrast evidence and final native-vs-Krypton standard decision |
-| R0.3 | Core interaction implementation substantially complete | grid/controller/paging/search/filter, CSV/grid state, dialogs/error/busy/progress, versioned state, commands/shell, executable Gallery integration | UIA/FlaUI pilot, screenshot regression, keyboard-only end-to-end evidence, manual DPI/accessibility evidence |
-| R1.0 | Functional component foundation largely implemented | forms/validation, commands/shortcuts, shell/navigation/status, grids/lists/trees, dialogs/notifications, Windows services, state/recent items, drag/drop/tray, Gallery integration | reference applications, NuGet publication, API baseline, first real consumer migration, formal quality matrix |
+| R0.3 | Core interaction implementation substantially complete | grid/controller/paging/search/filter, CSV/grid state, dialogs/error/busy/progress, versioned state, commands/shell, executable Gallery integration, integrated Showcase consumer | UIA/FlaUI pilot, screenshot regression, keyboard-only end-to-end evidence, manual DPI/accessibility evidence |
+| R1.0 | Functional component foundation largely implemented | forms/validation, commands/shortcuts, shell/navigation/status, grids/lists/trees, dialogs/notifications, Windows services, state/recent items, drag/drop/tray, Gallery plus CRUD/Workbench/Showcase consumers | NuGet publication, API baseline, first real SASD consumer migration, formal quality matrix |
 | R1.1 | Hardening occurs continuously; formal stage not started | analyzer-as-error policy, recovery/disposal/threading fixes and growing smoke coverage | formal API review, performance/handle-leak matrix, migration notes and three real SASD consumers |
-| R2.0 | Started with dependency-free native helpers | property editor, column chooser, image viewer, saved grid views, sparkline and KPI card | Gallery coverage for R2, real consumer evidence and separately reviewed specialist adapters |
+| R2.0 | Started with dependency-free native helpers | property editor, column chooser, image viewer, saved grid views, sparkline/KPI, Gallery integration and Showcase exercises | manual DPI/accessibility evidence, real consumer evidence and separately reviewed specialist adapters |
 | R3 | Deferred | scope rules documented | requires demonstrated product need and explicit maintenance ownership |
 
 ## 3. Release Map
@@ -125,14 +125,15 @@ Otherwise, the native WinForms implementation remains the standard. Design token
 - `SasdRecentItemsService`;
 - command manager, global shortcuts, command bar, navigation, status service and shell form;
 - strict smoke coverage for commands, grid/state, forms, dispatcher, Windows safety, shell integration, native R2 helpers and Krypton;
-- Component Gallery integration shell demonstrating commands, status, notifications and safe drag/drop.
+- Component Gallery integration shell demonstrating commands, status, notifications and safe drag/drop;
+- integrated `Sasd.Ui.PlatformShowcase` consumer with manual exercises and safe public-API self tests across the current modules.
 
 ### Evidence Still Required for the Gate
 
 - UI Automation through UIA3/FlaUI as a pilot;
 - screenshot regression for defined Gallery states;
 - at least one keyboard-only end-to-end scenario;
-- broader Component Gallery coverage of all implemented controls, including native R2 helpers;
+- broader Component Gallery coverage of remaining implemented controls and important states;
 - stored manual DPI/Designer/Accessibility Insights results.
 
 ## 7. R1.0 – Productive Foundation
@@ -150,21 +151,22 @@ The following R1 areas now have usable implementation code:
 - dialogs, notifications, errors, busy and progress;
 - file/folder dialogs, clipboard, safe drag-and-drop, tray and constrained shell integration;
 - versioned UI state, migrations, recent items and window/grid state;
-- executable Component Gallery integration host.
+- executable Component Gallery integration host;
+- focused in-memory CRUD and document/workbench reference applications;
+- broad integrated Showcase consumer that exercises the platform in one application-like process.
 
 ### Remaining R1 Release Work
 
 The next work is no longer mainly “add missing base controls”. It is now:
 
-1. expand Gallery coverage for all implemented R1 controls and important states;
+1. expand Gallery coverage for remaining implemented R1 controls and important states;
 2. add keyboard-only and UIA automation for business-critical flows;
 3. execute and record Designer, DPI, High-Contrast and accessibility matrices;
 4. establish NuGet packaging, symbols and XML-documentation output;
 5. introduce public-API baseline/compatibility checks;
 6. produce SBOM/third-party release evidence;
-7. create or complete CRUD/workbench/utility reference applications;
-8. migrate a bounded feature from a real SASD application, preferably Prompt Manager;
-9. simplify APIs based on consumer feedback before declaring R1.0 stable.
+7. migrate a bounded feature from a real SASD application, preferably Prompt Manager;
+8. simplify APIs based on reference-consumer and real-consumer feedback before declaring R1.0 stable.
 
 ### Pilot Migration
 
@@ -199,7 +201,7 @@ These provide common usability without introducing a new runtime vendor decision
 - `SasdSparkline` — compact finite-value trend rendering;
 - `SasdKpiCard` — accessible textual KPI plus optional sparkline context.
 
-These helpers still require wider Gallery/DPI/accessibility evidence and real consumer feedback before being considered stable.
+These helpers now have integrated Gallery and Showcase exercises, but still require broader DPI/accessibility evidence and real-consumer feedback before being considered stable.
 
 ### 9.2 Specialist adapter candidates
 
@@ -220,10 +222,14 @@ A new runtime dependency requires the dependency/licence review and, where archi
 
 ## 10. Coding-Agent / Codex Enablement
 
-The repository now supports controlled agent-assisted development.
+The repository now supports controlled agent-assisted development and an explicit queue of bounded tasks.
 
 - root `AGENTS.md` defines durable autonomy and escalation boundaries;
+- scoped `AGENTS.md` files refine source/test guidance without replacing the architecture documents;
 - detailed guidance lives in `docs/en/project/codex-development-workflow.md`;
+- `eng/codex/preflight.ps1` checks the local repository/tooling shape without modifying credentials or machine policy;
+- `.github/ISSUE_TEMPLATE/codex_task.md` provides a bounded task format;
+- `eng/codex/READY_TASKS.md` records the current ready-work queue and completion contract;
 - `build/verify.ps1` provides one local/agent/CI verification entry point;
 - Codex may autonomously implement already-approved roadmap/specification work and normal hardening fixes;
 - Codex must stop before new runtime dependencies, platform changes, major package-boundary changes, breaking public APIs or other strategic choices.
@@ -234,9 +240,9 @@ The goal is not unrestricted autonomous change. The goal is to let agents carry 
 
 Unless a real consumer exposes a more urgent defect, prefer this order:
 
-1. finish Codex/verification integration and keep agent instructions concise/current;
-2. broaden Component Gallery coverage, including Property Editor, Image Viewer, saved grid views, KPI and Sparkline;
-3. implement a first keyboard-only/UIA3/FlaUI automated user flow;
+1. use the Codex ready queue for bounded lifecycle, evidence and release-engineering work while keeping agent instructions concise/current;
+2. complete a current component-coverage matrix and fill remaining dependency-free Gallery/Showcase gaps;
+3. implement a first keyboard-only/UIA3/FlaUI automated user flow after the required dependency/tooling decision;
 4. execute manual Designer/DPI/High-Contrast/accessibility matrix and store evidence;
 5. implement NuGet pack/symbol/XML-doc release path;
 6. add public-API compatibility baseline checks;

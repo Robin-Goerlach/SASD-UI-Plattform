@@ -32,6 +32,12 @@ To run verification immediately after the preflight succeeds:
 pwsh ./eng/codex/preflight.ps1 -RunVerification
 ```
 
+## Ready work queue
+
+[`READY_TASKS.md`](READY_TASKS.md) is the operational handoff for work that has already been narrowed enough for Codex. It contains the current recommended issue order, a safe first prompt and the completion report expected from the agent.
+
+The ready queue is deliberately separate from `AGENTS.md`: durable architecture and safety rules belong in the agent guide, while the set of immediately useful tasks can change frequently.
+
 ## Create a Codex task
 
 Use the GitHub issue template **Codex development task**. A good task contains:
