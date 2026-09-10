@@ -148,6 +148,13 @@ try {
         '-p:TreatWarningsAsErrors=true'
     )
 
+    Invoke-DotNetStep -Name 'Keyboard acceptance smoke checks' -Arguments @(
+        'run',
+        '--project', 'tests/smoke/Sasd.Ui.KeyboardSmokeChecks/Sasd.Ui.KeyboardSmokeChecks.csproj',
+        '--configuration', 'Release',
+        '-p:TreatWarningsAsErrors=true'
+    )
+
     Invoke-DotNetStep -Name 'Dialog threading smoke checks' -Arguments @(
         'run',
         '--project', 'tests/smoke/Sasd.Ui.DialogSmokeChecks/Sasd.Ui.DialogSmokeChecks.csproj',
