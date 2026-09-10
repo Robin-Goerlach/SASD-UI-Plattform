@@ -10,7 +10,7 @@
 
 The project provides reusable application shells, forms, commands, data views, dialogs, themes, UI-state persistence, Windows integration, optional specialist adapters, reference applications and enforceable quality standards. It is intentionally focused on **Windows, .NET 8 and WinForms** before any later WPF or web product line.
 
-**Project links:** [Roadmap](ROADMAP.md) · [Architecture](docs/en/core/04-architecture.md) · [Requirements](docs/en/core/02-requirements-specification.md) · [Functional specification](docs/en/core/03-functional-specification.md) · [Codex workflow](docs/en/project/codex-development-workflow.md) · [English documentation](docs/en/README.md) · [German documentation](docs/de/README.md)
+**Project links:** [Roadmap](ROADMAP.md) · [Architecture](docs/en/core/04-architecture.md) · [Requirements](docs/en/core/02-requirements-specification.md) · [Functional specification](docs/en/core/03-functional-specification.md) · [Integrated showcase](examples/Sasd.Ui.PlatformShowcase/README.md) · [Codex workflow](docs/en/project/codex-development-workflow.md) · [English documentation](docs/en/README.md) · [German documentation](docs/de/README.md)
 
 ![Concept design for the SASD UI Platform Component Gallery](artefacts/sasd-ui-platform-component-gallery.png)
 
@@ -45,7 +45,7 @@ The project is **not yet claiming R1.0 stability**. Important acceptance work re
 - dialogs, errors, notifications, busy and progress handling;
 - file/folder dialogs, clipboard, drag-and-drop, tray and safe shell integration;
 - versioned JSON UI state, migration, backup, reset and recent items;
-- Component Gallery and planned CRUD, workbench and utility reference applications.
+- Component Gallery, focused CRUD/Workbench reference applications and the integrated showcase consumer.
 
 ### Native R2 foundation
 
@@ -89,7 +89,8 @@ SASD-UI-Plattform/
 ├─ AGENTS.md               Persistent map/instructions for coding agents such as Codex
 ├─ src/                    Product projects and optional adapters
 ├─ tests/                  Unit, integration, architecture, UI and visual tests
-├─ samples/                Component Gallery and reference applications
+├─ samples/                Component Gallery and focused reference applications
+├─ examples/               Larger integrated application-like demonstrations
 ├─ templates/              Planned project and application templates
 ├─ docs/
 │  ├─ en/                  English normative and project documentation
@@ -113,6 +114,7 @@ SASD-UI-Plattform/
 | [Requirements specification](docs/en/core/02-requirements-specification.md) | Product requirements, priorities, exclusions and acceptance criteria |
 | [Functional specification](docs/en/core/03-functional-specification.md) | Technical implementation commitments and component catalogue |
 | [Architecture](docs/en/core/04-architecture.md) | Module, runtime, package, quality and security architecture |
+| [Integrated showcase](examples/Sasd.Ui.PlatformShowcase/README.md) | Broad runnable demonstration and manual exercise surface for current components |
 | [Codex development workflow](docs/en/project/codex-development-workflow.md) | Agent autonomy, escalation boundaries, task format and verification workflow |
 | [Project documentation index](docs/en/README.md) | Development, testing, CI/CD, release, security, governance and ADRs |
 
@@ -137,6 +139,22 @@ The `src` folder follows the package boundaries defined by the architecture. Cur
 - `Sasd.Ui.WinForms.Media` — dependency-free image-viewing foundation;
 - `Sasd.Ui.WinForms.Krypton` — isolated Krypton technology pilot;
 - `samples/Sasd.Ui.ComponentGallery` — executable specification and acceptance host.
+
+## Reference consumers and integrated example
+
+The repository intentionally contains more than one consumer shape so awkward public APIs are found before wider adoption:
+
+- [`samples/Sasd.Ui.Sample.Crud`](samples/Sasd.Ui.Sample.Crud/) — focused CRUD reference application;
+- [`samples/Sasd.Ui.Sample.Workbench`](samples/Sasd.Ui.Sample.Workbench/) — focused document/workbench reference application;
+- [`examples/Sasd.Ui.PlatformShowcase`](examples/Sasd.Ui.PlatformShowcase/) — broad integrated demonstration with manual component exercises and a safe public-API self-test page.
+
+Run the integrated showcase on Windows with:
+
+```powershell
+dotnet run --project examples/Sasd.Ui.PlatformShowcase/Sasd.Ui.PlatformShowcase.csproj
+```
+
+The canonical verification script restores and strictly builds all three consumers, so future platform changes cannot silently break the example.
 
 ## Build prerequisites
 
