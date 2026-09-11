@@ -16,6 +16,7 @@ internal static class Program
             await ValidatePersistenceAndRecoveryAsync(root);
             await ValidateIncrementalMigrationAsync(root);
             await ValidateRecentItemsAsync(root);
+            await RecentItemsPinningChecks.RunAsync(root);
 
             // The preceding file/state checks are intentionally asynchronous and may resume
             // on a pool thread because a console smoke executable has no UI message loop.
