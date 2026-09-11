@@ -16,6 +16,12 @@ public sealed class SasdNavigationEventArgs : EventArgs
 /// Provides a small list/content shell for CRUD, utility and workbench applications.
 /// Applications own page factories and business navigation policy.
 /// </summary>
+/// <remarks>
+/// Views returned by registered factories become owned by this host. With
+/// <see cref="CachePages"/> disabled, an inactive view is disposed when navigation leaves it.
+/// With caching enabled, inactive views remain host-owned and are reused until caching is
+/// disabled or the navigation host itself is disposed.
+/// </remarks>
 public class SasdNavigationHost : UserControl
 {
     private readonly SplitContainer splitContainer;
@@ -24,11 +30,18 @@ public class SasdNavigationHost : UserControl
     private readonly List<PageRegistration> pages = [];
     private readonly Dictionary<string, Control> cachedViews = new(StringComparer.Ordinal);
     private Control? currentView;
+    private string? currentPageId;
+    private bool cachePages;
     private bool internalSelectionChange;
 
     /// <summary>Initialises the navigation host.</summary>
     public SasdNavigationHost()
     {
+        AutoScaleMode = AutoScaleMode.Dpi;
+        AccessibleRole = AccessibleRole.Grouping;
+        AccessibleName = "Navigation";
+        AccessibleDescription = "Application navigation pages and the active page content.";
+
         splitContainer = new SplitContainer
         {
             Dock = DockStyle.Fill,
@@ -41,6 +54,8 @@ public class SasdNavigationHost : UserControl
 
         navigationList = new ListBox
         {
+            AccessibleName = "Navigation pages",
+            AccessibleDescription = "Selects the active application page.",
             Dock = DockStyle.Fill,
             BorderStyle = BorderStyle.None,
             IntegralHeight = false,
@@ -49,8 +64,11 @@ public class SasdNavigationHost : UserControl
 
         contentPanel = new Panel
         {
+            AccessibleRole = AccessibleRole.Pane,
+            AccessibleName = "Page content",
             Dock = DockStyle.Fill,
             Padding = new Padding(12),
+            TabStop = false,
         };
 
         splitContainer.Panel1.Padding = new Padding(8);
@@ -63,9 +81,35 @@ public class SasdNavigationHost : UserControl
     public event EventHandler<SasdNavigationEventArgs>? Navigated;
 
     /// <summary>Gets or sets whether created pages are retained for reuse.</summary>
+    /// <remarks>
+    /// Changing this property at runtime is supported. Disabling caching immediately disposes
+    /// inactive cached views but leaves the currently displayed view alive until normal
+    /// navigation replaces it. Enabling caching adopts the currently displayed view into the
+    /// cache so it is not detached and lost on the next navigation.
+    /// </remarks>
     [Category("SASD")]
     [DefaultValue(false)]
-    public bool CachePages { get; set; }
+    public bool CachePages
+    {
+        get => cachePages;
+        set
+        {
+            if (cachePages == value)
+            {
+                return;
+            }
+
+            cachePages = value;
+            if (value)
+            {
+                CacheCurrentView();
+            }
+            else
+            {
+                ReleaseInactiveCachedViews();
+            }
+        }
+    }
 
     /// <summary>Gets or sets the navigation-pane width.</summary>
     [Category("SASD")]
@@ -77,6 +121,10 @@ public class SasdNavigationHost : UserControl
     }
 
     /// <summary>Registers one application-owned page factory.</summary>
+    /// <remarks>
+    /// The factory itself remains application-owned. A control returned successfully from the
+    /// factory transfers to navigation-host ownership for the remainder of its visual lifetime.
+    /// </remarks>
     public void RegisterPage(string id, string title, Func<Control> factory)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(id);
@@ -96,14 +144,14 @@ public class SasdNavigationHost : UserControl
     public bool Navigate(string pageId)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(pageId);
-        var index = pages.FindIndex(page => string.Equals(page.Id, pageId, StringComparison.Ordinal));
+        int index = pages.FindIndex(page => string.Equals(page.Id, pageId, StringComparison.Ordinal));
         if (index < 0)
         {
             return false;
         }
 
-        var registration = pages[index];
-        var nextView = GetOrCreateView(registration);
+        PageRegistration registration = pages[index];
+        Control nextView = GetOrCreateView(registration);
         nextView.Dock = DockStyle.Fill;
 
         if (!ReferenceEquals(currentView, nextView))
@@ -115,7 +163,14 @@ public class SasdNavigationHost : UserControl
             }
 
             currentView = nextView;
+            currentPageId = registration.Id;
             contentPanel.Controls.Add(nextView);
+        }
+        else
+        {
+            // Keep identity explicit even when a cached page is reselected. This also makes
+            // runtime cache-policy changes independent of ListBox selection implementation.
+            currentPageId = registration.Id;
         }
 
         internalSelectionChange = true;
@@ -138,11 +193,11 @@ public class SasdNavigationHost : UserControl
         if (disposing)
         {
             navigationList.SelectedIndexChanged -= OnSelectedIndexChanged;
-            foreach (var view in cachedViews.Values)
-            {
-                view.Dispose();
-            }
 
+            // The currently displayed control belongs to contentPanel and will be disposed by
+            // normal WinForms child ownership in base.Dispose(). Inactive cached pages are not
+            // in that visual tree, so dispose those explicitly without double-disposing current.
+            DisposeCachedViewsExcept(currentView);
             cachedViews.Clear();
         }
 
@@ -151,12 +206,20 @@ public class SasdNavigationHost : UserControl
 
     private Control GetOrCreateView(PageRegistration registration)
     {
-        if (CachePages && cachedViews.TryGetValue(registration.Id, out var cached))
+        if (CachePages && cachedViews.TryGetValue(registration.Id, out Control? cached))
         {
-            return cached;
+            if (!cached.IsDisposed)
+            {
+                return cached;
+            }
+
+            // The host owns cached views, so callers should not dispose them. Recover safely if
+            // application code nevertheless does so; never attempt to reattach a disposed
+            // WinForms control to the live content tree.
+            cachedViews.Remove(registration.Id);
         }
 
-        var view = registration.Factory()
+        Control view = registration.Factory()
             ?? throw new InvalidOperationException($"Page factory '{registration.Id}' returned null.");
 
         if (CachePages)
@@ -165,6 +228,42 @@ public class SasdNavigationHost : UserControl
         }
 
         return view;
+    }
+
+    private void CacheCurrentView()
+    {
+        if (currentView is null || currentView.IsDisposed || currentPageId is null)
+        {
+            return;
+        }
+
+        // A page created while caching was disabled is still host-owned. When caching is later
+        // enabled, adopt that current instance rather than allowing the next navigation to
+        // detach it without either cache ownership or disposal.
+        cachedViews[currentPageId] = currentView;
+    }
+
+    private void ReleaseInactiveCachedViews()
+    {
+        // Turning caching off is an ownership transition, not a performance hint. Inactive
+        // controls are no longer retained and must be disposed now. The current view remains a
+        // normal child of contentPanel and will be disposed when navigation actually leaves it.
+        DisposeCachedViewsExcept(currentView);
+        cachedViews.Clear();
+    }
+
+    private void DisposeCachedViewsExcept(Control? retainedView)
+    {
+        var disposedViews = new HashSet<Control>();
+        foreach (Control view in cachedViews.Values)
+        {
+            if (ReferenceEquals(view, retainedView) || !disposedViews.Add(view))
+            {
+                continue;
+            }
+
+            view.Dispose();
+        }
     }
 
     private void OnSelectedIndexChanged(object? sender, EventArgs e)

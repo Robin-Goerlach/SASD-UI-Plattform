@@ -16,6 +16,7 @@ internal static class Program
             await ValidateShortcutBindingAsync();
             ValidateStatusServiceAndBinding();
             ValidateShellComposition();
+            NavigationHostLifecycleChecks.Run();
             ValidateBreadcrumbAccessibilityAndLifecycle();
             ValidateDocumentTabsKeyboardAndAccessibility();
             ValidateNotificationHost();
