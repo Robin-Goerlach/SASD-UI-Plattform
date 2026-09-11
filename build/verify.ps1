@@ -19,6 +19,10 @@ $referenceProjects = @(
         Project = 'samples/Sasd.Ui.Sample.Workbench/Sasd.Ui.Sample.Workbench.csproj'
     },
     @{
+        Name = 'Utility reference application'
+        Project = 'samples/Sasd.Ui.Sample.Utility/Sasd.Ui.Sample.Utility.csproj'
+    },
+    @{
         Name = 'Integrated platform showcase'
         Project = 'examples/Sasd.Ui.PlatformShowcase/Sasd.Ui.PlatformShowcase.csproj'
     }
