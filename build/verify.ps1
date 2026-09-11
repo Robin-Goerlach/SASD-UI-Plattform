@@ -1,7 +1,8 @@
 [CmdletBinding()]
 param(
     [switch]$SkipRestore,
-    [switch]$CompileOnly
+    [switch]$CompileOnly,
+    [switch]$IncludePackDryRun
 )
 
 Set-StrictMode -Version Latest
@@ -16,6 +17,14 @@ $referenceProjects = @(
     @{
         Name = 'Workbench reference application'
         Project = 'samples/Sasd.Ui.Sample.Workbench/Sasd.Ui.Sample.Workbench.csproj'
+    },
+    @{
+        Name = 'Utility reference application'
+        Project = 'samples/Sasd.Ui.Sample.Utility/Sasd.Ui.Sample.Utility.csproj'
+    },
+    @{
+        Name = 'Integrated platform showcase'
+        Project = 'examples/Sasd.Ui.PlatformShowcase/Sasd.Ui.PlatformShowcase.csproj'
     }
 )
 
@@ -46,10 +55,10 @@ try {
             'SASD.Ui.Platform.sln'
         )
 
-        # Reference applications are intentionally kept outside the hand-maintained
-        # classic solution while they are still small consumer pilots. Restoring each
-        # one explicitly proves that samples do not accidentally depend on solution-only
-        # state or manually copied binaries.
+        # Reference/example applications are intentionally kept outside the hand-maintained
+        # classic solution while they are still small consumer pilots. Restoring each one
+        # explicitly proves that consumers do not accidentally depend on solution-only state
+        # or manually copied binaries.
         foreach ($reference in $referenceProjects) {
             Invoke-DotNetStep -Name "Restore $($reference.Name)" -Arguments @(
                 'restore',
@@ -105,6 +114,13 @@ try {
             Write-Warning 'Non-Windows environment detected. WinForms runtime smoke checks are skipped.'
         }
 
+        # Packaging net8.0-windows projects from a non-Windows host is supported by
+        # EnableWindowsTargeting, but this verification path intentionally remains a
+        # compile-only contract. CI exercises packaging on the normal Windows runner.
+        if ($IncludePackDryRun) {
+            Write-Warning 'NuGet pack dry-run is skipped in CompileOnly/non-Windows verification. Run build/pack-dry-run.ps1 explicitly if packaging is required on this host.'
+        }
+
         Write-Host ""
         Write-Host 'Compile/architecture verification completed successfully.' -ForegroundColor Green
         return
@@ -122,6 +138,20 @@ try {
         '--configuration', 'Release'
     )
 
+    Invoke-DotNetStep -Name 'Forms smoke checks' -Arguments @(
+        'run',
+        '--project', 'tests/smoke/Sasd.Ui.FormsSmokeChecks/Sasd.Ui.FormsSmokeChecks.csproj',
+        '--configuration', 'Release',
+        '-p:TreatWarningsAsErrors=true'
+    )
+
+    Invoke-DotNetStep -Name 'Composite feedback smoke checks' -Arguments @(
+        'run',
+        '--project', 'tests/smoke/Sasd.Ui.CompositeFeedbackSmokeChecks/Sasd.Ui.CompositeFeedbackSmokeChecks.csproj',
+        '--configuration', 'Release',
+        '-p:TreatWarningsAsErrors=true'
+    )
+
     Invoke-DotNetStep -Name 'Windows integration smoke checks' -Arguments @(
         'run',
         '--project', 'tests/smoke/Sasd.Ui.WindowsSmokeChecks/Sasd.Ui.WindowsSmokeChecks.csproj',
@@ -132,6 +162,27 @@ try {
     Invoke-DotNetStep -Name 'Shell integration smoke checks' -Arguments @(
         'run',
         '--project', 'tests/smoke/Sasd.Ui.ShellSmokeChecks/Sasd.Ui.ShellSmokeChecks.csproj',
+        '--configuration', 'Release',
+        '-p:TreatWarningsAsErrors=true'
+    )
+
+    Invoke-DotNetStep -Name 'Keyboard acceptance smoke checks' -Arguments @(
+        'run',
+        '--project', 'tests/smoke/Sasd.Ui.KeyboardSmokeChecks/Sasd.Ui.KeyboardSmokeChecks.csproj',
+        '--configuration', 'Release',
+        '-p:TreatWarningsAsErrors=true'
+    )
+
+    Invoke-DotNetStep -Name 'Dialog threading smoke checks' -Arguments @(
+        'run',
+        '--project', 'tests/smoke/Sasd.Ui.DialogSmokeChecks/Sasd.Ui.DialogSmokeChecks.csproj',
+        '--configuration', 'Release',
+        '-p:TreatWarningsAsErrors=true'
+    )
+
+    Invoke-DotNetStep -Name 'Lifecycle endurance smoke checks' -Arguments @(
+        'run',
+        '--project', 'tests/smoke/Sasd.Ui.LifecycleSmokeChecks/Sasd.Ui.LifecycleSmokeChecks.csproj',
         '--configuration', 'Release',
         '-p:TreatWarningsAsErrors=true'
     )
@@ -155,6 +206,15 @@ try {
         '--project', 'tests/smoke/Sasd.Ui.KryptonSmokeChecks/Sasd.Ui.KryptonSmokeChecks.csproj',
         '--configuration', 'Release'
     )
+
+    if ($IncludePackDryRun) {
+        Write-Host ""
+        Write-Host '==> NuGet packaging dry-run' -ForegroundColor Cyan
+        # The solution was already restored at the start of this gate. Keeping restore
+        # out of the packaging step makes the extra CI evidence deterministic without
+        # making ordinary local verification pay the packaging cost unless requested.
+        & (Join-Path $PSScriptRoot 'pack-dry-run.ps1') -SkipRestore
+    }
 
     Write-Host ""
     Write-Host 'Full SASD UI Platform verification completed successfully.' -ForegroundColor Green
