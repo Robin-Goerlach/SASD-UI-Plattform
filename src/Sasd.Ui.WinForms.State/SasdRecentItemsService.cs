@@ -135,7 +135,7 @@ public sealed class SasdRecentItemsService
         _ = await store.RemoveAsync(StateKey, cancellationToken).ConfigureAwait(false);
     }
 
-    private IReadOnlyList<SasdRecentItem> OrderAndTrim(IEnumerable<SasdRecentItem> items) =>
+    private SasdRecentItem[] OrderAndTrim(IEnumerable<SasdRecentItem> items) =>
         items
             .OrderByDescending(static item => item.IsPinned)
             .ThenByDescending(static item => item.LastOpenedAtUtc)
