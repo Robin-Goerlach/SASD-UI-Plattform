@@ -1,0 +1,18 @@
+<Project>
+  <!--
+    Project-local README files double as the NuGet landing page for packable projects.
+    Directory.Build.targets is intentionally used instead of Directory.Build.props because
+    SDK default None items have been established by this point; Update therefore enriches the
+    existing README item instead of creating a duplicate item in every project.
+
+    The condition keeps projects without a local README untouched. The release dry-run packs
+    only the explicit product-project list, so this common rule does not expand package scope.
+  -->
+  <PropertyGroup Condition="'$(IsPackable)' != 'false' and Exists('$(MSBuildProjectDirectory)/README.md')">
+    <PackageReadmeFile Condition="'$(PackageReadmeFile)' == ''">README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(IsPackable)' != 'false' and Exists('$(MSBuildProjectDirectory)/README.md')">
+    <None Update="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>
