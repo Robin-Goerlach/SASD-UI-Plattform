@@ -103,7 +103,7 @@ public sealed class SasdValidationCoordinator : IDisposable
             return false;
         }
 
-        // Bring an editor into view before selecting it. This is deliberately best-effort:
+        // Bring an editor into view before focusing it. This is deliberately best-effort:
         // nested application layouts retain ownership of their own scrolling policy, while the
         // nearest WinForms ScrollableControl can usually expose the target without extra routing.
         Control? parent = registration.Control.Parent;
@@ -118,7 +118,10 @@ public sealed class SasdValidationCoordinator : IDisposable
             parent = parent.Parent;
         }
 
-        return registration.Control.Select();
+        // Focus() returns the real outcome of the native focus request. That lets summary
+        // navigation report failure when a target becomes unavailable between validation and
+        // user activation without pretending that selecting a logical target always succeeded.
+        return registration.Control.Focus();
     }
 
     /// <summary>Clears currently displayed validation errors.</summary>
