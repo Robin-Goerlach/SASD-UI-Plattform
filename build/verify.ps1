@@ -201,6 +201,13 @@ try {
         '-p:TreatWarningsAsErrors=true'
     )
 
+    Invoke-DotNetStep -Name 'Data interaction smoke checks' -Arguments @(
+        'run',
+        '--project', 'tests/smoke/Sasd.Ui.DataInteractionSmokeChecks/Sasd.Ui.DataInteractionSmokeChecks.csproj',
+        '--configuration', 'Release',
+        '-p:TreatWarningsAsErrors=true'
+    )
+
     Invoke-DotNetStep -Name 'Krypton adapter smoke checks' -Arguments @(
         'run',
         '--project', 'tests/smoke/Sasd.Ui.KryptonSmokeChecks/Sasd.Ui.KryptonSmokeChecks.csproj',
