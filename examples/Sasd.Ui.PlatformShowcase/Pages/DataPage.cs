@@ -9,6 +9,8 @@ namespace Sasd.Ui.PlatformShowcase;
 /// </summary>
 internal sealed class DataPage : UserControl
 {
+    private const int PreferredGridSplitterDistance = 700;
+
     private readonly Action<string, SasdStatusSeverity, TimeSpan?> publishStatus;
     private readonly List<DemoCustomer> allCustomers = CreateCustomers();
     private readonly BindingSource bindingSource = new();
@@ -19,7 +21,9 @@ internal sealed class DataPage : UserControl
     private readonly ComboBox statusFilter = new();
     private readonly Label resultLabel = new();
     private readonly TextBox csvPreview = new();
+    private readonly SplitContainer gridArea = new();
     private SasdGridViewDefinition? savedView;
+    private bool gridSplitterInitialized;
 
     public DataPage(Action<string, SasdStatusSeverity, TimeSpan?> publishStatus)
     {
@@ -75,18 +79,22 @@ internal sealed class DataPage : UserControl
         actions.Controls.Add(statusFilter);
         actions.Controls.Add(resultLabel);
 
-        var gridArea = new SplitContainer
-        {
-            Dock = DockStyle.Fill,
-            FixedPanel = FixedPanel.Panel2,
-            Panel1MinSize = 480,
-            Panel2MinSize = 220,
-            SplitterDistance = 700,
-        };
+        gridArea.Dock = DockStyle.Fill;
+        gridArea.FixedPanel = FixedPanel.Panel2;
+        gridArea.Panel1MinSize = 480;
+        gridArea.Panel2MinSize = 220;
         gridArea.Panel1.Controls.Add(grid);
         gridArea.Panel2.Padding = new Padding(12, 0, 0, 0);
         gridArea.Panel2.Controls.Add(columnChooser);
         columnChooser.Dock = DockStyle.Fill;
+
+        // SplitContainer validates SplitterDistance against its *current* width. During a
+        // UserControl constructor that width is still the small default size, so assigning the
+        // intended 700px distance here can throw before the page ever reaches its real host.
+        // Defer only the initial preference until the first layout with enough room; afterwards
+        // detach the handler so user resizing/moving the splitter remains ordinary WinForms
+        // behavior rather than being continually overridden by the showcase.
+        gridArea.Layout += OnGridAreaLayout;
 
         var layout = new TableLayoutPanel
         {
@@ -120,6 +128,7 @@ internal sealed class DataPage : UserControl
             searchBox.SearchTextChanged -= OnSearchChanged;
             filterBar.FiltersChanged -= OnFiltersChanged;
             statusFilter.SelectedIndexChanged -= OnStatusFilterChanged;
+            gridArea.Layout -= OnGridAreaLayout;
             columnChooser.Unbind();
             bindingSource.Dispose();
         }
@@ -175,6 +184,29 @@ internal sealed class DataPage : UserControl
         statusFilter.Items.AddRange(["All", "Active", "Paused", "Archived"]);
         statusFilter.SelectedIndex = 0;
         statusFilter.SelectedIndexChanged += OnStatusFilterChanged;
+    }
+
+    private void OnGridAreaLayout(object? sender, LayoutEventArgs e)
+    {
+        if (gridSplitterInitialized)
+        {
+            return;
+        }
+
+        int maximumDistance = gridArea.ClientSize.Width - gridArea.Panel2MinSize - gridArea.SplitterWidth;
+        if (maximumDistance < gridArea.Panel1MinSize)
+        {
+            // The host has not reached a usable width yet. A later layout will retry without
+            // forcing either panel below its declared minimum size.
+            return;
+        }
+
+        gridSplitterInitialized = true;
+        gridArea.SplitterDistance = Math.Clamp(
+            PreferredGridSplitterDistance,
+            gridArea.Panel1MinSize,
+            maximumDistance);
+        gridArea.Layout -= OnGridAreaLayout;
     }
 
     private void OnSearchChanged(object? sender, EventArgs e) => ApplyFilter();
