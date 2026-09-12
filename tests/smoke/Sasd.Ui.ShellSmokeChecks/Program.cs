@@ -18,6 +18,7 @@ internal static class Program
             ValidateShellComposition();
             NavigationHostLifecycleChecks.Run();
             ValidateBreadcrumbAccessibilityAndLifecycle();
+            BreadcrumbOverflowChecks.Run();
             ValidateDocumentTabsKeyboardAndAccessibility();
             ValidateNotificationHost();
 

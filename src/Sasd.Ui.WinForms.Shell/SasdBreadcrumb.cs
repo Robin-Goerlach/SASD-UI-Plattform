@@ -25,15 +25,20 @@ public sealed class SasdBreadcrumbItemInvokedEventArgs : EventArgs
 }
 
 /// <summary>
-/// Displays a simple, keyboard-accessible breadcrumb path without owning the
-/// application's navigation policy.
+/// Displays a keyboard-accessible breadcrumb path without owning the application's
+/// navigation policy.
 /// </summary>
 [DefaultEvent(nameof(ItemInvoked))]
 public class SasdBreadcrumb : UserControl
 {
+    private const int DefaultMaximumVisibleItems = 5;
+
     private readonly FlowLayoutPanel host;
     private readonly List<SasdBreadcrumbItem> items = [];
     private string separatorText = "›";
+    private int maximumVisibleItems = DefaultMaximumVisibleItems;
+    private ContextMenuStrip? overflowMenu;
+    private int collapsedItemCount;
 
     /// <summary>Initialises the breadcrumb control.</summary>
     public SasdBreadcrumb()
@@ -73,6 +78,41 @@ public class SasdBreadcrumb : UserControl
     /// <summary>Gets the number of breadcrumb items.</summary>
     [Browsable(false)]
     public int ItemCount => items.Count;
+
+    /// <summary>
+    /// Gets or sets the maximum number of real breadcrumb locations shown before intermediate
+    /// locations are represented by an ellipsis menu.
+    /// </summary>
+    /// <remarks>
+    /// The root and current location are always retained. The ellipsis itself is an additional
+    /// presentation control and does not count toward this value. Count-based collapsing keeps
+    /// the R1 behavior deterministic across fonts, themes and DPI settings; applications that
+    /// later need pixel-perfect adaptive layout can build that policy above this stable contract.
+    /// </remarks>
+    [Category("SASD")]
+    [DefaultValue(DefaultMaximumVisibleItems)]
+    public int MaximumVisibleItems
+    {
+        get => maximumVisibleItems;
+        set
+        {
+            if (value < 2)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(value),
+                    value,
+                    "At least the root and current breadcrumb locations must remain visible.");
+            }
+
+            if (maximumVisibleItems == value)
+            {
+                return;
+            }
+
+            maximumVisibleItems = value;
+            RebuildControls();
+        }
+    }
 
     /// <summary>Gets or sets the visual separator between breadcrumb items.</summary>
     [Category("SASD")]
@@ -129,6 +169,21 @@ public class SasdBreadcrumb : UserControl
         RebuildControls();
     }
 
+    /// <inheritdoc />
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            // ContextMenuStrip is not part of the Controls hierarchy, so the breadcrumb must
+            // release this generated native resource explicitly. Child path controls remain
+            // normal WinForms children and are disposed by the base control hierarchy.
+            overflowMenu?.Dispose();
+            overflowMenu = null;
+        }
+
+        base.Dispose(disposing);
+    }
+
     private void RebuildControls()
     {
         // Generated controls are owned by the breadcrumb. Disposing them explicitly is
@@ -142,27 +197,67 @@ public class SasdBreadcrumb : UserControl
             control.Dispose();
         }
 
-        for (int index = 0; index < items.Count; index++)
-        {
-            SasdBreadcrumbItem item = items[index];
-            bool isCurrent = index == items.Count - 1;
-            host.Controls.Add(isCurrent ? CreateCurrentLabel(item) : CreateLink(item));
+        // The overflow menu is not parented into host.Controls and therefore requires its own
+        // lifecycle. Rebuilding the path invalidates every captured breadcrumb item in it.
+        overflowMenu?.Dispose();
+        overflowMenu = null;
+        collapsedItemCount = 0;
 
-            if (!isCurrent)
+        if (items.Count <= maximumVisibleItems)
+        {
+            for (int index = 0; index < items.Count; index++)
             {
-                host.Controls.Add(new Label
-                {
-                    AccessibleRole = AccessibleRole.Separator,
-                    AutoSize = true,
-                    Margin = new Padding(4, 4, 4, 0),
-                    TabStop = false,
-                    Text = separatorText,
-                });
+                AddPathItem(items[index], isCurrent: index == items.Count - 1);
+                AddSeparatorAfter(index, items.Count);
+            }
+        }
+        else
+        {
+            // Keep the root plus the newest tail. Intermediate ancestors remain reachable
+            // through one explicit ellipsis menu rather than being silently discarded.
+            AddPathItem(items[0], isCurrent: false);
+            AddSeparator();
+
+            int tailItemCount = maximumVisibleItems - 1;
+            int tailStartIndex = items.Count - tailItemCount;
+            SasdBreadcrumbItem[] hiddenItems = items
+                .Skip(1)
+                .Take(tailStartIndex - 1)
+                .ToArray();
+
+            collapsedItemCount = hiddenItems.Length;
+            host.Controls.Add(CreateOverflowLink(hiddenItems));
+            AddSeparator();
+
+            for (int index = tailStartIndex; index < items.Count; index++)
+            {
+                AddPathItem(items[index], isCurrent: index == items.Count - 1);
+                AddSeparatorAfter(index, items.Count);
             }
         }
 
         UpdateAccessibleState();
     }
+
+    private void AddPathItem(SasdBreadcrumbItem item, bool isCurrent) =>
+        host.Controls.Add(isCurrent ? CreateCurrentLabel(item) : CreateLink(item));
+
+    private void AddSeparatorAfter(int index, int itemCount)
+    {
+        if (index < itemCount - 1)
+        {
+            AddSeparator();
+        }
+    }
+
+    private void AddSeparator() => host.Controls.Add(new Label
+    {
+        AccessibleRole = AccessibleRole.Separator,
+        AutoSize = true,
+        Margin = new Padding(4, 4, 4, 0),
+        TabStop = false,
+        Text = separatorText,
+    });
 
     private LinkLabel CreateLink(SasdBreadcrumbItem item)
     {
@@ -176,9 +271,59 @@ public class SasdBreadcrumb : UserControl
             TabStop = true,
             Text = item.Text,
         };
-        link.LinkClicked += (_, _) => ItemInvoked?.Invoke(this, new SasdBreadcrumbItemInvokedEventArgs(item));
+        link.LinkClicked += (_, _) => RaiseItemInvoked(item);
         return link;
     }
+
+    private LinkLabel CreateOverflowLink(IReadOnlyList<SasdBreadcrumbItem> hiddenItems)
+    {
+        overflowMenu = new ContextMenuStrip
+        {
+            AccessibleName = "Hidden breadcrumb locations",
+        };
+
+        foreach (SasdBreadcrumbItem item in hiddenItems)
+        {
+            var menuItem = new ToolStripMenuItem(item.Text)
+            {
+                AccessibleName = $"Navigate to {item.Text}",
+                AccessibleDescription = $"Navigates to the hidden breadcrumb location {item.Text}.",
+            };
+            menuItem.Click += (_, _) => RaiseItemInvoked(item);
+            overflowMenu.Items.Add(menuItem);
+        }
+
+        var overflowLink = new LinkLabel
+        {
+            AccessibleRole = AccessibleRole.Link,
+            AccessibleName = $"Show {hiddenItems.Count} hidden breadcrumb locations",
+            AccessibleDescription = "Opens the intermediate breadcrumb locations that were collapsed to keep the path compact.",
+            AutoSize = true,
+            ContextMenuStrip = overflowMenu,
+            Margin = new Padding(0, 4, 0, 0),
+            TabStop = true,
+            Text = "…",
+        };
+        overflowLink.LinkClicked += (_, _) => ShowOverflowMenu(overflowLink);
+        return overflowLink;
+    }
+
+    private void ShowOverflowMenu(LinkLabel overflowLink)
+    {
+        ContextMenuStrip? menu = overflowMenu;
+        if (menu is null || menu.IsDisposed || menu.Items.Count == 0 || overflowLink.IsDisposed)
+        {
+            return;
+        }
+
+        // LinkClicked is raised by the native LinkLabel for pointer and keyboard activation.
+        // Keeping menu display here means the platform does not need process-global input hooks
+        // or application routing knowledge to make collapsed ancestors reachable.
+        menu.Show(overflowLink, new Point(0, overflowLink.Height));
+    }
+
+    private void RaiseItemInvoked(SasdBreadcrumbItem item) =>
+        ItemInvoked?.Invoke(this, new SasdBreadcrumbItemInvokedEventArgs(item));
 
     private static Label CreateCurrentLabel(SasdBreadcrumbItem item) => new()
     {
@@ -200,7 +345,10 @@ public class SasdBreadcrumb : UserControl
         }
 
         string noun = items.Count == 1 ? "location" : "locations";
+        string collapsed = collapsedItemCount == 0
+            ? string.Empty
+            : $" {collapsedItemCount} intermediate {(collapsedItemCount == 1 ? "location is" : "locations are")} collapsed under the ellipsis.";
         AccessibleDescription =
-            $"{items.Count} breadcrumb {noun}. Current location: {items[^1].Text}.";
+            $"{items.Count} breadcrumb {noun}. Current location: {items[^1].Text}.{collapsed}";
     }
 }

@@ -7,7 +7,7 @@ Reusable application-shell, navigation, document and status components for SASD 
 - `SasdShellForm` composes the command bar, navigation host, status surface and global command manager without a service locator;
 - `SasdCommandBar` projects application commands into a standard toolbar surface;
 - `SasdNavigationHost` registers application page factories, owns created views, exposes DPI/accessibility-aware navigation surfaces and supports explicit cached/non-cached view lifecycles;
-- `SasdBreadcrumb` exposes a stable application-defined path with explicit grouping/link/current-location accessibility semantics while leaving routing to the application;
+- `SasdBreadcrumb` exposes a stable application-defined path with explicit grouping/link/current-location accessibility semantics and deterministic ellipsis navigation for long paths while leaving routing to the application;
 - `SasdDocumentTabs` owns factory-created document controls, keeps stable document ids, updates visible/accessibility titles together and supports Ctrl+Tab / Ctrl+Shift+Tab document switching;
 - `SasdStatusService`, `SasdStatusBinding` and `SasdStatusBar` provide priority-aware status feedback.
 
@@ -26,6 +26,10 @@ The navigation host, navigation list and content pane expose descriptive accessi
 `SasdBreadcrumb` owns the generated `LinkLabel`, separator and current-location controls that represent the current path. Replacing or clearing the path disposes those generated controls rather than merely detaching them, so repeated navigation does not accumulate abandoned WinForms resources.
 
 The control exposes the complete breadcrumb and its internal path host as accessible groupings, ancestor locations as links, decorative separators as separators and the final location as non-interactive static text. Its accessible description follows the number of locations and the current location. Invoking an ancestor raises `ItemInvoked` with the stable application-owned breadcrumb item; the application remains responsible for deciding whether and how navigation occurs.
+
+Long paths are collapsed deterministically rather than by repeatedly measuring pixels during layout. `MaximumVisibleItems` defaults to five real breadcrumb locations and must remain at least two so root and current location can always stay visible. When a path exceeds that limit, the root and newest tail remain visible while intermediate ancestors move under a keyboard-accessible `…` link. The ellipsis opens a native `ContextMenuStrip`; selecting a hidden ancestor raises the same `ItemInvoked` event as a visible link, so applications do not need a second routing path.
+
+The ellipsis is an additional presentation control and does not count toward `MaximumVisibleItems`. This count-based R1 contract is intentionally stable across fonts, themes and DPI settings; it avoids a premature pixel-measurement/reflow engine while still preventing arbitrarily long breadcrumb paths from expanding the shell indefinitely. The generated overflow menu is not part of the normal WinForms child-control hierarchy, so `SasdBreadcrumb` disposes it explicitly whenever the path/limit changes and when the breadcrumb itself is disposed.
 
 ## Document ownership and keyboard behavior
 
