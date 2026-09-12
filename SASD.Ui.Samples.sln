@@ -1,0 +1,45 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sasd.Ui.ComponentGallery", "samples\Sasd.Ui.ComponentGallery\Sasd.Ui.ComponentGallery.csproj", "{19F6CE84-DBF0-479F-AFAB-0866D0BE6EE0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sasd.Ui.PlatformShowcase", "examples\Sasd.Ui.PlatformShowcase\Sasd.Ui.PlatformShowcase.csproj", "{A62A5393-D6AB-4A4F-85F8-8318BB11D901}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sasd.Ui.Sample.Crud", "samples\Sasd.Ui.Sample.Crud\Sasd.Ui.Sample.Crud.csproj", "{2ACCFB1E-063F-491B-9751-F2FC2C0937C7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sasd.Ui.Sample.Workbench", "samples\Sasd.Ui.Sample.Workbench\Sasd.Ui.Sample.Workbench.csproj", "{F2420933-D08D-4AA2-AAD9-8235E7E50839}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sasd.Ui.Sample.Utility", "samples\Sasd.Ui.Sample.Utility\Sasd.Ui.Sample.Utility.csproj", "{AC2B4FEB-C0D4-45F0-9B0E-A94726AD6936}"
+EndProject
+Global
+    GlobalSection(SolutionConfigurationPlatforms) = preSolution
+        Debug|Any CPU = Debug|Any CPU
+        Release|Any CPU = Release|Any CPU
+    EndGlobalSection
+    GlobalSection(ProjectConfigurationPlatforms) = postSolution
+        {19F6CE84-DBF0-479F-AFAB-0866D0BE6EE0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+        {19F6CE84-DBF0-479F-AFAB-0866D0BE6EE0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+        {19F6CE84-DBF0-479F-AFAB-0866D0BE6EE0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+        {19F6CE84-DBF0-479F-AFAB-0866D0BE6EE0}.Release|Any CPU.Build.0 = Release|Any CPU
+        {A62A5393-D6AB-4A4F-85F8-8318BB11D901}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+        {A62A5393-D6AB-4A4F-85F8-8318BB11D901}.Debug|Any CPU.Build.0 = Debug|Any CPU
+        {A62A5393-D6AB-4A4F-85F8-8318BB11D901}.Release|Any CPU.ActiveCfg = Release|Any CPU
+        {A62A5393-D6AB-4A4F-85F8-8318BB11D901}.Release|Any CPU.Build.0 = Release|Any CPU
+        {2ACCFB1E-063F-491B-9751-F2FC2C0937C7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+        {2ACCFB1E-063F-491B-9751-F2FC2C0937C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+        {2ACCFB1E-063F-491B-9751-F2FC2C0937C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+        {2ACCFB1E-063F-491B-9751-F2FC2C0937C7}.Release|Any CPU.Build.0 = Release|Any CPU
+        {F2420933-D08D-4AA2-AAD9-8235E7E50839}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+        {F2420933-D08D-4AA2-AAD9-8235E7E50839}.Debug|Any CPU.Build.0 = Debug|Any CPU
+        {F2420933-D08D-4AA2-AAD9-8235E7E50839}.Release|Any CPU.ActiveCfg = Release|Any CPU
+        {F2420933-D08D-4AA2-AAD9-8235E7E50839}.Release|Any CPU.Build.0 = Release|Any CPU
+        {AC2B4FEB-C0D4-45F0-9B0E-A94726AD6936}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+        {AC2B4FEB-C0D4-45F0-9B0E-A94726AD6936}.Debug|Any CPU.Build.0 = Debug|Any CPU
+        {AC2B4FEB-C0D4-45F0-9B0E-A94726AD6936}.Release|Any CPU.ActiveCfg = Release|Any CPU
+        {AC2B4FEB-C0D4-45F0-9B0E-A94726AD6936}.Release|Any CPU.Build.0 = Release|Any CPU
+    EndGlobalSection
+    GlobalSection(SolutionProperties) = preSolution
+        HideSolutionNode = FALSE
+    EndGlobalSection
+EndGlobal

@@ -87,6 +87,8 @@ The architecture is based on four rules:
 ```text
 SASD-UI-Plattform/
 ├─ AGENTS.md               Persistent map/instructions for coding agents such as Codex
+├─ SASD.Ui.Platform.sln    Product/development solution
+├─ SASD.Ui.Samples.sln     Executable Gallery/Showcase/reference-consumer solution
 ├─ src/                    Product projects and optional adapters
 ├─ tests/                  Unit, integration, architecture, UI and visual tests
 ├─ samples/                Component Gallery and focused reference applications
@@ -144,17 +146,21 @@ The `src` folder follows the package boundaries defined by the architecture. Cur
 
 The repository intentionally contains more than one consumer shape so awkward public APIs are found before wider adoption:
 
+- [`samples/Sasd.Ui.ComponentGallery`](samples/Sasd.Ui.ComponentGallery/) — component-oriented executable Gallery;
 - [`samples/Sasd.Ui.Sample.Crud`](samples/Sasd.Ui.Sample.Crud/) — focused CRUD reference application;
 - [`samples/Sasd.Ui.Sample.Workbench`](samples/Sasd.Ui.Sample.Workbench/) — focused document/workbench reference application;
+- [`samples/Sasd.Ui.Sample.Utility`](samples/Sasd.Ui.Sample.Utility/) — Windows integration, state, progress and tray reference application;
 - [`examples/Sasd.Ui.PlatformShowcase`](examples/Sasd.Ui.PlatformShowcase/) — broad integrated demonstration with manual component exercises and a safe public-API self-test page.
 
-Run the integrated showcase on Windows with:
+For Visual Studio, open `SASD.Ui.Samples.sln`, select any of these five executable projects as the startup project and press F5. Keeping this solution separate from `SASD.Ui.Platform.sln` gives developers a direct runnable entry point without turning the product solution into a demo catalogue.
+
+Run the integrated showcase directly on Windows with:
 
 ```powershell
 dotnet run --project examples/Sasd.Ui.PlatformShowcase/Sasd.Ui.PlatformShowcase.csproj
 ```
 
-The canonical verification script restores and strictly builds all three consumers, so future platform changes cannot silently break the example.
+The canonical verification script restores and strictly builds the reference consumers independently, validates `SASD.Ui.Samples.sln`, and runs the Showcase off-screen navigation smoke. This keeps examples useful as consumers rather than allowing them to depend on solution-only state.
 
 ## Build prerequisites
 
@@ -178,32 +184,3 @@ On a non-Windows environment use `pwsh ./build/verify.ps1 -CompileOnly`; this do
 ## Coding agents / Codex
 
 The repository contains a curated [`AGENTS.md`](AGENTS.md) for Codex and other instruction-aware coding agents. It is intentionally a concise map rather than a second specification. The detailed source of truth remains under `docs/` and in `ROADMAP.md`.
-
-Read the [Codex development workflow](docs/en/project/codex-development-workflow.md) before assigning broad autonomous work. In particular, Codex may implement already-approved roadmap/specification work, but must stop before introducing new runtime dependencies, platform changes, major package-boundary changes or other strategic choices.
-
-## Roadmap
-
-The roadmap is intentionally kept at the repository root so it is visible next to the README:
-
-**[`ROADMAP.md`](ROADMAP.md)**
-
-In summary:
-
-- **R0.1:** repository, contracts, architecture checks and reproducible build;
-- **R0.2:** native WinForms versus isolated Krypton visual pilot;
-- **R0.3:** grid, dialog, state and UI-test pilot;
-- **R1:** productive foundation, quality evidence, packaging and first real SASD migrations;
-- **R2:** dependency-free native helpers plus independently approved specialist adapters;
-- **R3:** only additional modules with demonstrated product demand.
-
-## Contributing and security
-
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) before proposing a new component or dependency. Security issues should follow [SECURITY.md](SECURITY.md) and should not initially be disclosed through a public issue.
-
-## Licence
-
-SASD UI Platform is licensed under the [MIT License](LICENSE). Third-party adapters and sample integrations retain their own licences and notices. Inclusion in the component catalogue does not mean that a product's source code or commercial functionality is part of this repository.
-
----
-
-Copyright © 2026 SASD-GmbH
