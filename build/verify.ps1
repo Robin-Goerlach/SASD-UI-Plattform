@@ -55,10 +55,14 @@ try {
             'SASD.Ui.Platform.sln'
         )
 
-        # Reference/example applications are intentionally kept outside the hand-maintained
-        # classic solution while they are still small consumer pilots. Restoring each one
-        # explicitly proves that consumers do not accidentally depend on solution-only state
-        # or manually copied binaries.
+        # Keep the executable Visual Studio entry point itself under CI. This catches malformed
+        # solution/project paths while the independent project restores below continue proving
+        # that reference consumers do not depend on solution-only state or copied binaries.
+        Invoke-DotNetStep -Name 'Restore executable samples solution' -Arguments @(
+            'restore',
+            'SASD.Ui.Samples.sln'
+        )
+
         foreach ($reference in $referenceProjects) {
             Invoke-DotNetStep -Name "Restore $($reference.Name)" -Arguments @(
                 'restore',
@@ -78,9 +82,16 @@ try {
         '-p:TreatWarningsAsErrors=true'
     )
 
-    # Reference consumers are built with the same analyzer policy as product code.
-    # This catches awkward public APIs and missing project/package references that
-    # component-level smoke checks alone cannot reveal.
+    Invoke-DotNetStep -Name 'Build executable samples solution' -Arguments @(
+        'build',
+        'SASD.Ui.Samples.sln',
+        '--configuration', 'Release',
+        '--no-restore',
+        '-p:TreatWarningsAsErrors=true'
+    )
+
+    # Reference consumers are also built independently with the same analyzer policy. This
+    # catches awkward public APIs and missing references that a solution-only build can mask.
     foreach ($reference in $referenceProjects) {
         Invoke-DotNetStep -Name "Build $($reference.Name)" -Arguments @(
             'build',
