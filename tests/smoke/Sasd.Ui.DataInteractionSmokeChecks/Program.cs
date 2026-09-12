@@ -232,6 +232,8 @@ internal static class Program
 
     private static async Task ValidateCancellationOnDisposeAsync(Form hostForm)
     {
+        var loaderStarted = new TaskCompletionSource(
+            TaskCreationOptions.RunContinuationsAsynchronously);
         var cancellationObserved = new TaskCompletionSource(
             TaskCreationOptions.RunContinuationsAsynchronously);
         var loaderFinished = new TaskCompletionSource(
@@ -241,15 +243,20 @@ internal static class Program
         var tree = new TestTreeView
         {
             Dock = DockStyle.Fill,
-            Visible = false,
         };
         hostForm.Controls.Add(tree);
+
+        // This scenario tests a native expand/dispose race. Force handle creation on the
+        // owning STA thread so the test cannot accidentally depend on handleless behavior of
+        // a hidden child control. The host form itself remains far off-screen and off-taskbar.
+        _ = tree.Handle;
 
         var root = new TreeNode("Long-running node");
         tree.Nodes.Add(root);
         tree.NodeLoadFailed += (_, _) => failures++;
         tree.RegisterLazyNode(root, async cancellationToken =>
         {
+            loaderStarted.TrySetResult();
             using CancellationTokenRegistration registration = cancellationToken.Register(
                 static state => ((TaskCompletionSource)state!).TrySetResult(),
                 cancellationObserved);
@@ -266,6 +273,8 @@ internal static class Program
         });
 
         root.Expand();
+        Ensure(loaderStarted.Task.IsCompleted,
+            "Native TreeView expansion did not start the registered lazy loader before disposal.");
         tree.Dispose();
 
         await cancellationObserved.Task.ConfigureAwait(true);
