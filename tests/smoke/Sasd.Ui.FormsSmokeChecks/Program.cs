@@ -1,3 +1,4 @@
+using System.Reflection;
 using Sasd.Ui.WinForms.Forms;
 
 namespace Sasd.Ui.FormsSmokeChecks;
@@ -11,6 +12,7 @@ internal static class Program
         {
             ValidateFieldLayout();
             ValidateSectionPanel();
+            ValidateValidationFocusNavigation();
 
             Console.WriteLine("SASD forms smoke checks passed.");
             return 0;
@@ -108,6 +110,125 @@ internal static class Program
 
         section.SectionTitle = null!;
         Ensure(section.Text == string.Empty, "Null section title was not normalized to an empty title.");
+    }
+
+    private static void ValidateValidationFocusNavigation()
+    {
+        using var form = new Form
+        {
+            ClientSize = new Size(640, 360),
+            Location = new Point(-32000, -32000),
+            ShowInTaskbar = false,
+            StartPosition = FormStartPosition.Manual,
+            Text = "SASD validation navigation smoke",
+        };
+        using var summary = new SasdValidationSummary { Dock = DockStyle.Top };
+        using var fields = new Panel { AutoScroll = true, Dock = DockStyle.Fill };
+        var nameEditor = new TextBox
+        {
+            AccessibleName = "Name",
+            Location = new Point(12, 220),
+            Width = 280,
+        };
+        var emailEditor = new TextBox
+        {
+            AccessibleName = "Email",
+            Location = new Point(12, 12),
+            Width = 280,
+        };
+        fields.Controls.Add(nameEditor);
+        fields.Controls.Add(emailEditor);
+        form.Controls.Add(fields);
+        form.Controls.Add(summary);
+
+        using var coordinator = new SasdValidationCoordinator(form);
+        coordinator.AddRequired("name", nameEditor, "Name");
+        coordinator.AddRequired("email", emailEditor, "Email");
+        summary.Bind(coordinator);
+
+        form.Show();
+        emailEditor.Focus();
+        Ensure(emailEditor.Focused,
+            "Validation-navigation smoke could not establish its initial focus target.");
+
+        // Both rules complete synchronously, so this call does not require a separate message
+        // loop. Binding proves that the summary receives ValidationCompleted without application
+        // code having to duplicate ShowResult plumbing.
+        SasdValidationResult result = coordinator.ValidateAsync().GetAwaiter().GetResult();
+        Ensure(result.Messages.Count == 2 && summary.Visible,
+            "Bound validation summary did not display the completed validation result.");
+
+        ListBox messageList = FindDescendant<ListBox>(summary)
+            ?? throw new InvalidOperationException("Validation summary did not create its message list.");
+        Ensure(messageList.Items.Count == 2 && messageList.Items[0] is SasdValidationMessage,
+            "Validation summary did not retain full validation-message objects for navigation.");
+        Ensure(summary.AccessibleDescription?.Contains("Error: Name is required.", StringComparison.Ordinal) == true,
+            "Validation summary accessible text omitted message severity.");
+
+        SasdValidationMessageInvokedEventArgs? invoked = null;
+        summary.MessageInvoked += (_, args) => invoked = args;
+        messageList.SelectedIndex = 0;
+        messageList.Focus();
+        Ensure(messageList.Focused,
+            "Validation message list could not receive keyboard focus in a real WinForms host.");
+
+        KeyEventArgs enter = RaiseKeyDown(messageList, Keys.Enter);
+        Ensure(enter.Handled && enter.SuppressKeyPress,
+            "Enter activation was not claimed by the validation message list.");
+        Ensure(nameEditor.Focused,
+            "Activating the name validation message did not move focus to its registered editor.");
+        Ensure(invoked?.Message.FieldKey == "name" && invoked.FocusMoved,
+            "Validation message activation did not report the selected message and successful focus navigation.");
+
+        Ensure(coordinator.TryFocusField("EMAIL") && emailEditor.Focused,
+            "Validation field lookup was not case-insensitive or did not focus the matching editor.");
+        Ensure(!coordinator.TryFocusField("missing"),
+            "Validation coordinator reported success for an unknown field key.");
+
+        emailEditor.Enabled = false;
+        Ensure(!coordinator.TryFocusField("email"),
+            "Validation coordinator reported success for a disabled/unselectable target.");
+        emailEditor.Enabled = true;
+
+        summary.Unbind();
+        summary.Clear();
+        _ = coordinator.ValidateAsync().GetAwaiter().GetResult();
+        Ensure(!summary.Visible && messageList.Items.Count == 0,
+            "Validation summary continued receiving results after Unbind.");
+
+        form.Hide();
+    }
+
+    private static KeyEventArgs RaiseKeyDown(Control control, Keys keys)
+    {
+        MethodInfo onKeyDown = typeof(Control).GetMethod(
+            "OnKeyDown",
+            BindingFlags.Instance | BindingFlags.NonPublic)
+            ?? throw new InvalidOperationException("Could not locate the protected Control.OnKeyDown method.");
+
+        var args = new KeyEventArgs(keys);
+        onKeyDown.Invoke(control, [args]);
+        return args;
+    }
+
+    private static TControl? FindDescendant<TControl>(Control parent)
+        where TControl : Control
+    {
+        foreach (Control child in parent.Controls)
+        {
+            if (child is TControl match)
+            {
+                return match;
+            }
+
+            TControl? descendant = FindDescendant<TControl>(child);
+            if (descendant is not null)
+            {
+                return descendant;
+            }
+        }
+
+        return null;
     }
 
     private static void EnsureThrows<TException>(Action action, string message)
