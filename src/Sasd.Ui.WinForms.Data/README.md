@@ -12,7 +12,8 @@ Reusable data-presentation components and application-neutral query/state helper
 - `SasdPager` with DPI-aware layout, explicit paging-group semantics, descriptive navigation/page-size accessibility text, and a current page/range description derived from loaded state;
 - CSV export;
 - persisted grid layout state;
-- `SasdListView` and `SasdTreeView` defaults.
+- `SasdListView` with conservative native defaults;
+- `SasdTreeView` with conservative native defaults plus application-owned lazy child loading, generic retry presentation and shutdown cancellation.
 
 ### Search-box edit and request contract
 
@@ -39,6 +40,16 @@ If a result set shrinks while the controller is positioned beyond the new final 
 Failures from explicit `LoadAsync`, `SearchAsync` and `SortAsync` calls remain normal task failures for the application to await and handle. Loads initiated by the controller's own WinForms pager/header event handlers cannot return a `Task` to application code, so non-cancellation failures are reported through `LoadFailed`. The event carries the technical exception for logging/diagnostics; applications should choose their own user-safe error presentation instead of displaying raw exception details.
 
 Disposing the controller detaches its WinForms event handlers and requests cancellation of an active load. The in-flight `LoadAsync` invocation remains responsible for disposing its own linked cancellation source after the application-owned source call completes.
+
+### Tree lazy-loading and retry contract
+
+`SasdTreeView.RegisterLazyNode(...)` lets an application defer expensive child discovery until a node is first expanded. The application supplies the asynchronous loader and therefore retains responsibility for file-system, API, database or domain access. The UI Platform only owns the presentation/lifecycle boundary around that loader.
+
+A registered node receives a lightweight placeholder so native WinForms exposes an expansion affordance before the actual children are known. The first expansion invokes the loader exactly once. Child nodes returned by the loader must be detached from any other tree location; after successful attachment they follow the normal WinForms tree hierarchy. A successfully loaded node is not reloaded on every collapse/expand cycle.
+
+Loader failures are converted into a generic retry child instead of displaying raw exception text. The technical exception is available through `NodeLoadFailed` for application logging or diagnostics. Selecting the retry child and pressing Enter, or double-clicking it, retries through the same registered loader. Applications should keep user-facing diagnostics separate from technical exception details.
+
+The control owns the cancellation sources it creates for active lazy loads. Disposing the TreeView requests cancellation but deliberately does not dispose an in-flight source until the application-owned loader task has actually unwound; this avoids invalidating cancellation registrations that the loader still uses. Cancellation caused by control disposal is a normal lifecycle boundary and is not surfaced as `NodeLoadFailed`.
 
 ## Native R2 foundation
 
