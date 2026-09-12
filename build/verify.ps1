@@ -208,6 +208,17 @@ try {
         '-p:TreatWarningsAsErrors=true'
     )
 
+    # Build-only coverage did not catch page-constructor/layout failures because showcase pages
+    # are created lazily during navigation. Exercise every registered demonstration page in a
+    # normal off-screen WinForms host so consumer-level regressions fail the same shared gate.
+    Invoke-DotNetStep -Name 'Integrated showcase navigation smoke checks' -Arguments @(
+        'run',
+        '--project', 'examples/Sasd.Ui.PlatformShowcase/Sasd.Ui.PlatformShowcase.csproj',
+        '--configuration', 'Release',
+        '--no-build',
+        '--', '--smoke'
+    )
+
     Invoke-DotNetStep -Name 'Krypton adapter smoke checks' -Arguments @(
         'run',
         '--project', 'tests/smoke/Sasd.Ui.KryptonSmokeChecks/Sasd.Ui.KryptonSmokeChecks.csproj',

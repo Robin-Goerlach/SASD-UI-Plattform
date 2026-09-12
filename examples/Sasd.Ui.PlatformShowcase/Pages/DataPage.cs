@@ -9,6 +9,10 @@ namespace Sasd.Ui.PlatformShowcase;
 /// </summary>
 internal sealed class DataPage : UserControl
 {
+    private const int GridPanelMinimumWidth = 480;
+    private const int ChooserPanelMinimumWidth = 220;
+    private const int PreferredGridSplitterDistance = 700;
+
     private readonly Action<string, SasdStatusSeverity, TimeSpan?> publishStatus;
     private readonly List<DemoCustomer> allCustomers = CreateCustomers();
     private readonly BindingSource bindingSource = new();
@@ -19,7 +23,9 @@ internal sealed class DataPage : UserControl
     private readonly ComboBox statusFilter = new();
     private readonly Label resultLabel = new();
     private readonly TextBox csvPreview = new();
+    private readonly SplitContainer gridArea = new();
     private SasdGridViewDefinition? savedView;
+    private bool gridSplitterInitialized;
 
     public DataPage(Action<string, SasdStatusSeverity, TimeSpan?> publishStatus)
     {
@@ -75,18 +81,20 @@ internal sealed class DataPage : UserControl
         actions.Controls.Add(statusFilter);
         actions.Controls.Add(resultLabel);
 
-        var gridArea = new SplitContainer
-        {
-            Dock = DockStyle.Fill,
-            FixedPanel = FixedPanel.Panel2,
-            Panel1MinSize = 480,
-            Panel2MinSize = 220,
-            SplitterDistance = 700,
-        };
+        gridArea.Dock = DockStyle.Fill;
+        gridArea.FixedPanel = FixedPanel.Panel2;
         gridArea.Panel1.Controls.Add(grid);
         gridArea.Panel2.Padding = new Padding(12, 0, 0, 0);
         gridArea.Panel2.Controls.Add(columnChooser);
         columnChooser.Dock = DockStyle.Fill;
+
+        // SplitContainer validates panel minimum sizes and SplitterDistance against its *current*
+        // width. During a UserControl constructor that width is still the small default size, so
+        // applying the real page constraints here can throw before the page reaches its shell.
+        // Defer the complete one-time split policy until a hosted layout has enough room. Once
+        // applied, detach the handler so subsequent user resizing remains ordinary WinForms
+        // behavior instead of being continually forced back to a showcase preference.
+        gridArea.Layout += OnGridAreaLayout;
 
         var layout = new TableLayoutPanel
         {
@@ -120,6 +128,7 @@ internal sealed class DataPage : UserControl
             searchBox.SearchTextChanged -= OnSearchChanged;
             filterBar.FiltersChanged -= OnFiltersChanged;
             statusFilter.SelectedIndexChanged -= OnStatusFilterChanged;
+            gridArea.Layout -= OnGridAreaLayout;
             columnChooser.Unbind();
             bindingSource.Dispose();
         }
@@ -175,6 +184,36 @@ internal sealed class DataPage : UserControl
         statusFilter.Items.AddRange(["All", "Active", "Paused", "Archived"]);
         statusFilter.SelectedIndex = 0;
         statusFilter.SelectedIndexChanged += OnStatusFilterChanged;
+    }
+
+    private void OnGridAreaLayout(object? sender, LayoutEventArgs e)
+    {
+        if (gridSplitterInitialized)
+        {
+            return;
+        }
+
+        int requiredWidth = GridPanelMinimumWidth + gridArea.SplitterWidth + ChooserPanelMinimumWidth;
+        if (gridArea.ClientSize.Width < requiredWidth)
+        {
+            // The page has not reached a usable hosted width yet. Leave WinForms defaults alone
+            // and let a later layout retry rather than creating an impossible split constraint.
+            return;
+        }
+
+        // Apply the minimums only after the current width can satisfy both. WinForms validates
+        // each assignment immediately, so constructor-time values are not merely advisory.
+        gridArea.Panel1MinSize = GridPanelMinimumWidth;
+        gridArea.Panel2MinSize = ChooserPanelMinimumWidth;
+
+        int maximumDistance = gridArea.ClientSize.Width - ChooserPanelMinimumWidth - gridArea.SplitterWidth;
+        gridArea.SplitterDistance = Math.Clamp(
+            PreferredGridSplitterDistance,
+            GridPanelMinimumWidth,
+            maximumDistance);
+
+        gridSplitterInitialized = true;
+        gridArea.Layout -= OnGridAreaLayout;
     }
 
     private void OnSearchChanged(object? sender, EventArgs e) => ApplyFilter();
