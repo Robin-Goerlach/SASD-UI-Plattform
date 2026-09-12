@@ -45,6 +45,11 @@ internal sealed class FormsPage : UserControl
                 new SasdValidationMessage("email-format", "Email must be a valid email address."));
         });
 
+        // Binding keeps result display and summary-to-field navigation on the shared validation
+        // contracts. The page still owns/disposes the coordinator; the summary owns only its
+        // event subscription and detaches it explicitly during page disposal.
+        validationSummary.Bind(validation);
+
         var fields = new SasdFieldLayout
         {
             Dock = DockStyle.Top,
@@ -84,7 +89,7 @@ internal sealed class FormsPage : UserControl
             Text =
                 "Forms and validation\r\n\r\n" +
                 "Required fields, custom rules and the validation summary use shared platform contracts. " +
-                "Try an empty form, an invalid email address and then a valid form.",
+                "Try an empty form, an invalid email address and then a valid form. Activate a summary message with Enter or double-click to return to its field.",
         };
 
         var layout = new TableLayoutPanel
@@ -111,6 +116,7 @@ internal sealed class FormsPage : UserControl
     {
         if (disposing)
         {
+            validationSummary.Unbind();
             validation.Dispose();
         }
 
@@ -120,7 +126,6 @@ internal sealed class FormsPage : UserControl
     private async void OnValidateClick(object? sender, EventArgs e)
     {
         SasdValidationResult result = await validation.ValidateAsync(CancellationToken.None);
-        validationSummary.ShowResult(result);
 
         publishStatus(
             result.IsValid ? "Form validation passed." : $"Form validation found {result.Messages.Count} issue(s).",

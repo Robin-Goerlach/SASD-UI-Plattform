@@ -10,9 +10,17 @@ Reusable form-layout, validation and property-editing components for SASD WinFor
 - required fields expose a textual accessible indication in addition to the visible `*` marker;
 - `FieldGap` is non-negative and updates rows created earlier by `AddField` without rewriting application-inserted exceptional rows;
 - editors passed to `SasdFieldLayout.AddField` become normal WinForms child controls and follow parent-control disposal ownership;
-- `SasdValidationCoordinator` for reusable synchronous/asynchronous validation rules;
-- `SasdValidationSummary` for persistent validation feedback;
+- `SasdValidationCoordinator` for reusable synchronous/asynchronous validation rules and stable field-key focus lookup;
+- `SasdValidationSummary` for persistent validation feedback, severity-aware accessible text and Enter/double-click navigation back to the affected field;
 - required-field helpers and standard validation messages.
+
+## Validation-summary binding and ownership
+
+`SasdValidationSummary.Bind(...)` is an optional convenience for normal forms. A bound summary subscribes to `SasdValidationCoordinator.ValidationCompleted`, displays each completed result and uses the coordinator's existing `FieldKey -> Control` registrations when a user activates a message. The summary retains the complete `SasdValidationMessage` rather than maintaining a second lookup table.
+
+The coordinator remains application-owned. Binding transfers no disposal ownership: the summary owns only its event subscription and detaches it through `Unbind()` or `Dispose()`. `TryFocusField(...)` never enables, reveals or otherwise mutates an unavailable editor merely to make navigation succeed; application workflow policy remains application-owned.
+
+Applications that need custom navigation can leave the summary unbound and handle `MessageInvoked`. The event exposes the original validation message, including its stable field key and severity. When a coordinator is bound, `FocusMoved` reports whether the native WinForms focus request actually succeeded.
 
 ## Native R2 foundation
 

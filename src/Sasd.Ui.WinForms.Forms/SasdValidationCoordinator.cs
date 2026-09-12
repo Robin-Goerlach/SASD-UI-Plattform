@@ -83,6 +83,47 @@ public sealed class SasdValidationCoordinator : IDisposable
         return result;
     }
 
+    /// <summary>
+    /// Attempts to move keyboard focus to the control registered for a validation field key.
+    /// </summary>
+    /// <remarks>
+    /// Field keys are compared case-insensitively because they are stable application identifiers,
+    /// not user-visible labels. The coordinator does not change visibility/enabled state to make an
+    /// invalid target selectable; application workflow policy remains application-owned.
+    /// </remarks>
+    public bool TryFocusField(string fieldKey)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(fieldKey);
+        ThrowIfDisposed();
+
+        RuleRegistration? registration = rules.FirstOrDefault(rule =>
+            string.Equals(rule.FieldKey, fieldKey, StringComparison.OrdinalIgnoreCase));
+        if (registration is null || registration.Control.IsDisposed || !registration.Control.CanSelect)
+        {
+            return false;
+        }
+
+        // Bring an editor into view before focusing it. This is deliberately best-effort:
+        // nested application layouts retain ownership of their own scrolling policy, while the
+        // nearest WinForms ScrollableControl can usually expose the target without extra routing.
+        Control? parent = registration.Control.Parent;
+        while (parent is not null)
+        {
+            if (parent is ScrollableControl scrollable)
+            {
+                scrollable.ScrollControlIntoView(registration.Control);
+                break;
+            }
+
+            parent = parent.Parent;
+        }
+
+        // Focus() returns the real outcome of the native focus request. That lets summary
+        // navigation report failure when a target becomes unavailable between validation and
+        // user activation without pretending that selecting a logical target always succeeded.
+        return registration.Control.Focus();
+    }
+
     /// <summary>Clears currently displayed validation errors.</summary>
     public void ClearErrors()
     {
