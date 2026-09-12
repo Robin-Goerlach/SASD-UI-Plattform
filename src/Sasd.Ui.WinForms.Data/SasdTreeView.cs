@@ -152,12 +152,16 @@ public class SasdTreeView : TreeView
 
     private async void HandleBeforeExpand(object? sender, TreeViewCancelEventArgs e)
     {
-        if (!lazyNodes.TryGetValue(e.Node, out LazyNodeState? state) || state.IsLoaded || state.IsLoading)
+        TreeNode? node = e.Node;
+        if (node is null ||
+            !lazyNodes.TryGetValue(node, out LazyNodeState? state) ||
+            state.IsLoaded ||
+            state.IsLoading)
         {
             return;
         }
 
-        await LoadChildrenFromUiEventAsync(e.Node, state).ConfigureAwait(true);
+        await LoadChildrenFromUiEventAsync(node, state).ConfigureAwait(true);
     }
 
     private async void HandleNodeMouseDoubleClick(object? sender, TreeNodeMouseClickEventArgs e)
@@ -211,6 +215,14 @@ public class SasdTreeView : TreeView
 
             cancellation.Token.ThrowIfCancellationRequested();
             if (IsDisposed || Disposing)
+            {
+                return;
+            }
+
+            // The application may remove a node while its asynchronous loader is in flight.
+            // In that case the result is stale presentation work: do not mutate a detached node
+            // or publish a success event. Reattaching and expanding it later can safely retry.
+            if (!ReferenceEquals(node.TreeView, this))
             {
                 return;
             }
