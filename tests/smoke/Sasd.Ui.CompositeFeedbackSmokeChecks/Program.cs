@@ -98,7 +98,22 @@ internal static class Program
 
     private static void ValidateBusyOverlay()
     {
-        using var overlay = new SasdBusyOverlay();
+        using var form = new Form
+        {
+            ClientSize = new Size(640, 360),
+            Location = new Point(-32000, -32000),
+            ShowInTaskbar = false,
+            StartPosition = FormStartPosition.Manual,
+            Text = "SASD busy overlay smoke",
+        };
+        using var editor = new TextBox { Dock = DockStyle.Top, Text = "Application input" };
+        using var overlay = new TestBusyOverlay();
+        form.Controls.Add(editor);
+        form.Controls.Add(overlay);
+        form.Show();
+
+        editor.Select();
+        Ensure(editor.Focused, "Busy-overlay smoke could not establish a prior application focus target.");
         Ensure(!overlay.Visible && !overlay.UseWaitCursor,
             "A new busy overlay should not block the application.");
         Ensure(overlay.AccessibleRole == AccessibleRole.Grouping,
@@ -106,16 +121,60 @@ internal static class Program
         Ensure(overlay.AccessibleDescription is null,
             "Hidden busy overlay unexpectedly exposes active busy-state text.");
 
+        overlay.CancellationEnabled = true;
+        int cancellationRequests = 0;
+        overlay.CancelRequested += (_, _) => cancellationRequests++;
         overlay.BeginBusy("Loading customers…");
+
+        Button cancelButton = FindDescendant<Button>(overlay)
+            ?? throw new InvalidOperationException("Busy overlay did not create its cancel action.");
+        ProgressBar progressBar = FindDescendant<ProgressBar>(overlay)
+            ?? throw new InvalidOperationException("Busy overlay did not create its progress surface.");
+
         Ensure(overlay.Visible && overlay.UseWaitCursor,
             "Busy overlay did not enter its blocking state.");
         Ensure(overlay.Message == "Loading customers…",
             "Busy overlay did not retain the supplied user-facing message.");
-        Ensure(overlay.AccessibleDescription == "Loading customers…",
-            "Busy overlay did not expose its current message through accessible text.");
+        Ensure(overlay.ProgressPercentage is null && progressBar.Style == ProgressBarStyle.Marquee,
+            "A newly started busy operation did not begin in indeterminate mode.");
+        Ensure(overlay.AccessibleDescription?.Contains("Loading customers…", StringComparison.Ordinal) == true &&
+               overlay.AccessibleDescription.Contains("Progress is indeterminate.", StringComparison.Ordinal) &&
+               overlay.AccessibleDescription.Contains("Cancellation is available.", StringComparison.Ordinal),
+            "Busy overlay accessible state omitted message, progress or cancellation availability.");
+        Ensure(cancelButton.Visible && cancelButton.Focused,
+            "Cancellable busy operation did not move focus into its cancel action.");
+
+        overlay.SetProgress(42);
+        Ensure(overlay.ProgressPercentage == 42 &&
+               progressBar.Style == ProgressBarStyle.Blocks &&
+               progressBar.Value == 42 &&
+               progressBar.AccessibleDescription == "42 percent complete.",
+            "Determinate busy progress did not update visual and accessible state together.");
+        Ensure(overlay.AccessibleDescription?.Contains("42 percent complete.", StringComparison.Ordinal) == true,
+            "Busy overlay accessible state did not reflect determinate progress.");
+        EnsureThrows<ArgumentOutOfRangeException>(
+            () => overlay.SetProgress(-1),
+            "Busy overlay accepted progress below zero.");
+        EnsureThrows<ArgumentOutOfRangeException>(
+            () => overlay.SetProgress(101),
+            "Busy overlay accepted progress above one hundred.");
+
+        Ensure(overlay.RaiseDialogKey(Keys.Tab) && cancelButton.Focused,
+            "Tab escaped the cancellable busy overlay.");
+        Ensure(overlay.RaiseDialogKey(Keys.Shift | Keys.Tab) && cancelButton.Focused,
+            "Shift+Tab escaped the cancellable busy overlay.");
+        Ensure(overlay.RaiseCommandKey(Keys.Escape) && cancellationRequests == 1,
+            "Escape did not raise exactly one cooperative cancellation request.");
+        cancelButton.PerformClick();
+        Ensure(cancellationRequests == 2,
+            "Busy-overlay cancel action did not raise the application-facing cancellation event.");
+
+        overlay.SetIndeterminate();
+        Ensure(overlay.ProgressPercentage is null && progressBar.Style == ProgressBarStyle.Marquee,
+            "Busy overlay could not return to indeterminate progress.");
 
         overlay.Message = "Still working…";
-        Ensure(overlay.AccessibleDescription == "Still working…",
+        Ensure(overlay.AccessibleDescription?.Contains("Still working…", StringComparison.Ordinal) == true,
             "Changing a visible busy message did not refresh accessible text.");
 
         overlay.EndBusy();
@@ -123,6 +182,22 @@ internal static class Program
             "Busy overlay did not restore its idle state.");
         Ensure(overlay.AccessibleDescription is null,
             "Busy overlay kept stale accessible text after leaving the busy state.");
+        Ensure(overlay.ProgressPercentage is null,
+            "Ending a busy operation retained stale determinate progress.");
+        Ensure(editor.Focused,
+            "Ending a busy operation did not restore the previous valid focus target.");
+
+        overlay.CancellationEnabled = false;
+        overlay.BeginBusy("Non-cancellable work");
+        Ensure(!cancelButton.Visible && overlay.Focused,
+            "Non-cancellable busy operation did not retain focus on the blocking surface.");
+        Ensure(overlay.RaiseCommandKey(Keys.Escape) && cancellationRequests == 2,
+            "Escape escaped a non-cancellable busy overlay or raised a spurious cancellation request.");
+        Ensure(overlay.RaiseDialogKey(Keys.Tab) && overlay.Focused,
+            "Tab escaped a non-cancellable busy overlay.");
+        overlay.EndBusy();
+
+        form.Hide();
     }
 
     private static void ValidateNotificationPreHandleDispatch()
@@ -266,6 +341,17 @@ internal static class Program
         if (!condition)
         {
             throw new InvalidOperationException(message);
+        }
+    }
+
+    private sealed class TestBusyOverlay : SasdBusyOverlay
+    {
+        public bool RaiseDialogKey(Keys keyData) => ProcessDialogKey(keyData);
+
+        public bool RaiseCommandKey(Keys keyData)
+        {
+            Message message = default;
+            return ProcessCmdKey(ref message, keyData);
         }
     }
 }
