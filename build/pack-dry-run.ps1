@@ -58,13 +58,14 @@ function Assert-PackageContents {
     )
 
     # NuGet packages are ZIP files. Inspecting the archive directly keeps this dry-run
-    # dependency-free and proves that consumers will receive both assembly and XML docs,
-    # rather than merely proving that `dotnet pack` returned exit code zero.
+    # dependency-free and proves that consumers receive the runtime assembly, XML API docs
+    # and a package landing page rather than merely proving that `dotnet pack` returned zero.
     $archive = [System.IO.Compression.ZipFile]::OpenRead($PackagePath)
     try {
         $entryNames = @($archive.Entries | ForEach-Object { $_.FullName })
         $assemblyName = "$PackageId.dll"
         $documentationName = "$PackageId.xml"
+        $readmeName = 'README.md'
 
         $hasAssembly = $entryNames | Where-Object {
             $_ -like "lib/*/$assemblyName"
@@ -72,6 +73,7 @@ function Assert-PackageContents {
         $hasDocumentation = $entryNames | Where-Object {
             $_ -like "lib/*/$documentationName"
         }
+        $hasReadme = $entryNames -contains $readmeName
 
         if (-not $hasAssembly) {
             throw "Package '$PackageId' does not contain its product assembly."
@@ -79,6 +81,10 @@ function Assert-PackageContents {
 
         if (-not $hasDocumentation) {
             throw "Package '$PackageId' does not contain XML documentation."
+        }
+
+        if (-not $hasReadme) {
+            throw "Package '$PackageId' does not contain its root README.md."
         }
     }
     finally {
@@ -141,6 +147,11 @@ try {
     foreach ($project in $productProjects) {
         if (-not (Test-Path $project -PathType Leaf)) {
             throw "Configured product project was not found: $project"
+        }
+
+        $projectReadme = Join-Path (Split-Path $project -Parent) 'README.md'
+        if (-not (Test-Path $projectReadme -PathType Leaf)) {
+            throw "Configured product project does not provide its package README: $projectReadme"
         }
 
         $packageId = [System.IO.Path]::GetFileNameWithoutExtension($project)
