@@ -83,6 +83,44 @@ public sealed class SasdValidationCoordinator : IDisposable
         return result;
     }
 
+    /// <summary>
+    /// Attempts to move keyboard focus to the control registered for a validation field key.
+    /// </summary>
+    /// <remarks>
+    /// Field keys are compared case-insensitively because they are stable application identifiers,
+    /// not user-visible labels. The coordinator does not change visibility/enabled state to make an
+    /// invalid target selectable; application workflow policy remains application-owned.
+    /// </remarks>
+    public bool TryFocusField(string fieldKey)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(fieldKey);
+        ThrowIfDisposed();
+
+        RuleRegistration? registration = rules.FirstOrDefault(rule =>
+            string.Equals(rule.FieldKey, fieldKey, StringComparison.OrdinalIgnoreCase));
+        if (registration is null || registration.Control.IsDisposed || !registration.Control.CanSelect)
+        {
+            return false;
+        }
+
+        // Bring an editor into view before selecting it. This is deliberately best-effort:
+        // nested application layouts retain ownership of their own scrolling policy, while the
+        // nearest WinForms ScrollableControl can usually expose the target without extra routing.
+        Control? parent = registration.Control.Parent;
+        while (parent is not null)
+        {
+            if (parent is ScrollableControl scrollable)
+            {
+                scrollable.ScrollControlIntoView(registration.Control);
+                break;
+            }
+
+            parent = parent.Parent;
+        }
+
+        return registration.Control.Select();
+    }
+
     /// <summary>Clears currently displayed validation errors.</summary>
     public void ClearErrors()
     {
