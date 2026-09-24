@@ -254,6 +254,35 @@ internal static class Program
         using var list = new SasdListView();
         Ensure(list.View == View.Details && list.FullRowSelect, "ListView business defaults are incomplete.");
         Ensure(!list.HideSelection && !list.MultiSelect, "ListView selection defaults are unsafe or inconsistent.");
+        Ensure(list.AccessibleRole == AccessibleRole.List && list.AccessibleName == "Items",
+            "ListView accessibility defaults changed unexpectedly.");
+
+        // VirtualMode is intentionally the native WinForms contract rather than a SASD
+        // data-source wrapper. A large logical list can therefore stay application-backed
+        // without materialising thousands of ListViewItem instances up front.
+        const int virtualItemCount = 10_000;
+        int retrievals = 0;
+        list.Columns.Add("Item", 160);
+        list.Columns.Add("Purpose", 260);
+        list.RetrieveVirtualItem += (_, args) =>
+        {
+            retrievals++;
+            args.Item = new ListViewItem(
+            [
+                $"Virtual item {args.ItemIndex + 1}",
+                "Created on demand through native RetrieveVirtualItem",
+            ]);
+        };
+        list.VirtualMode = true;
+        list.VirtualListSize = virtualItemCount;
+
+        ListViewItem retrieved = list.Items[9_876];
+        Ensure(retrieved.Text == "Virtual item 9877",
+            "ListView virtual retrieval returned the wrong logical item.");
+        Ensure(retrievals == 1,
+            "Reading one virtual item unexpectedly materialised additional logical rows.");
+        Ensure(list.Items.Count == virtualItemCount,
+            "ListView did not expose the configured logical VirtualListSize.");
 
         using var tree = new SasdTreeView();
         Ensure(!tree.HideSelection && tree.ShowNodeToolTips, "TreeView selection or tooltip defaults are incorrect.");
