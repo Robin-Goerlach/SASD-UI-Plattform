@@ -56,6 +56,8 @@ The dry-run verifies that every product package contains:
 - the project-local `README.md` as the NuGet package readme;
 - a portable PDB in the symbol package.
 
+After all packages are complete, `build/write-checksums.ps1` writes a deterministic UTF-8/LF `SHA256SUMS.txt` for every `.nupkg` and `.snupkg` and immediately recomputes each SHA-256 value from disk. The checksum file contains only distributable package artifacts; unrelated temporary files are deliberately excluded.
+
 Using the project-local module README keeps package guidance close to the public surface it describes instead of maintaining a second copied package document. A product project without that README fails the dry-run rather than silently producing a package with no landing-page documentation.
 
-The dry-run uses version `0.0.0-local` by default and performs no push or feed operation.
+The dry-run uses version `0.0.0-local` by default and performs no push or feed operation. Checksum generation proves artifact integrity for the dry-run; it does not replace the still-pending SBOM, signing or public-package-topology decisions.
