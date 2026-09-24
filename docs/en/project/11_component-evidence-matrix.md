@@ -1,9 +1,9 @@
 # Component Evidence Matrix
 
 **Product line:** SASD UI Platform — .NET 8 / Windows Forms  
-**Revision:** 0.2  
+**Revision:** 0.3  
 **Status:** Current implementation/evidence inventory  
-**Reviewed against:** repository `main` after PR #41, 2026-09-10  
+**Reviewed against:** repository `main` after PR #60, 2026-09-24  
 **Scope:** implemented public R1 and dependency-free native R2 visual controls plus application-facing UI services
 
 ## 1. Purpose
@@ -71,24 +71,24 @@ The keyboard smoke is deliberately counted only for the interactions it actually
 | `SasdSectionPanel` | `src/Sasd.Ui.WinForms.Forms/SasdSectionPanel.cs` | Yes — Overview/Forms | Yes — several Showcase pages | Yes — grouping, spacing and title contract in `Sasd.Ui.FormsSmokeChecks` | Designer, DPI clipping and High Contrast Pending |
 | `SasdFieldLayout` | `src/Sasd.Ui.WinForms.Forms/SasdFieldLayout.cs` | Yes — Forms | Yes — Forms and Acceptance Lab | Yes — row/layout, accessibility preservation, required-field semantics, gap validation and child ownership in `Sasd.Ui.FormsSmokeChecks` | Designer, real DPI clipping, long-label/localization and broader keyboard traversal Pending |
 | `SasdValidationCoordinator` | `src/Sasd.Ui.WinForms.Forms/SasdValidationCoordinator.cs` | Yes | Yes — Forms | Yes — `Sasd.Ui.WinFormsSmokeChecks` | Real application validation UX/manual focus-on-error still Pending |
-| `SasdValidationSummary` | `src/Sasd.Ui.WinForms.Forms/SasdValidationSummary.cs` | Yes | Yes — Forms | Yes — show/clear, accessible text and result projection in `Sasd.Ui.CompositeFeedbackSmokeChecks` | Real screen-reader announcement behavior and DPI Pending |
+| `SasdValidationSummary` | `src/Sasd.Ui.WinForms.Forms/SasdValidationSummary.cs` | Yes | Yes — Forms | Yes — show/clear/accessibility plus coordinator binding, Enter/double-click invocation and real field-focus navigation in Forms/Composite smoke | Real screen-reader announcement behavior and DPI Pending |
 | `SasdPropertyEditor` | `src/Sasd.Ui.WinForms.Forms/SasdPropertyEditor.cs` | Yes — `R2NativeGalleryPage.cs` | Yes — `AdvancedPage.cs` | Yes — `Sasd.Ui.NativeR2SmokeChecks` | Designer behavior, keyboard-only property editing, DPI and accessibility Pending |
 
 ## 6. Data, lists and dashboard controls
 
 | Public surface | Source | Gallery | Showcase/manual exercise | Automated smoke | Remaining evidence |
 | --- | --- | --- | --- | --- | --- |
-| `SasdSearchBox` | `src/Sasd.Ui.WinForms.Data/SasdSearchBox.cs` | Yes — Data | Yes — Data/Self Test | Yes — saved-view/data-dashboard behavior plus bounded keyboard-scenario text change | Keyboard clear-action path, DPI and accessibility/UIA Pending |
+| `SasdSearchBox` | `src/Sasd.Ui.WinForms.Data/SasdSearchBox.cs` | Yes — Data | Yes — Data/Self Test | Yes — debounce/request contract plus Tab/Shift+Tab, Enter commit, Escape/clear and accessible child semantics in keyboard smoke | Real DPI/High Contrast and UIA/screen-reader evidence Pending |
 | `SasdFilterBar` | `src/Sasd.Ui.WinForms.Data/SasdFilterBar.cs` | Partial/indirect | Yes — Data | Yes — foundation and data/dashboard smoke | Keyboard chip/removal UX, overflow/DPI and accessibility Pending |
 | `SasdDataGrid` | `src/Sasd.Ui.WinForms.Data/SasdDataGrid.cs` | Yes — Data | Yes — Data | Yes — foundation, native-R2 and dashboard suites use it | Keyboard-only grid operation, large DPI, High Contrast and UIA Pending |
 | `SasdDataGridState` | `src/Sasd.Ui.WinForms.Data/SasdDataGridState.cs` | Yes — save/restore layout | Yes — Data | Yes — foundation and dashboard smoke | Real consumer migration/version evidence remains part of adoption work |
 | `SasdDataQuery` and descriptors | `src/Sasd.Ui.WinForms.Data/SasdDataQuery.cs` | Partial | Indirect through data scenarios | Yes — `Sasd.Ui.WinFormsSmokeChecks` and controller smoke | N/A for visual evidence; more consumer combinations may be added as needed |
-| `SasdGridController<T>` | `src/Sasd.Ui.WinForms.Data/SasdGridController.cs` | Partial | Yes — Data/Self Test and CRUD reference consumer | Yes — load/search/sort/pager synchronization and disposal in `Sasd.Ui.DataDashboardSmokeChecks` | Cancellation, error and empty-page direct cases remain useful before API stabilization |
+| `SasdGridController<T>` | `src/Sasd.Ui.WinForms.Data/SasdGridController.cs` | Partial | Yes — Data/Self Test and CRUD reference consumer | Yes — load/search/sort/pager plus shrinking-result realignment, superseded-load cancellation, direct/event failure contracts and disposed mutation guards in `Sasd.Ui.DataDashboardSmokeChecks` | Real data-source consumer feedback and performance/reference-case evidence remain Pending |
 | `SasdGridColumnChooser` | `src/Sasd.Ui.WinForms.Data/SasdGridColumnChooser.cs` | Yes — native R2 | Yes — Data | Yes — `Sasd.Ui.NativeR2SmokeChecks` | Keyboard-only chooser operation, DPI and accessibility Pending |
 | `SasdGridViewDefinition` | `src/Sasd.Ui.WinForms.Data/SasdGridViewDefinition.cs` | Yes — native R2 | Yes — Data | Yes — `Sasd.Ui.DataDashboardSmokeChecks` | Persistence/versioning in a real consumer remains Pending |
 | `SasdPager` | `src/Sasd.Ui.WinForms.Data/SasdPager.cs` | Partial | Yes — `ControlsLabPage.cs` | Yes — clamping, requests, custom page sizes, DPI configuration and accessible state in `Sasd.Ui.DataDashboardSmokeChecks` | End-to-end keyboard interaction, real DPI/High Contrast and UIA Pending |
-| `SasdListView` | `src/Sasd.Ui.WinForms.Data/SasdListView.cs` | Partial | Yes — `ControlsLabPage.cs` | Yes — default-contract checks in `Sasd.Ui.WinFormsSmokeChecks` | Real item interaction, keyboard and UIA Pending |
-| `SasdTreeView` | `src/Sasd.Ui.WinForms.Data/SasdTreeView.cs` | Partial | Yes — `ControlsLabPage.cs` | Yes — default-contract checks in `Sasd.Ui.WinFormsSmokeChecks` | Expand/collapse keyboard path, large trees and UIA Pending |
+| `SasdListView` | `src/Sasd.Ui.WinForms.Data/SasdListView.cs` | Partial | Yes — `ControlsLabPage.cs` demonstrates a 10,000-item native virtual list | Yes — defaults/accessibility plus native `VirtualMode`/`VirtualListSize`/on-demand retrieval pilot in `Sasd.Ui.WinFormsSmokeChecks` | Selection/context keyboard flow, real large-list consumer behavior and UIA Pending |
+| `SasdTreeView` | `src/Sasd.Ui.WinForms.Data/SasdTreeView.cs` | Partial | Yes — `ControlsLabPage.cs` | Yes — defaults plus lazy-load success, generic failure/retry, Enter retry, registration guards and disposal cancellation in `Sasd.Ui.DataInteractionSmokeChecks` | Broader keyboard expand/collapse, real large-tree consumer behavior and UIA Pending |
 | `SasdEmptyState` | `src/Sasd.Ui.WinForms.Data/SasdEmptyState.cs` | Yes — Feedback | Yes — Controls/feedback scenarios | Yes — action, accessibility and visibility contract in `Sasd.Ui.CompositeFeedbackSmokeChecks` | Real focus, High Contrast, DPI and UIA Pending |
 | `SasdCsvExporter` | `src/Sasd.Ui.WinForms.Data/SasdCsvExporter.cs` | Yes — Data | Yes — Data exports to an in-memory preview | Yes — `Sasd.Ui.WinFormsSmokeChecks` | Larger datasets/cancellation may be exercised when a consumer requires it; no performance target yet |
 | `SasdSparkline` | `src/Sasd.Ui.WinForms.Data/SasdSparkline.cs` | Yes — native R2 | Yes — Overview | Yes — `Sasd.Ui.DataDashboardSmokeChecks` | Visual contrast at DPI/High Contrast and UIA/manual accessible-description review Pending |
@@ -110,8 +110,8 @@ The keyboard smoke is deliberately counted only for the interactions it actually
 | `SasdShellForm` | `src/Sasd.Ui.WinForms.Shell/SasdShellForm.cs` | Yes — `GalleryShellForm.cs` | Yes — `ShowcaseForm.cs` | Yes/Partial — shell integration smoke and consumer builds | Designer, DPI, complete keyboard-only shell path and UIA Pending |
 | `SasdCommandBar` | `src/Sasd.Ui.WinForms.Shell/SasdCommandBar.cs` | Yes | Yes — top command bar | Yes — `Sasd.Ui.WinFormsSmokeChecks` | Overflow, keyboard access, High Contrast and UIA Pending |
 | `SasdNavigationHost` | `src/Sasd.Ui.WinForms.Shell/SasdNavigationHost.cs` | Yes — detailed and integration galleries | Yes — primary Showcase navigation | Yes — foundation/shell smoke | Keyboard-only navigation, DPI and accessibility Pending |
-| `SasdBreadcrumb` | `src/Sasd.Ui.WinForms.Shell/SasdBreadcrumb.cs` | Partial | Yes — `ControlsLabPage.cs`/Workbench reference | Yes — foundation smoke | Click/keyboard path, truncation and UIA Pending |
-| `SasdDocumentTabs` | `src/Sasd.Ui.WinForms.Shell/SasdDocumentTabs.cs` | Partial | Yes — `ControlsLabPage.cs` and Workbench | Yes — foundation smoke + lifecycle endurance | Keyboard tab closing/switching, overflow and UIA Pending |
+| `SasdBreadcrumb` | `src/Sasd.Ui.WinForms.Shell/SasdBreadcrumb.cs` | Partial | Yes — `ControlsLabPage.cs`/Workbench reference | Yes — path/invocation plus accessible keyboard ellipsis menu, hidden-ancestor ordering, rebuild/disposal and limit validation in shell smoke | Real DPI/High Contrast and UIA/screen-reader evidence Pending |
+| `SasdDocumentTabs` | `src/Sasd.Ui.WinForms.Shell/SasdDocumentTabs.cs` | Partial | Yes — `ControlsLabPage.cs` and Workbench | Yes — foundation/lifecycle plus bounded keyboard selection/close behavior | Overflow presentation, real DPI/High Contrast and UIA Pending |
 | `SasdStatusBar` | `src/Sasd.Ui.WinForms.Shell/SasdStatusBar.cs` | Yes | Yes | Yes — foundation/shell behavior | Screen-reader announcement policy and High Contrast Pending |
 | `SasdStatusService` / `ISasdStatusService` | `src/Sasd.Ui.WinForms.Shell/SasdStatusService.cs` | Yes — integration gallery | Yes — Showcase status publishing | Yes/Partial — shell integration | Priority/lifetime combinations can be widened; visual acceptance belongs to StatusBar |
 
@@ -121,7 +121,7 @@ The keyboard smoke is deliberately counted only for the interactions it actually
 | --- | --- | --- | --- | --- | --- |
 | `SasdDialogService` / `ISasdDialogService` | `src/Sasd.Ui.WinForms.Dialogs/` | Yes — Feedback | Yes — Feedback | No direct modal interaction smoke identified | Button order, owner behavior, keyboard, DPI and accessibility Pending |
 | `SasdErrorDialog` | `src/Sasd.Ui.WinForms.Dialogs/SasdErrorDialog.cs` | Yes — detailed error action | Yes — Feedback | No direct focused smoke identified | Long details, copy/select behavior, DPI and accessibility Pending |
-| `SasdBusyOverlay` | `src/Sasd.Ui.WinForms.Dialogs/SasdBusyOverlay.cs` | Yes | Yes — Feedback | Yes — busy/idle state and accessible-message synchronization in `Sasd.Ui.CompositeFeedbackSmokeChecks` | Real focus blocking, resize/DPI, High Contrast and UIA Pending |
+| `SasdBusyOverlay` | `src/Sasd.Ui.WinForms.Dialogs/SasdBusyOverlay.cs` | Yes | Yes — Feedback | Yes — busy/idle, determinate/indeterminate progress, cancellation, Escape, Tab focus containment, accessible state and prior-focus restoration in `Sasd.Ui.CompositeFeedbackSmokeChecks` | Resize/real DPI, High Contrast and UIA/screen-reader evidence Pending |
 | `SasdProgressDialog` | `src/Sasd.Ui.WinForms.Dialogs/SasdProgressDialog.cs` | Partial | Yes — cancellable worker demo | Yes — `Sasd.Ui.DialogSmokeChecks`; startup threading hardened by PR #25 | Manual cancellation/focus/DPI/accessibility Pending |
 | `SasdNotificationService` | `src/Sasd.Ui.WinForms.Dialogs/SasdNotificationService.cs` | Yes — integration gallery | Yes — Feedback | Yes — foundation smoke publication contract | Service itself N/A visually; host behavior still needs manual accessibility review |
 | `SasdNotificationHost` | `src/Sasd.Ui.WinForms.Dialogs/SasdNotificationHost.cs` | Yes — integration gallery | Yes — Feedback | Yes — bind/unbind/dismiss/dispose plus pre-handle worker publication and latest-value hand-off in `Sasd.Ui.CompositeFeedbackSmokeChecks` | Timer expiry, focus policy, DPI/High Contrast and UIA/screen-reader behavior Pending |
@@ -177,17 +177,20 @@ All three are restored and built by `build/verify.ps1` with warnings treated as 
 
 ## 16. Highest-value evidence gaps
 
-The inventory shows that the next quality work should favor **evidence depth rather than more component count**. Several gaps identified in revision 0.1 are now closed: pager/controller state, recent items, form-state restore, core composite feedback and one bounded keyboard acceptance flow all have direct executable evidence. The highest-value remaining gaps are currently:
+The inventory now shows a mature R1 implementation with substantially deeper direct evidence than revision 0.2. Grid-controller cancellation/failure behavior, SearchBox keyboard/debounce behavior, Breadcrumb overflow, DocumentTabs keyboard behavior, BusyOverlay focus/cancellation, ValidationSummary field navigation, TreeView lazy loading/retry and the ListView native virtual-mode pilot are no longer open implementation-evidence gaps.
 
-1. deepen direct edge-case coverage where behavior is still only partial, especially `SasdGridController<T>` cancellation/error/empty-page handling and selected feedback/Windows failure paths that can be exercised without external desktop side effects;
-2. extend keyboard-only automated flows beyond the current bounded form/global-shortcut scenario into shell navigation, grids, dialogs and document-tab operations where deterministic WinForms routing is possible;
-3. formal Visual Studio Designer open/edit/save evidence for designer-supported controls;
-4. recorded 100%, 125%, 150% and 200% DPI/display-scale runs, including mixed-DPI monitor moves where hardware permits;
-5. real Windows High Contrast review rather than only selecting the SASD High Contrast theme;
-6. UI Automation/screen-reader evidence. Existing accessible names/descriptions are useful implementation work but do not by themselves prove UIA acceptance;
-7. first bounded real SASD application migration after release-engineering/API-baseline work is sufficiently stable.
+The highest-value remaining work now favors **release evidence and real adoption over additional component count**:
 
-Third-party UI automation, screenshot-regression tooling or a new visual framework still require the project decision boundary defined in `AGENTS.md` and the roadmap.
+1. formal Visual Studio Designer open/edit/save/reopen evidence for designer-supported controls;
+2. recorded 100%, 125%, 150% and 200% DPI/display-scale runs, including mixed-DPI monitor moves where hardware permits;
+3. real Windows High Contrast review rather than only selecting the SASD High Contrast theme;
+4. extend keyboard-only acceptance where deterministic WinForms routing remains practical, especially representative shell/dialog/data workflows;
+5. UI Automation/screen-reader evidence; accessible names/descriptions and behavioral smoke checks do not by themselves prove UIA acceptance;
+6. public-API baseline/compatibility evidence plus final public package-topology validation;
+7. SBOM/checksum/third-party release evidence;
+8. first bounded real SASD application migration, followed by API simplification from that consumer feedback.
+
+Third-party UI automation, screenshot-regression tooling or a new visual framework still require the project decision boundary defined in `AGENTS.md` and the R1 closing plan.
 
 ## 17. Maintenance rule
 
