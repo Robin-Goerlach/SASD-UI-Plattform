@@ -1,5 +1,7 @@
 # Roadmap – SASD UI Platform
 
+> **Current status note (2026-09-24):** The canonical current roadmap is the repository-root [`ROADMAP.md`](../../../ROADMAP.md). R1 is now in closing mode; use [`r1-closing-plan.md`](r1-closing-plan.md) for the active execution and exit criteria. This file is retained as the earlier project-document companion and must not override the current root roadmap.
+
 **As of:** 2026-07-23  
 **Version:** 0.1  
 **Horizon:** R0 through R3; no artificial calendar dates without reliable capacity planning
