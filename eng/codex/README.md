@@ -10,7 +10,7 @@ From the repository root:
 pwsh ./eng/codex/preflight.ps1
 ```
 
-The preflight checks only the local development prerequisites and repository shape. It does not install software, modify Git state or change Codex settings.
+The preflight checks only the local development prerequisites and repository shape. It does not install software, modify Git state or change Codex settings. Repository-shape validation includes tracked Git file modes so ordinary documentation, source and binary assets cannot silently re-enter the repository as Unix-executable files and recreate mode-only Windows working-tree changes.
 
 On Windows it recommends the full verification gate:
 
