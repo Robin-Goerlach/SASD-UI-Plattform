@@ -58,7 +58,7 @@ Complete without changing product strategy:
 
 ### B. Manual Windows acceptance
 
-Record evidence rather than inferring it from compilation:
+Record evidence rather than inferring it from compilation. Use [`r1-manual-acceptance-record.md`](r1-manual-acceptance-record.md) as the session record:
 
 1. Visual Studio Designer open/edit/save/reopen for designer-supported controls;
 2. 100%, 125%, 150% and 200% display scaling;
