@@ -31,7 +31,7 @@ Bereits vorhandene native R2-Helfer dürfen Fehlerkorrekturen und Evidence-Arbei
 
 - kanonisches Windows-Verifikations-Gate grün halten;
 - Paketmetadaten, README, XML-Dokumentation und Symbolpaket-Prüfung reproduzierbar halten;
-- Checksums sowie reproduzierbare SBOM-/Third-Party-Evidence ergänzen;
+- deterministische SHA-256-Checksums beibehalten/verifizieren und reproduzierbare SBOM-/Third-Party-Evidence ergänzen;
 - vor dem Stabilitätsversprechen eine Public-API-Inventur/Baseline etablieren;
 - Gallery, Showcase und Referenz-Consumer aus einem sauberen Checkout baubar halten;
 - Evidence Matrix aktuell halten.
