@@ -136,6 +136,98 @@ if ($null -ne $gitCommand) {
                 $warnings.Add('Working tree is not clean. Codex must preserve unrelated user work and avoid destructive reset/checkout operations.')
             }
 
+            # Git file modes are repository metadata even on Windows, where the filesystem
+            # does not normally model the Unix executable bit. A previous accidental 100755
+            # import made ordinary Markdown, images and C# sources appear modified immediately
+            # after checkout on Windows. Keep executable files an explicit reviewed exception.
+            $allowedExecutableFiles = @()
+            $unexpectedExecutableFiles = [System.Collections.Generic.List[string]]::new()
+            foreach ($indexEntry in @(& git ls-files --stage)) {
+                if ($indexEntry -notmatch '^(?<mode>[0-9]{6})\s+[0-9a-f]+\s+[0-9]+\t(?<path>.+)            if ([string]::IsNullOrWhiteSpace($origin)) {
+                Write-Check -Label 'Origin remote' -Value 'not configured' -State Warn
+                $warnings.Add('No origin remote is configured. Local coding can continue, but push/PR workflow is unavailable until a remote is configured.')
+            }
+            else {
+                Write-Check -Label 'Origin remote' -Value $origin
+            }
+        }
+    }
+    finally {
+        Pop-Location
+    }
+}
+
+Write-Host ''
+if ($warnings.Count -gt 0) {
+    Write-Host 'Warnings:' -ForegroundColor Yellow
+    foreach ($warning in $warnings) {
+        Write-Host "- $warning" -ForegroundColor Yellow
+    }
+    Write-Host ''
+}
+
+if ($errors.Count -gt 0) {
+    Write-Host 'Preflight failed:' -ForegroundColor Red
+    foreach ($item in $errors) {
+        Write-Host "- $item" -ForegroundColor Red
+    }
+
+    exit 1
+}
+
+$verifyScript = Join-Path $repositoryRoot 'build/verify.ps1'
+$useCompileOnly = $CompileOnly -or -not $IsWindows
+$verificationCommand = if ($useCompileOnly) {
+    'pwsh ./build/verify.ps1 -CompileOnly'
+}
+else {
+    'pwsh ./build/verify.ps1'
+}
+
+Write-Check -Label 'Recommended verification' -Value $verificationCommand
+Write-Host ''
+
+if ($RunVerification) {
+    Write-Host 'Running repository verification...' -ForegroundColor Cyan
+    if ($useCompileOnly) {
+        & $verifyScript -CompileOnly
+    }
+    else {
+        & $verifyScript
+    }
+
+    if ($LASTEXITCODE -ne 0) {
+        exit $LASTEXITCODE
+    }
+}
+
+Write-Host 'Codex preflight completed successfully.' -ForegroundColor Green
+) {
+                    continue
+                }
+
+                $mode = $Matches.mode
+                $trackedPath = $Matches.path
+                if ($mode -eq '100755' -and $trackedPath -notin $allowedExecutableFiles) {
+                    $unexpectedExecutableFiles.Add($trackedPath)
+                }
+            }
+
+            if ($unexpectedExecutableFiles.Count -eq 0) {
+                Write-Check -Label 'Tracked file modes' -Value 'normal'
+            }
+            else {
+                $preview = ($unexpectedExecutableFiles | Select-Object -First 5) -join ', '
+                if ($unexpectedExecutableFiles.Count -gt 5) {
+                    $preview += ", … (+$($unexpectedExecutableFiles.Count - 5) more)"
+                }
+
+                $errors.Add(
+                    "Unexpected executable Git file mode(s): $preview. " +
+                    'Use 100644 for ordinary repository files; add a deliberate executable path to the preflight allowlist only when required.')
+                Write-Check -Label 'Tracked file modes' -Value "$($unexpectedExecutableFiles.Count) unexpected executable file(s)" -State Fail
+            }
+
             $origin = Invoke-GitText -Arguments @('remote', 'get-url', 'origin')
             if ([string]::IsNullOrWhiteSpace($origin)) {
                 Write-Check -Label 'Origin remote' -Value 'not configured' -State Warn
