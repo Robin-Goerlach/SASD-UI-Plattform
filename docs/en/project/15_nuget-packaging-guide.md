@@ -10,6 +10,9 @@
 
 ## 2. Package Groups
 
+The repository currently dry-runs packaging for the granular internal product projects so package metadata, symbols and XML documentation can be verified early. That technical dry-run is **not** the public package-topology decision. R1 closing work must preserve the goal of a small consumer-facing package set even when internal projects remain more granular.
+
+
 ### Core
 
 - `Sasd.Ui.Core`

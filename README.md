@@ -10,7 +10,7 @@
 
 The project provides reusable application shells, forms, commands, data views, dialogs, themes, UI-state persistence, Windows integration, optional specialist adapters, reference applications and enforceable quality standards. It is intentionally focused on **Windows, .NET 8 and WinForms** before any later WPF or web product line.
 
-**Project links:** [Roadmap](ROADMAP.md) · [Architecture](docs/en/core/04-architecture.md) · [Requirements](docs/en/core/02-requirements-specification.md) · [Functional specification](docs/en/core/03-functional-specification.md) · [Integrated showcase](examples/Sasd.Ui.PlatformShowcase/README.md) · [Codex workflow](docs/en/project/codex-development-workflow.md) · [English documentation](docs/en/README.md) · [German documentation](docs/de/README.md)
+**Project links:** [Roadmap](ROADMAP.md) · [R1.0 closing plan](docs/en/project/r1-closing-plan.md) · [Architecture](docs/en/core/04-architecture.md) · [Requirements](docs/en/core/02-requirements-specification.md) · [Functional specification](docs/en/core/03-functional-specification.md) · [Integrated showcase](examples/Sasd.Ui.PlatformShowcase/README.md) · [Codex workflow](docs/en/project/codex-development-workflow.md) · [English documentation](docs/en/README.md) · [German documentation](docs/de/README.md)
 
 ![Concept design for the SASD UI Platform Component Gallery](artefacts/sasd-ui-platform-component-gallery.png)
 
@@ -22,7 +22,7 @@ The repository has moved beyond the initial R0 scaffold. The current `main` line
 
 Implemented foundations include themes, forms and validation, commands and shortcuts, shell/navigation/status, DataGrid support, paging/search/filter contracts, saved grid views, dialogs and progress, notifications, versioned UI state with backup/migration, recent items, file/clipboard/drag-and-drop/tray/shell services, property editing, column choosing, image viewing, KPI/sparkline primitives and the Component Gallery host.
 
-The project is **not yet claiming R1.0 stability**. Important acceptance work remains, especially the Visual Studio Designer/DPI/focus/high-contrast matrix, UI Automation/screenshot regression, broader Gallery coverage, packaging/API-baseline tooling and adoption by real SASD applications. See the [Roadmap](ROADMAP.md) for the current gate status.
+The project is **not yet claiming R1.0 stability**. R1 feature breadth is now effectively frozen and the project is in a closing phase focused on release evidence, public API/package stability, manual Designer/DPI/High-Contrast/accessibility acceptance and adoption by a real SASD application. See the [R1.0 closing plan](docs/en/project/r1-closing-plan.md) and [Roadmap](ROADMAP.md) for the current gate status.
 
 ## Product goals
 

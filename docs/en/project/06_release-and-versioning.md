@@ -1,5 +1,7 @@
 # Release and Versioning Concept
 
+The active R1.0 execution and exit checklist is maintained in [`r1-closing-plan.md`](r1-closing-plan.md). This release concept remains the durable versioning policy; the closing plan is the current staged application of it.
+
 ## 1. Version Model
 
 The platform uses semantic versioning.
