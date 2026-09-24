@@ -190,6 +190,15 @@ try {
     }
 
     Write-Host ""
+    Write-Host '==> SHA-256 release checksums' -ForegroundColor Cyan
+    # Checksums are generated from the completed artifact set, not incrementally while
+    # packages are still being written. The helper verifies the manifest immediately.
+    & (Join-Path $PSScriptRoot 'write-checksums.ps1') -InputDirectory $resolvedOutput
+    if ($LASTEXITCODE -ne 0) {
+        throw "Checksum generation failed with exit code $LASTEXITCODE."
+    }
+
+    Write-Host ""
     Write-Host "NuGet dry-run succeeded for $($productProjects.Count) product projects." -ForegroundColor Green
     Write-Host "Version: $Version" -ForegroundColor DarkGray
     Write-Host "Artifacts: $resolvedOutput" -ForegroundColor DarkGray
