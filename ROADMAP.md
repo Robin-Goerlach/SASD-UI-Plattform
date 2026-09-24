@@ -25,7 +25,7 @@ The status below distinguishes **implemented code** from **completed release gat
 
 | Stage | Current status | Evidence already present | Important work still open |
 | --- | --- | --- | --- |
-| R0.1 | Functionally implemented; release-engineering gate still open | .NET 8 solution, central package/build configuration, strict warning-free CI, architecture checks, ADR/licence process, one-command verification, repeatable NuGet pack/symbol/XML/README dry-run | Public-API baseline, SBOM/checksum release evidence and final public package topology |
+| R0.1 | Functionally implemented; release-engineering gate still open | .NET 8 solution, central package/build configuration, strict warning-free CI, architecture checks, ADR/licence process, one-command verification, repeatable NuGet pack/symbol/XML/README dry-run with verified SHA-256 artifact manifest | Public-API baseline, SBOM/third-party release evidence and final public package topology |
 | R0.2 | Pilot implemented; decision gate still open | native theme/form baseline, isolated `Krypton.Toolkit` adapter, Krypton smoke check, automated vendor-boundary enforcement | Visual Studio Designer matrix, multi-DPI/focus/high-contrast evidence and final native-vs-Krypton standard decision |
 | R0.3 | Core interaction implementation substantially complete and broadly hardened | grid/controller/paging/search/filter, CSV/grid state, dialogs/error/busy/progress, versioned state, commands/shell, keyboard acceptance smoke, runtime Showcase navigation smoke and integrated consumers | UI Automation/screen-reader and screenshot-regression decision, broader manual DPI/Designer/High-Contrast evidence |
 | R1.0 | Feature foundation effectively complete; closing phase active | forms/validation/focus navigation, commands/shortcuts, shell/navigation/status, hardened grids/lists/trees, dialogs/notifications/busy/progress, Windows services, state/recent items, Gallery plus CRUD/Workbench/Utility/Showcase consumers | Public package decision, API baseline, SBOM/checksums, manual quality matrix, first real SASD consumer migration and internal release candidate |
@@ -62,7 +62,7 @@ The status below distinguishes **implemented code** from **completed release gat
 
 - keep the existing repeatable NuGet package/symbol/XML/README dry-run as the technical packaging baseline;
 - add public-API baseline tooling before API stability is claimed;
-- add SBOM, checksums and release-engineering helpers under `eng/`;
+- retain verified SHA-256 artifact manifests and add SBOM/third-party release-engineering helpers under `eng/`;
 - decide the smaller public consumer package surface separately from the more granular internal project/package dry-run;
 - make release evidence reproducible rather than relying on manual notes.
 
