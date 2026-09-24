@@ -1,5 +1,7 @@
 # Roadmap – SASD UI Platform
 
+> **Aktueller Hinweis (24.09.2026):** Die kanonische aktuelle Roadmap ist die [`ROADMAP.md`](../../../ROADMAP.md) im Repository-Root. R1 befindet sich jetzt in der Abschlussphase; für Arbeitsreihenfolge und Exit-Kriterien gilt der [`R1.0-Abschlussplan`](r1-abschlussplan.md). Diese Datei bleibt als ältere Projektbegleitfassung erhalten und überstimmt die aktuelle Root-Roadmap nicht.
+
 **Stand:** 2026-07-23  
 **Version:** 0.1  
 **Zeithorizont:** R0 bis R3; keine künstlichen Kalendertermine ohne belastbare Kapazitätsplanung
