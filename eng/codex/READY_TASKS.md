@@ -1,6 +1,6 @@
 # Codex Ready Task Queue
 
-**Updated:** 2026-09-10
+**Updated:** 2026-09-24
 
 This file is the small operational handoff for starting Codex work on the SASD UI Platform. It complements the durable rules in the root `AGENTS.md` and the detailed workflow in `docs/en/project/codex-development-workflow.md`.
 
@@ -34,35 +34,43 @@ abstractions or micro-optimization. Add or strengthen behavioral checks and
 run the broad verification gate before declaring the work complete.
 ```
 
-## Current ready task
+## Current ready work
 
-### Issue #27 — NuGet packaging dry-run
+R1 is now in closing mode. The authoritative execution order is [`docs/en/project/r1-closing-plan.md`](../../docs/en/project/r1-closing-plan.md). Do not add new R1 controls merely because a component could be useful.
 
-Current release-engineering task using normal SDK packaging capabilities. It validates the existing package graph without choosing a public release version and must stop before publication, signing credentials, external feeds or a package-boundary redesign.
+### Ready without a new strategic decision
 
-Expected outcome:
+Use the evidence matrix to select small, serial tasks from these areas:
 
-- repeatable `dotnet pack` dry-run for the explicitly listed current product modules;
-- `.nupkg` and `.snupkg` output in a disposable ignored directory;
-- XML documentation and portable PDB presence verified from package contents;
-- centrally consistent authors/company/repository/license metadata;
-- no package publication.
+- dependency-free release hygiene and reproducible evidence;
+- documentation and evidence-matrix maintenance;
+- lifecycle/accessibility/keyboard defect fixes in existing R1 contracts;
+- release checksums and third-party evidence using already-approved SDK/repository capabilities;
+- preparation work for the manual Designer/DPI/High-Contrast/accessibility matrix;
+- bounded reference-consumer fixes that do not redefine package boundaries.
 
-## Recently completed
+### Stop before these closing decisions
 
-### Issue #28 — Component coverage matrix
+Ask for explicit approval before choosing or implementing:
 
-Completed by PR #33. `docs/en/project/11_component-evidence-matrix.md` now separates implemented R1/R2 surfaces from direct Gallery, Showcase, smoke-test and still-pending manual acceptance evidence. Missing Designer, DPI, real Windows High Contrast, keyboard-only and UIA evidence stays explicit instead of being inferred from compilation.
+- the final public NuGet package topology;
+- the public-API compatibility tool if it adds a new dependency/toolchain;
+- native WinForms versus Krypton as the visible default;
+- third-party UI automation or screenshot-regression tooling;
+- a new specialist R2 runtime dependency.
 
-### Issue #26 — UI lifecycle endurance checks
+### Recently completed closing evidence
 
-Completed by PR #31. The canonical Windows gate repeats representative create/use/dispose cycles for image ownership, document-tab ownership/event lifecycle and hidden tray-service disposal without introducing timing thresholds, handle-count assumptions or a new dependency.
-
-## After #27
-
-Use the evidence matrix rather than component count to choose the next small hardening task. The highest-value dependency-free gaps currently include direct behavioral coverage for `SasdGridController<T>`, `SasdPager`, `SasdRecentItemsService` and `SasdFormStateService`, followed by the manual keyboard/DPI/Designer/High-Contrast evidence that requires a controlled Windows environment.
-
-Do not run overlapping tasks concurrently when they touch the same verification files or project metadata. Small, serial pull requests are easier to review and keep the repository gate meaningful.
+- PR #43: GridController resilience, cancellation and failure contracts;
+- PRs #44–#50: SearchBox, FilterBar, Breadcrumb, DocumentTabs, navigation and recent-items hardening;
+- PR #53: TreeView lazy loading/retry/disposal lifecycle;
+- PR #54: Breadcrumb ellipsis navigation;
+- PR #55: Integrated Showcase runtime navigation smoke and DataPage layout fix;
+- PR #56: BusyOverlay progress/cancellation/focus contract;
+- PR #57: NuGet README evidence in the package dry-run;
+- PR #58: ValidationSummary field navigation;
+- PR #59: executable samples solution;
+- PR #60: native ListView virtual-mode pilot.
 
 ## Completion contract for Codex
 
