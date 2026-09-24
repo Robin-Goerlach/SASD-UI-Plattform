@@ -12,7 +12,7 @@ Reusable data-presentation components and application-neutral query/state helper
 - `SasdPager` with DPI-aware layout, explicit paging-group semantics, descriptive navigation/page-size accessibility text, and a current page/range description derived from loaded state;
 - CSV export;
 - persisted grid layout state;
-- `SasdListView` with conservative native defaults;
+- `SasdListView` with conservative native/accessibility defaults and an evidence-backed native VirtualMode pilot;
 - `SasdTreeView` with conservative native defaults plus application-owned lazy child loading, generic retry presentation and shutdown cancellation.
 
 ### Search-box edit and request contract
@@ -40,6 +40,14 @@ If a result set shrinks while the controller is positioned beyond the new final 
 Failures from explicit `LoadAsync`, `SearchAsync` and `SortAsync` calls remain normal task failures for the application to await and handle. Loads initiated by the controller's own WinForms pager/header event handlers cannot return a `Task` to application code, so non-cancellation failures are reported through `LoadFailed`. The event carries the technical exception for logging/diagnostics; applications should choose their own user-safe error presentation instead of displaying raw exception details.
 
 Disposing the controller detaches its WinForms event handlers and requests cancellation of an active load. The in-flight `LoadAsync` invocation remains responsible for disposing its own linked cancellation source after the application-owned source call completes.
+
+### ListView native virtual-mode pilot and empty-state composition
+
+`SasdListView` deliberately keeps the mature WinForms `ListView` contracts visible instead of adding a second thin abstraction. Applications can use `View`, `ContextMenuStrip`, selection events, `VirtualMode`, `VirtualListSize` and `RetrieveVirtualItem` directly. The platform adds conservative business-selection and accessibility defaults but does not invent another data-source protocol for functionality WinForms already provides.
+
+The automated R1 pilot exercises a large logical item count through native virtual retrieval without materialising thousands of `ListViewItem` instances up front. Applications remain responsible for the item provider/cache appropriate to their domain and for keeping retrieval fast enough for the UI thread.
+
+An empty list should be composed with `SasdEmptyState` when explanatory text or a primary action is needed. The platform intentionally does not inject a fake "No items" `ListViewItem`, because that would contaminate selection counts, context actions, virtual indexes and application data semantics. The application decides when its domain result is empty and toggles the sibling empty-state/list presentation accordingly.
 
 ### Tree lazy-loading and retry contract
 
