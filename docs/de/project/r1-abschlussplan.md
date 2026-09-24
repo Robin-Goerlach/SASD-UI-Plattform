@@ -38,6 +38,8 @@ Bereits vorhandene native R2-Helfer dürfen Fehlerkorrekturen und Evidence-Arbei
 
 ### B. Manuelle Windows-Abnahme
 
+Die tatsächlichen Sessions werden in der [`R1-Manuellen-Abnahmeakte`](r1-manuelle-abnahmeakte.md) dokumentiert.
+
 - Visual-Studio-Designer öffnen/ändern/speichern/erneut öffnen;
 - 100 %, 125 %, 150 % und 200 % Display-Skalierung;
 - Mixed-DPI-Monitorwechsel, soweit die Hardware dies erlaubt;
