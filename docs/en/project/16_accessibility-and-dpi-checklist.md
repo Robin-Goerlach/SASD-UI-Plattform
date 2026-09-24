@@ -1,5 +1,7 @@
 # Accessibility, Keyboard, and DPI Checklist
 
+For R1 release evidence, record actual sessions in [`r1-manual-acceptance-record.md`](r1-manual-acceptance-record.md). This checklist defines what to inspect; the record captures what was actually run.
+
 ## 1. Keyboard
 
 - [ ] Every interactive element is reachable with Tab.
