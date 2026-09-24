@@ -1,7 +1,7 @@
 # Roadmap – SASD UI Platform
 
-**As of:** 2026-09-10  
-**Version:** 0.4  
+**As of:** 2026-09-24  
+**Version:** 0.5  
 **Horizon:** R0 through R3; no artificial calendar dates without reliable capacity planning
 
 ## 1. Roadmap Principles
@@ -25,10 +25,10 @@ The status below distinguishes **implemented code** from **completed release gat
 
 | Stage | Current status | Evidence already present | Important work still open |
 | --- | --- | --- | --- |
-| R0.1 | Functionally implemented; release-engineering gate still open | .NET 8 solution, central package/build configuration, strict warning-free CI, architecture checks, ADR/licence process, one-command verification | NuGet packaging, public-API baseline, SBOM/release automation |
+| R0.1 | Functionally implemented; release-engineering gate still open | .NET 8 solution, central package/build configuration, strict warning-free CI, architecture checks, ADR/licence process, one-command verification, repeatable NuGet pack/symbol/XML/README dry-run | Public-API baseline, SBOM/checksum release evidence and final public package topology |
 | R0.2 | Pilot implemented; decision gate still open | native theme/form baseline, isolated `Krypton.Toolkit` adapter, Krypton smoke check, automated vendor-boundary enforcement | Visual Studio Designer matrix, multi-DPI/focus/high-contrast evidence and final native-vs-Krypton standard decision |
-| R0.3 | Core interaction implementation substantially complete | grid/controller/paging/search/filter, CSV/grid state, dialogs/error/busy/progress, versioned state, commands/shell, executable Gallery integration, integrated Showcase consumer | UIA/FlaUI pilot, screenshot regression, keyboard-only end-to-end evidence, manual DPI/accessibility evidence |
-| R1.0 | Functional component foundation largely implemented | forms/validation, commands/shortcuts, shell/navigation/status, grids/lists/trees, dialogs/notifications, Windows services, state/recent items, drag/drop/tray, Gallery plus CRUD/Workbench/Showcase consumers | NuGet publication, API baseline, first real SASD consumer migration, formal quality matrix |
+| R0.3 | Core interaction implementation substantially complete and broadly hardened | grid/controller/paging/search/filter, CSV/grid state, dialogs/error/busy/progress, versioned state, commands/shell, keyboard acceptance smoke, runtime Showcase navigation smoke and integrated consumers | UI Automation/screen-reader and screenshot-regression decision, broader manual DPI/Designer/High-Contrast evidence |
+| R1.0 | Feature foundation effectively complete; closing phase active | forms/validation/focus navigation, commands/shortcuts, shell/navigation/status, hardened grids/lists/trees, dialogs/notifications/busy/progress, Windows services, state/recent items, Gallery plus CRUD/Workbench/Utility/Showcase consumers | Public package decision, API baseline, SBOM/checksums, manual quality matrix, first real SASD consumer migration and internal release candidate |
 | R1.1 | Hardening occurs continuously; formal stage not started | analyzer-as-error policy, recovery/disposal/threading fixes and growing smoke coverage | formal API review, performance/handle-leak matrix, migration notes and three real SASD consumers |
 | R2.0 | Started with dependency-free native helpers | property editor, column chooser, image viewer, saved grid views, sparkline/KPI, Gallery integration and Showcase exercises | manual DPI/accessibility evidence, real consumer evidence and separately reviewed specialist adapters |
 | R3 | Deferred | scope rules documented | requires demonstrated product need and explicit maintenance ownership |
@@ -60,9 +60,10 @@ The status below distinguishes **implemented code** from **completed release gat
 
 ### Remaining Gate Work
 
-- establish repeatable NuGet packaging and symbols as an explicit release path;
+- keep the existing repeatable NuGet package/symbol/XML/README dry-run as the technical packaging baseline;
 - add public-API baseline tooling before API stability is claimed;
-- add SBOM, checksums and release-engineering helpers under `eng/` when packaging starts;
+- add SBOM, checksums and release-engineering helpers under `eng/`;
+- decide the smaller public consumer package surface separately from the more granular internal project/package dry-run;
 - make release evidence reproducible rather than relying on manual notes.
 
 ### Stop Criteria
@@ -132,11 +133,13 @@ Otherwise, the native WinForms implementation remains the standard. Design token
 
 - UI Automation through UIA3/FlaUI as a pilot;
 - screenshot regression for defined Gallery states;
-- at least one keyboard-only end-to-end scenario;
-- broader Component Gallery coverage of remaining implemented controls and important states;
-- stored manual DPI/Designer/Accessibility Insights results.
+- extend the existing bounded keyboard-only acceptance evidence into additional business-critical flows where deterministic routing is practical;
+- broader Component Gallery coverage only where an implemented R1 state still lacks a useful exercise surface;
+- stored manual DPI/Designer/High-Contrast/accessibility results.
 
 ## 7. R1.0 – Productive Foundation
+
+R1 is now in **closing mode**. The detailed execution and exit criteria are maintained in [`docs/en/project/r1-closing-plan.md`](docs/en/project/r1-closing-plan.md). Feature breadth is frozen unless a real consumer exposes a blocking R1 gap.
 
 ### Implemented Product Areas
 
@@ -240,16 +243,18 @@ The goal is not unrestricted autonomous change. The goal is to let agents carry 
 
 Unless a real consumer exposes a more urgent defect, prefer this order:
 
-1. use the Codex ready queue for bounded lifecycle, evidence and release-engineering work while keeping agent instructions concise/current;
-2. complete a current component-coverage matrix and fill remaining dependency-free Gallery/Showcase gaps;
-3. implement a first keyboard-only/UIA3/FlaUI automated user flow after the required dependency/tooling decision;
-4. execute manual Designer/DPI/High-Contrast/accessibility matrix and store evidence;
-5. implement NuGet pack/symbol/XML-doc release path;
-6. add public-API compatibility baseline checks;
-7. add SBOM/checksum/third-party release automation;
-8. migrate the first bounded real SASD consumer feature;
-9. use consumer feedback to harden/simplify R1 and native R2 APIs;
-10. only then promote a specialist R2 adapter unless a real project need makes one urgent sooner.
+1. keep the R1.0 closing plan, roadmap, evidence matrix and Codex queue synchronized;
+2. close dependency-free automated evidence and release-hygiene gaps without increasing component count;
+3. establish the public-API baseline/compatibility approach before declaring API stability;
+4. execute and record the Visual Studio Designer, 100/125/150/200 percent DPI, mixed-DPI, High-Contrast, keyboard and accessibility matrix;
+5. use that evidence to make the explicit public-package-topology and native-vs-Krypton decisions;
+6. produce an internal release candidate from the intended package surface;
+7. migrate one bounded Prompt Manager feature against that packaged candidate;
+8. harden/simplify R1 APIs from real-consumer feedback;
+9. complete SBOM/checksum/third-party/release-note evidence and close R1.0;
+10. only then make specialist R2 adapters the normal development priority.
+
+The current detailed closing contract is [`docs/en/project/r1-closing-plan.md`](docs/en/project/r1-closing-plan.md).
 
 ## 12. R3 and Deliberate Non-Goals
 
