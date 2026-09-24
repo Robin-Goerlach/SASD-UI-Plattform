@@ -51,7 +51,7 @@ Complete without changing product strategy:
 
 1. keep the canonical Windows verification gate green;
 2. keep package metadata, README, XML documentation and symbol-package checks reproducible;
-3. add release checksums and repeatable SBOM/third-party evidence using approved tooling or SDK capabilities;
+3. keep deterministic SHA-256 release checksums verified and add repeatable SBOM/third-party evidence using approved tooling or SDK capabilities;
 4. establish a public API inventory/baseline before R1 compatibility is claimed;
 5. keep the Component Gallery, Showcase and reference consumers buildable from a clean checkout;
 6. keep the evidence matrix current after each closing change.
