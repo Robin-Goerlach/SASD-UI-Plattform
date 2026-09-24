@@ -147,13 +147,24 @@ internal sealed class ControlsLabPage : UserControl
         var list = new SasdListView
         {
             Dock = DockStyle.Fill,
+
+            // The showcase uses the native WinForms virtual-list contract directly. The
+            // logical size is deliberately larger than a normal demo list so scrolling can
+            // exercise on-demand retrieval without allocating every ListViewItem in advance.
+            VirtualMode = true,
+            VirtualListSize = 10_000,
         };
-        list.Columns.Add("Component", 170);
-        list.Columns.Add("Purpose", 280);
-        list.Items.Add(new ListViewItem(["SasdListView", "Business-style row selection defaults"]));
-        list.Items.Add(new ListViewItem(["SasdTreeView", "Stable tree selection/rendering defaults"]));
-        list.Items.Add(new ListViewItem(["SasdBreadcrumb", "Application-owned navigation path"]));
-        list.Items.Add(new ListViewItem(["SasdDocumentTabs", "Owned document visual lifecycle"]));
+        list.Columns.Add("Virtual item", 170);
+        list.Columns.Add("Purpose", 310);
+        list.RetrieveVirtualItem += (_, args) =>
+        {
+            int displayNumber = args.ItemIndex + 1;
+            args.Item = new ListViewItem(
+            [
+                $"Item {displayNumber:N0}",
+                "Materialised on demand through RetrieveVirtualItem",
+            ]);
+        };
 
         var tree = new SasdTreeView
         {
