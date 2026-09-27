@@ -180,10 +180,14 @@ SASD-UI-Platform/
 
 ## 5.1 Packaging rules
 
-- R1 must not begin with twenty public NuGet packages. Projects may already be separated internally, while early public packages remain few and cohesive.
-- Initial packages: `Sasd.Ui.Core`, `Sasd.Ui.WinForms`, `Sasd.Ui.WinForms.Krypton`, `Sasd.Ui.WinForms.Data` and `Sasd.Ui.WinForms.Templates`.
-- Dialog, shell, state and Windows projects may be bundled into `Sasd.Ui.WinForms` until their APIs stabilise.
-- Every R2 specialist adapter is packaged separately so applications acquire only the heavy or native dependencies they use.
+- R1 keeps internal assemblies modular while exposing only a small **supported direct consumer entry set**.
+- The approved R1 direct entry packages are `Sasd.Ui.Core`, `Sasd.Ui.WinForms`, `Sasd.Ui.WinForms.App`, `Sasd.Ui.WinForms.Data` and `Sasd.Ui.WinForms.Krypton`.
+- `Sasd.Ui.WinForms.App` is a dependency-only metapackage for Commands, Dialogs, Forms, Shell, State, Theming and Windows. It contains no runtime assembly of its own.
+- Internal implementation packages remain real transitive NuGet dependencies because their assemblies stay separate; applications normally do not compose that graph manually.
+- Data and Krypton remain explicit opt-ins. Media and every R2/R3 specialist adapter are excluded from the App metapackage.
+- Templates remain an R1 delivery asset but are not a runtime dependency of the App package.
+- The release dry-run verifies the metapackage dependency allowlist and builds a fresh consumer from the local package output before publication.
+- ADR-0017 records this package-topology decision and its review criteria.
 
 # 6. Public API, conventions and error contracts
 
