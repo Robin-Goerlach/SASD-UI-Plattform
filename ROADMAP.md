@@ -1,7 +1,7 @@
 # Roadmap – SASD UI Platform
 
-**As of:** 2026-09-24  
-**Version:** 0.5  
+**As of:** 2026-09-27  
+**Version:** 0.6  
 **Horizon:** R0 through R3; no artificial calendar dates without reliable capacity planning
 
 ## 1. Roadmap Principles
@@ -25,10 +25,10 @@ The status below distinguishes **implemented code** from **completed release gat
 
 | Stage | Current status | Evidence already present | Important work still open |
 | --- | --- | --- | --- |
-| R0.1 | Functionally implemented; release-engineering gate still open | .NET 8 solution, central package/build configuration, strict warning-free CI, architecture checks, ADR/licence process, one-command verification, repeatable NuGet pack/symbol/XML/README dry-run with verified SHA-256 artifact manifest | Public-API baseline, SBOM/third-party release evidence and final public package topology |
+| R0.1 | Functionally implemented; release-engineering gate still open | .NET 8 solution, central package/build configuration, strict warning-free CI, architecture checks, ADR/licence process, one-command verification, repeatable package validation/checksum/dependency evidence, ADR-0017 R1 consumer package topology | Public-API baseline and standards-compliant SBOM/release evidence |
 | R0.2 | Pilot implemented; decision gate still open | native theme/form baseline, isolated `Krypton.Toolkit` adapter, Krypton smoke check, automated vendor-boundary enforcement | Visual Studio Designer matrix, multi-DPI/focus/high-contrast evidence and final native-vs-Krypton standard decision |
 | R0.3 | Core interaction implementation substantially complete and broadly hardened | grid/controller/paging/search/filter, CSV/grid state, dialogs/error/busy/progress, versioned state, commands/shell, keyboard acceptance smoke, runtime Showcase navigation smoke and integrated consumers | UI Automation/screen-reader and screenshot-regression decision, broader manual DPI/Designer/High-Contrast evidence |
-| R1.0 | Feature foundation effectively complete; closing phase active | forms/validation/focus navigation, commands/shortcuts, shell/navigation/status, hardened grids/lists/trees, dialogs/notifications/busy/progress, Windows services, state/recent items, Gallery plus CRUD/Workbench/Utility/Showcase consumers | Public package decision, API baseline, SBOM/checksums, manual quality matrix, first real SASD consumer migration and internal release candidate |
+| R1.0 | Feature foundation effectively complete; closing phase active | forms/validation/focus navigation, commands/shortcuts, shell/navigation/status, hardened grids/lists/trees, dialogs/notifications/busy/progress, Windows services, state/recent items, Gallery plus CRUD/Workbench/Utility/Showcase consumers, approved R1 App metapackage topology | API baseline, standards-compliant SBOM, manual quality matrix, native-vs-Krypton decision, first real SASD consumer migration and internal release candidate |
 | R1.1 | Hardening occurs continuously; formal stage not started | analyzer-as-error policy, recovery/disposal/threading fixes and growing smoke coverage | formal API review, performance/handle-leak matrix, migration notes and three real SASD consumers |
 | R2.0 | Started with dependency-free native helpers | property editor, column chooser, image viewer, saved grid views, sparkline/KPI, Gallery integration and Showcase exercises | manual DPI/accessibility evidence, real consumer evidence and separately reviewed specialist adapters |
 | R3 | Deferred | scope rules documented | requires demonstrated product need and explicit maintenance ownership |
@@ -63,7 +63,7 @@ The status below distinguishes **implemented code** from **completed release gat
 - keep the existing repeatable NuGet package/symbol/XML/README dry-run as the technical packaging baseline;
 - add public-API baseline tooling before API stability is claimed;
 - retain verified SHA-256 artifact manifests and add SBOM/third-party release-engineering helpers under `eng/`;
-- decide the smaller public consumer package surface separately from the more granular internal project/package dry-run;
+- keep the ADR-0017 consumer entry package surface executable through the metapackage dependency and local-feed consumer checks;
 - make release evidence reproducible rather than relying on manual notes.
 
 ### Stop Criteria
@@ -162,12 +162,12 @@ The following R1 areas now have usable implementation code:
 
 The next work is no longer mainly “add missing base controls”. It is now:
 
-1. expand Gallery coverage for remaining implemented R1 controls and important states;
-2. add keyboard-only and UIA automation for business-critical flows;
-3. execute and record Designer, DPI, High-Contrast and accessibility matrices;
-4. establish NuGet packaging, symbols and XML-documentation output;
-5. introduce public-API baseline/compatibility checks;
-6. produce SBOM/third-party release evidence;
+1. keep remaining Gallery/keyboard evidence focused on real R1 acceptance gaps rather than component-count expansion;
+2. execute and record Designer, DPI, High-Contrast and accessibility matrices;
+3. establish the public-API baseline/compatibility gate;
+4. produce a standards-compliant SBOM and final third-party release evidence;
+5. make the evidence-based native-vs-Krypton default decision;
+6. produce an internal release candidate using the ADR-0017 package topology;
 7. migrate a bounded feature from a real SASD application, preferably Prompt Manager;
 8. simplify APIs based on reference-consumer and real-consumer feedback before declaring R1.0 stable.
 
@@ -247,8 +247,8 @@ Unless a real consumer exposes a more urgent defect, prefer this order:
 2. close dependency-free automated evidence and release-hygiene gaps without increasing component count;
 3. establish the public-API baseline/compatibility approach before declaring API stability;
 4. execute and record the Visual Studio Designer, 100/125/150/200 percent DPI, mixed-DPI, High-Contrast, keyboard and accessibility matrix;
-5. use that evidence to make the explicit public-package-topology and native-vs-Krypton decisions;
-6. produce an internal release candidate from the intended package surface;
+5. use that evidence to make the native-vs-Krypton decision;
+6. produce an internal release candidate from the ADR-0017 package surface;
 7. migrate one bounded Prompt Manager feature against that packaged candidate;
 8. harden/simplify R1 APIs from real-consumer feedback;
 9. complete SBOM/checksum/third-party/release-note evidence and close R1.0;
