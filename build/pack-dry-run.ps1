@@ -11,6 +11,8 @@ $ErrorActionPreference = 'Stop'
 $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 . (Join-Path $PSScriptRoot 'product-projects.ps1')
 $productProjects = @(Get-SasdProductProjects)
+$metapackageProjects = @(Get-SasdMetapackageProjects)
+$appMetapackageDependencyIds = @(Get-SasdAppMetapackageDependencyIds)
 
 function Invoke-DotNetStep {
     param(
@@ -37,26 +39,84 @@ function Assert-PackageContents {
         [string]$PackagePath,
 
         [Parameter(Mandatory)]
-        [string]$PackageId
+        [string]$PackageId,
+
+        [switch]$Metapackage,
+
+        [string[]]$ExpectedDependencyIds = @()
     )
 
     # NuGet packages are ZIP files. Inspecting the archive directly keeps this dry-run
-    # dependency-free and proves that consumers receive the runtime assembly, XML API docs
-    # and a package landing page rather than merely proving that `dotnet pack` returned zero.
+    # dependency-free and proves the actual consumer payload rather than merely proving
+    # that `dotnet pack` returned zero.
     $archive = [System.IO.Compression.ZipFile]::OpenRead($PackagePath)
     try {
         $entryNames = @($archive.Entries | ForEach-Object { $_.FullName })
+        $readmeName = 'README.md'
+        $hasReadme = $entryNames -contains $readmeName
+
+        if (-not $hasReadme) {
+            throw "Package '$PackageId' does not contain its root README.md."
+        }
+
+        if ($Metapackage) {
+            # A metapackage must remain dependency-only. NuGet uses a zero-byte _._
+            # framework marker to represent an intentionally empty lib group; anything
+            # else under lib/ref would create an accidental runtime/reference asset.
+            $frameworkEntries = @($entryNames | Where-Object { $_ -like 'lib/*' -or $_ -like 'ref/*' })
+            $unexpectedRuntimeEntries = @(
+                $frameworkEntries |
+                    Where-Object { $_ -ne 'lib/net8.0-windows7.0/_._' }
+            )
+            if ($unexpectedRuntimeEntries.Count -gt 0) {
+                throw "Metapackage '$PackageId' unexpectedly contains runtime/reference assets: $($unexpectedRuntimeEntries -join ', ')"
+            }
+
+            if ($frameworkEntries -notcontains 'lib/net8.0-windows7.0/_._') {
+                throw "Metapackage '$PackageId' does not contain its expected NuGet _._ framework marker."
+            }
+
+            $nuspecEntry = $archive.Entries |
+                Where-Object { $_.FullName -like '*.nuspec' } |
+                Select-Object -First 1
+            if ($null -eq $nuspecEntry) {
+                throw "Metapackage '$PackageId' does not contain a NuGet manifest."
+            }
+
+            $reader = [System.IO.StreamReader]::new($nuspecEntry.Open())
+            try {
+                [xml]$nuspec = $reader.ReadToEnd()
+            }
+            finally {
+                $reader.Dispose()
+            }
+
+            $actualDependencyIds = @(
+                $nuspec.SelectNodes("//*[local-name()='dependency']") |
+                    ForEach-Object { [string]$_.id } |
+                    Sort-Object -Unique
+            )
+            $expectedIds = @($ExpectedDependencyIds | Sort-Object -Unique)
+
+            $missing = @($expectedIds | Where-Object { $_ -notin $actualDependencyIds })
+            $unexpected = @($actualDependencyIds | Where-Object { $_ -notin $expectedIds })
+            if ($missing.Count -gt 0 -or $unexpected.Count -gt 0) {
+                throw (
+                    "Metapackage '$PackageId' dependency contract changed. " +
+                    "Missing: $($missing -join ', '); unexpected: $($unexpected -join ', ').")
+            }
+
+            return
+        }
+
         $assemblyName = "$PackageId.dll"
         $documentationName = "$PackageId.xml"
-        $readmeName = 'README.md'
-
         $hasAssembly = $entryNames | Where-Object {
             $_ -like "lib/*/$assemblyName"
         }
         $hasDocumentation = $entryNames | Where-Object {
             $_ -like "lib/*/$documentationName"
         }
-        $hasReadme = $entryNames -contains $readmeName
 
         if (-not $hasAssembly) {
             throw "Package '$PackageId' does not contain its product assembly."
@@ -64,10 +124,6 @@ function Assert-PackageContents {
 
         if (-not $hasDocumentation) {
             throw "Package '$PackageId' does not contain XML documentation."
-        }
-
-        if (-not $hasReadme) {
-            throw "Package '$PackageId' does not contain its root README.md."
         }
     }
     finally {
@@ -138,12 +194,13 @@ try {
         }
 
         $packageId = [System.IO.Path]::GetFileNameWithoutExtension($project)
-        Invoke-DotNetStep -Name "Pack $packageId" -Arguments @(
+        $isMetapackage = $project -in $metapackageProjects
+
+        $packArguments = @(
             'pack',
             $project,
             '--configuration', 'Release',
             '--output', $resolvedOutput,
-            '--include-symbols',
             '--no-restore',
             "-p:PackageVersion=$Version",
             '-p:SymbolPackageFormat=snupkg',
@@ -152,6 +209,13 @@ try {
             '-p:EnablePackageValidation=true',
             '-p:TreatWarningsAsErrors=true'
         )
+        if (-not $isMetapackage) {
+            # A dependency-only metapackage has no PDB to publish. Concrete assembly
+            # packages continue to prove portable symbol-package generation.
+            $packArguments += '--include-symbols'
+        }
+
+        Invoke-DotNetStep -Name "Pack $packageId" -Arguments $packArguments
 
         $packagePath = Join-Path $resolvedOutput "$packageId.$Version.nupkg"
         $symbolPackagePath = Join-Path $resolvedOutput "$packageId.$Version.snupkg"
@@ -159,19 +223,44 @@ try {
         if (-not (Test-Path $packagePath -PathType Leaf)) {
             throw "Expected package was not produced: $packagePath"
         }
-        if (-not (Test-Path $symbolPackagePath -PathType Leaf)) {
-            throw "Expected symbol package was not produced: $symbolPackagePath"
-        }
 
-        Assert-PackageContents -PackagePath $packagePath -PackageId $packageId
-        Assert-SymbolPackageContents -PackagePath $symbolPackagePath -PackageId $packageId
+        if ($isMetapackage) {
+            if (Test-Path $symbolPackagePath -PathType Leaf) {
+                throw "Metapackage '$packageId' unexpectedly produced a symbol package."
+            }
+
+            $expectedDependencyIds = if ($packageId -eq 'Sasd.Ui.WinForms.App') {
+                $appMetapackageDependencyIds
+            }
+            else {
+                @()
+            }
+            Assert-PackageContents -PackagePath $packagePath -PackageId $packageId -Metapackage -ExpectedDependencyIds $expectedDependencyIds
+        }
+        else {
+            if (-not (Test-Path $symbolPackagePath -PathType Leaf)) {
+                throw "Expected symbol package was not produced: $symbolPackagePath"
+            }
+
+            Assert-PackageContents -PackagePath $packagePath -PackageId $packageId
+            Assert-SymbolPackageContents -PackagePath $symbolPackagePath -PackageId $packageId
+        }
     }
 
     $packages = @(Get-ChildItem $resolvedOutput -Filter '*.nupkg' -File)
     $symbolPackages = @(Get-ChildItem $resolvedOutput -Filter '*.snupkg' -File)
-    if ($packages.Count -ne $productProjects.Count -or $symbolPackages.Count -ne $productProjects.Count) {
-        throw "Unexpected package count. Expected $($productProjects.Count) packages and symbol packages; found $($packages.Count) and $($symbolPackages.Count)."
+    $expectedSymbolPackageCount = $productProjects.Count - $metapackageProjects.Count
+    if ($packages.Count -ne $productProjects.Count -or $symbolPackages.Count -ne $expectedSymbolPackageCount) {
+        throw (
+            "Unexpected package count. Expected $($productProjects.Count) normal/metapackages " +
+            "and $expectedSymbolPackageCount symbol packages; found $($packages.Count) and $($symbolPackages.Count).")
     }
+
+    Write-Host ""
+    Write-Host '==> R1 application metapackage consumer smoke' -ForegroundColor Cyan
+    # Restore and build a fresh consumer using only the just-produced local feed. This
+    # proves that the curated entry package resolves the intended module graph in practice.
+    & (Join-Path $PSScriptRoot 'test-r1-metapackage.ps1') -Version $Version -PackageDirectory $resolvedOutput
 
     Write-Host ""
     Write-Host '==> SHA-256 release checksums' -ForegroundColor Cyan

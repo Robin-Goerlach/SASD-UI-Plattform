@@ -52,14 +52,13 @@ Automatisierte Accessible Names und Smoke-Tests ersetzen diese manuellen Gates n
 
 ### C. Strategische Entscheidungen
 
-Nicht stillschweigend entscheiden:
+Die **R1-NuGet-Consumer-Topologie ist durch ADR-0017 entschieden**: fünf unterstützte direkte Einstiegspakete einschließlich des dependency-only Metapakets `Sasd.Ui.WinForms.App`; interne Assemblies bleiben granular. Der Pack-Dry-Run muss diese Grenze über Dependency-Prüfung und lokalen Consumer-Build ausführbar absichern.
 
-1. **öffentliche NuGet-Paketstruktur**;
-2. **native WinForms vs. Krypton als sichtbarer Standard**;
-3. **UI-Automation-/Screenshot-Regression-Tooling**;
-4. neue spezialisierte R2-Adapter bzw. Runtime-Abhängigkeiten.
+Weiterhin ausdrücklich zu entscheiden sind:
 
-Der aktuelle Pack-Dry-Run beweist die technische Paketierbarkeit der internen Produktprojekte. Er erklärt diese Projekte nicht automatisch zu eigenständigen öffentlichen Paketen.
+1. **native WinForms vs. Krypton als sichtbarer Standard**;
+2. **UI-Automation-/Screenshot-Regression-Tooling**;
+3. neue spezialisierte R2-Adapter bzw. Runtime-Abhängigkeiten.
 
 ### D. Erste reale SASD-Nutzung
 
@@ -99,8 +98,8 @@ Eine hohe Anzahl von Komponenten ist kein Exit-Kriterium.
 2. dependency-freie Evidence-Lücken und Release-Hygiene schließen;
 3. Public-API-Baseline auswählen und umsetzen;
 4. Designer-/DPI-/High-Contrast-/Accessibility-Matrix durchführen;
-5. Paketstruktur und Native-vs.-Krypton anhand der Evidence entscheiden;
-6. internen Release Candidate erzeugen;
+5. Native-vs.-Krypton anhand der Evidence entscheiden;
+6. internen Release Candidate mit der ADR-0017-Paketstruktur erzeugen;
 7. begrenztes Prompt-Manager-Feature migrieren;
 8. APIs anhand dieser Migration korrigieren/vereinfachen;
 9. finale Release-Evidence erzeugen und R1.0 intern veröffentlichen.

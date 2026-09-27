@@ -10,43 +10,67 @@
 
 ## 2. Package Groups
 
-The repository currently dry-runs packaging for the granular internal product projects so package metadata, symbols and XML documentation can be verified early. That technical dry-run is **not** the public package-topology decision. R1 closing work must preserve the goal of a small consumer-facing package set even when internal projects remain more granular.
+The repository dry-runs packaging for granular internal product projects so package metadata, symbols, dependency relationships and XML documentation are verified early. That technical inventory is intentionally larger than the supported direct consumer surface.
 
+### Supported R1 consumer entry packages
 
-### Core
+| Package | Consumer purpose |
+| --- | --- |
+| `Sasd.Ui.Core` | Platform-neutral contracts and semantics when an application needs them directly. |
+| `Sasd.Ui.WinForms` | Minimal native WinForms foundation. |
+| `Sasd.Ui.WinForms.App` | Recommended convenience metapackage for a normal R1 application. |
+| `Sasd.Ui.WinForms.Data` | Explicit opt-in for grids, search/filter/paging, lists and trees. |
+| `Sasd.Ui.WinForms.Krypton` | Explicit optional visual implementation. |
 
-- `Sasd.Ui.Core`
-- `Sasd.Ui.WinForms`
-- a small number of logically related R1 packages for theme, shell, data, dialogs, Windows integration, and state.
+The supported entry set is a documentation/support boundary, not a claim that only five package IDs exist on the feed. The platform keeps separate assemblies, so implementation packages such as Commands, Forms, Dialogs, Shell, State, Theming and Windows remain real transitive NuGet dependencies.
 
-### Adapters
+### R1 application metapackage
 
-- Krypton implementation;
-- ScottPlot;
-- ScintillaNET;
-- WebView2;
-- docking;
-- PDF/media.
+`Sasd.Ui.WinForms.App` is dependency-only and contains no runtime assembly. Its direct dependencies are exactly:
 
-Adapters are opt-in and must not enter every application through a general metapackage.
+- `Sasd.Ui.WinForms.Commands`;
+- `Sasd.Ui.WinForms.Dialogs`;
+- `Sasd.Ui.WinForms.Forms`;
+- `Sasd.Ui.WinForms.Shell`;
+- `Sasd.Ui.WinForms.State`;
+- `Sasd.Ui.WinForms.Theming`;
+- `Sasd.Ui.WinForms.Windows`.
+
+`Sasd.Ui.WinForms.Data`, `Sasd.Ui.WinForms.Krypton`, `Sasd.Ui.WinForms.Media` and all future R2/R3 adapters are intentionally excluded. This boundary is enforced by the package dry-run, not only by documentation.
+
+### Specialist adapters
+
+ScottPlot, ScintillaNET, WebView2, docking, PDF/media and similar specialist capabilities remain separate opt-in packages. They must not enter every application through the R1 App metapackage.
 
 ## 3. Consumer Package Strategy
 
-A curated R1 metapackage may be considered for typical applications if it bundles only lightweight core packages. It must not include R2 adapters.
+A typical R1 application starts with:
+
+```xml
+<ItemGroup>
+  <PackageReference Include="Sasd.Ui.WinForms.App" Version="<approved-version>" />
+</ItemGroup>
+```
+
+Add `Sasd.Ui.WinForms.Data` only when data-heavy controls are needed. Add `Sasd.Ui.WinForms.Krypton` only after the application deliberately chooses that visual implementation.
+
+Applications with unusually small requirements may reference `Sasd.Ui.Core` or `Sasd.Ui.WinForms` directly instead of the App package. Direct references to implementation packages remain possible for advanced cases, but they are not the normal R1 starting point and should have a concrete reason.
+
+ADR-0017 records the package-topology decision and its review criteria.
 
 ## 4. Metadata
 
-Every package contains:
+Every package contains common identity metadata:
 
 - ID, title, and description;
 - version and repository URL;
 - license expression or license file;
 - tags;
 - README;
-- symbol package;
-- XML documentation;
 - release notes or changelog link;
 - deterministic repository and commit metadata.
+
+Concrete assembly packages additionally contain XML documentation and a symbol package. Dependency-only metapackages deliberately contain neither a runtime assembly nor a symbol package.
 
 ## 5. Dependency Rules
 
@@ -60,12 +84,16 @@ Every package contains:
 
 Before publication:
 
-- inspect package contents;
-- create an empty consumer solution;
+- inspect package contents and dependency manifests;
+- create a fresh consumer project;
 - install from the intended feed;
-- test build, designer, and minimal example;
+- restore/build representative public types;
+- verify that the App package resolves its exact allowlisted modules and does not pull Data/Krypton/Media;
+- test designer and minimal example behavior;
 - review transitive dependencies and license notices;
 - verify uninstall and update paths.
+
+The current dry-run already performs a local-feed restore/build smoke for `Sasd.Ui.WinForms.App`; the later internal-feed release candidate repeats the same consumer path against the actual feed.
 
 ## 7. Package Count as an Architecture Indicator
 

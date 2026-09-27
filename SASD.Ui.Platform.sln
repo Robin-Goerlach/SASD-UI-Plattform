@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sasd.Ui.Core", "src\Sasd.Ui
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sasd.Ui.WinForms", "src\Sasd.Ui.WinForms\Sasd.Ui.WinForms.csproj", "{70D74002-5887-4E4E-A4C4-D28BEC13AE6A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sasd.Ui.WinForms.App", "src\Sasd.Ui.WinForms.App\Sasd.Ui.WinForms.App.csproj", "{8A7325C1-20CF-4BBE-B555-DC0BFA2A9910}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sasd.Ui.WinForms.Theming", "src\Sasd.Ui.WinForms.Theming\Sasd.Ui.WinForms.Theming.csproj", "{3FC2F066-9152-42CF-8D93-3565B2CC14AC}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sasd.Ui.WinForms.Forms", "src\Sasd.Ui.WinForms.Forms\Sasd.Ui.WinForms.Forms.csproj", "{89EB9D14-2913-4D0C-BCD2-D1AA6A0FD9ED}"
@@ -44,6 +46,10 @@ Global
         {70D74002-5887-4E4E-A4C4-D28BEC13AE6A}.Debug|Any CPU.Build.0 = Debug|Any CPU
         {70D74002-5887-4E4E-A4C4-D28BEC13AE6A}.Release|Any CPU.ActiveCfg = Release|Any CPU
         {70D74002-5887-4E4E-A4C4-D28BEC13AE6A}.Release|Any CPU.Build.0 = Release|Any CPU
+        {8A7325C1-20CF-4BBE-B555-DC0BFA2A9910}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+        {8A7325C1-20CF-4BBE-B555-DC0BFA2A9910}.Debug|Any CPU.Build.0 = Debug|Any CPU
+        {8A7325C1-20CF-4BBE-B555-DC0BFA2A9910}.Release|Any CPU.ActiveCfg = Release|Any CPU
+        {8A7325C1-20CF-4BBE-B555-DC0BFA2A9910}.Release|Any CPU.Build.0 = Release|Any CPU
         {3FC2F066-9152-42CF-8D93-3565B2CC14AC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
         {3FC2F066-9152-42CF-8D93-3565B2CC14AC}.Debug|Any CPU.Build.0 = Debug|Any CPU
         {3FC2F066-9152-42CF-8D93-3565B2CC14AC}.Release|Any CPU.ActiveCfg = Release|Any CPU

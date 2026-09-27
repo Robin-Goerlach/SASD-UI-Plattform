@@ -49,17 +49,12 @@ pwsh ./build/verify.ps1 -IncludePackDryRun
 
 The underlying `build/pack-dry-run.ps1` keeps the list of product packages explicit. It never publishes packages. For each configured product project it creates a normal `.nupkg` plus `.snupkg` in `artifacts/nuget-dry-run/`, enables the .NET SDK's built-in Package Validation, and inspects the archives directly.
 
-The dry-run verifies that every product package contains:
+The dry-run distinguishes concrete assembly packages from dependency-only metapackages. Every package contains its project-local `README.md`. Concrete assembly packages additionally contain their product assembly, generated XML API documentation and a portable PDB in the symbol package. `Sasd.Ui.WinForms.App` deliberately contains no runtime/reference assembly and produces no symbol package; instead the dry-run verifies its exact dependency allowlist.
 
-- its product assembly;
-- generated XML API documentation;
-- the project-local `README.md` as the NuGet package readme;
-- a portable PDB in the symbol package.
-
-After all packages are complete, `build/write-checksums.ps1` writes a deterministic UTF-8/LF `SHA256SUMS.txt` for every `.nupkg` and `.snupkg` and immediately recomputes each SHA-256 value from disk. The checksum file contains only distributable package artifacts; unrelated temporary files are deliberately excluded.
+After all packages are complete, `build/test-r1-metapackage.ps1` creates a fresh WinForms consumer, clears external NuGet sources, restores `Sasd.Ui.WinForms.App` only from the local dry-run feed, verifies the resolved SASD package graph and compiles representative types from every App module. Data, Krypton and Media are asserted absent. `build/write-checksums.ps1` then writes a deterministic UTF-8/LF `SHA256SUMS.txt` for every `.nupkg` and `.snupkg` and immediately recomputes each SHA-256 value from disk. The checksum file contains only distributable package artifacts; unrelated temporary files are deliberately excluded.
 
 Using the project-local module README keeps package guidance close to the public surface it describes instead of maintaining a second copied package document. A product project without that README fails the dry-run rather than silently producing a package with no landing-page documentation.
 
-The dry-run uses version `0.0.0-local` by default and performs no push or feed operation. SDK Package Validation currently checks the internal consistency/applicability of the package being built; it is not yet a cross-version API baseline because no approved R1 baseline package has been selected. Checksum generation proves artifact integrity for the dry-run; it does not replace the still-pending SBOM, signing or public-package-topology decisions.
+The dry-run uses version `0.0.0-local` by default and performs no push or feed operation. SDK Package Validation currently checks the internal consistency/applicability of the package being built; it is not yet a cross-version API baseline because no approved R1 baseline package has been selected. ADR-0017 now defines the supported R1 consumer package topology. Checksum generation proves artifact integrity for the dry-run; it does not replace the still-pending SBOM, signing or API-baseline work.
 
 When `-IncludePackDryRun` is used, `build/write-dependency-evidence.ps1` also records the resolved direct and transitive NuGet dependency graph for the same explicit product-project inventory. It verifies that direct dependencies are centrally versioned and that every resolved NuGet package is at least named in `THIRD-PARTY-NOTICES.md`. The generated `artifacts/release-evidence/nuget-dependencies.json` is deterministic release evidence; it is deliberately **not** labelled an SBOM because no SPDX/CycloneDX standard is being claimed.

@@ -176,10 +176,14 @@ SASD-UI-Platform/
 
 ## 5.1 Paketierungsregel
 
-- R1 soll nicht mit zwanzig NuGet-Paketen starten. Intern dürfen Projekte bereits getrennt sein; veröffentlicht werden zunächst wenige logisch zusammenhängende Pakete.
-- Vorgesehene erste NuGet-Pakete: `Sasd.Ui.Core`, `Sasd.Ui.WinForms`, `Sasd.Ui.WinForms.Krypton`, `Sasd.Ui.WinForms.Data`, `Sasd.Ui.WinForms.Templates`.
-- Dialog-, Shell-, State- und Windows-Module können bis zur API-Stabilisierung im Paket `Sasd.Ui.WinForms` gebündelt werden, obwohl sie im Repository getrennte Projekte bleiben.
-- R2-Spezialadapter werden immer separat paketiert, damit Anwendungen nur benötigte native oder große Abhängigkeiten beziehen.
+- R1 behält intern modulare Assemblies, bietet aber nur eine kleine **unterstützte direkte Consumer-Einstiegsschicht**.
+- Freigegebene direkte R1-Einstiegspakete sind `Sasd.Ui.Core`, `Sasd.Ui.WinForms`, `Sasd.Ui.WinForms.App`, `Sasd.Ui.WinForms.Data` und `Sasd.Ui.WinForms.Krypton`.
+- `Sasd.Ui.WinForms.App` ist ein dependency-only Metapaket für Commands, Dialogs, Forms, Shell, State, Theming und Windows und besitzt keine eigene Runtime-Assembly.
+- Interne Implementierungspakete bleiben reale transitive NuGet-Abhängigkeiten, weil ihre Assemblies getrennt bleiben; normale Anwendungen stellen diesen Graphen nicht manuell zusammen.
+- Data und Krypton bleiben ausdrückliche Opt-ins. Media sowie alle R2/R3-Spezialadapter sind aus dem App-Metapaket ausgeschlossen.
+- Templates bleiben ein R1-Auslieferungsartefakt, sind aber keine Runtime-Abhängigkeit von App.
+- Der Release-Dry-Run prüft die Dependency-Allowlist des Metapakets und baut vor einer Veröffentlichung einen frischen Consumer ausschließlich aus dem lokalen Paketoutput.
+- ADR-0017 dokumentiert diese Paketentscheidung und ihre Review-Kriterien.
 
 # 6. Öffentliche API, Konventionen und Fehlerverträge
 

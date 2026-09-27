@@ -1,6 +1,6 @@
 # Codex Ready Task Queue
 
-**Updated:** 2026-09-24
+**Updated:** 2026-09-27
 
 This file is the small operational handoff for starting Codex work on the SASD UI Platform. It complements the durable rules in the root `AGENTS.md` and the detailed workflow in `docs/en/project/codex-development-workflow.md`.
 
@@ -47,13 +47,13 @@ Use the evidence matrix to select small, serial tasks from these areas:
 - lifecycle/accessibility/keyboard defect fixes in existing R1 contracts;
 - release checksums and third-party evidence using already-approved SDK/repository capabilities;
 - preparation work for the manual Designer/DPI/High-Contrast/accessibility matrix;
-- bounded reference-consumer fixes that do not redefine package boundaries.
+- bounded reference-consumer fixes that do not redefine package boundaries;
+- maintenance and verification of the approved ADR-0017 R1 package topology.
 
 ### Stop before these closing decisions
 
 Ask for explicit approval before choosing or implementing:
 
-- the final public NuGet package topology;
 - the public-API compatibility tool if it adds a new dependency/toolchain;
 - native WinForms versus Krypton as the visible default;
 - third-party UI automation or screenshot-regression tooling;
@@ -70,7 +70,14 @@ Ask for explicit approval before choosing or implementing:
 - PR #57: NuGet README evidence in the package dry-run;
 - PR #58: ValidationSummary field navigation;
 - PR #59: executable samples solution;
-- PR #60: native ListView virtual-mode pilot.
+- PR #60: native ListView virtual-mode pilot;
+- PR #61: authoritative R1.0 closing plan and refreshed evidence guidance;
+- PR #62/#65: repository file-mode normalization and regression guard;
+- PR #63: deterministic SHA-256 release checksums;
+- PR #64: reproducible manual R1 acceptance record;
+- PR #66: deterministic NuGet dependency evidence and transitive third-party notices;
+- PR #67: built-in .NET SDK package validation;
+- ADR-0017 / current package-topology work: curated R1 direct consumer entry set with `Sasd.Ui.WinForms.App`.
 
 ## Completion contract for Codex
 
