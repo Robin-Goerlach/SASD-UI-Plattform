@@ -9,25 +9,8 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
-
-# Keep this list explicit. A new product project should not silently become a published
-# package merely because somebody added a .csproj under src/. Updating this list is a
-# small, reviewable acknowledgement of the existing package boundary; it does not create
-# a new boundary by itself.
-$productProjects = @(
-    'src/Sasd.Ui.Core/Sasd.Ui.Core.csproj',
-    'src/Sasd.Ui.WinForms/Sasd.Ui.WinForms.csproj',
-    'src/Sasd.Ui.WinForms.Commands/Sasd.Ui.WinForms.Commands.csproj',
-    'src/Sasd.Ui.WinForms.Data/Sasd.Ui.WinForms.Data.csproj',
-    'src/Sasd.Ui.WinForms.Dialogs/Sasd.Ui.WinForms.Dialogs.csproj',
-    'src/Sasd.Ui.WinForms.Forms/Sasd.Ui.WinForms.Forms.csproj',
-    'src/Sasd.Ui.WinForms.Media/Sasd.Ui.WinForms.Media.csproj',
-    'src/Sasd.Ui.WinForms.Shell/Sasd.Ui.WinForms.Shell.csproj',
-    'src/Sasd.Ui.WinForms.State/Sasd.Ui.WinForms.State.csproj',
-    'src/Sasd.Ui.WinForms.Theming/Sasd.Ui.WinForms.Theming.csproj',
-    'src/Sasd.Ui.WinForms.Windows/Sasd.Ui.WinForms.Windows.csproj',
-    'src/Sasd.Ui.WinForms.Krypton/Sasd.Ui.WinForms.Krypton.csproj'
-)
+. (Join-Path $PSScriptRoot 'product-projects.ps1')
+$productProjects = @(Get-SasdProductProjects)
 
 function Invoke-DotNetStep {
     param(
