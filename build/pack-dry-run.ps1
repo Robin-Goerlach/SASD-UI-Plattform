@@ -149,6 +149,7 @@ try {
             '-p:SymbolPackageFormat=snupkg',
             '-p:DebugType=portable',
             '-p:ContinuousIntegrationBuild=true',
+            '-p:EnablePackageValidation=true',
             '-p:TreatWarningsAsErrors=true'
         )
 
