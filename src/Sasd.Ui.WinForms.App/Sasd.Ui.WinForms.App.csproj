@@ -31,4 +31,13 @@
     <ProjectReference Include="..\Sasd.Ui.WinForms.Theming\Sasd.Ui.WinForms.Theming.csproj" />
     <ProjectReference Include="..\Sasd.Ui.WinForms.Windows\Sasd.Ui.WinForms.Windows.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <!--
+      NuGet requires a lib/ref framework marker when a dependency group has no assembly
+      assets. The conventional zero-byte _._ file says "this framework is intentionally
+      asset-free" and avoids hiding NU5128 with a warning suppression.
+    -->
+    <None Include="_._" Pack="true" PackagePath="lib/net8.0-windows7.0/_._" />
+  </ItemGroup>
+
 </Project>
