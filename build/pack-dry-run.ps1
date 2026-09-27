@@ -248,6 +248,12 @@ try {
     }
 
     Write-Host ""
+    Write-Host '==> R1 application metapackage consumer smoke' -ForegroundColor Cyan
+    # Restore and build a fresh consumer using only the just-produced local feed. This
+    # proves that the curated entry package resolves the intended module graph in practice.
+    & (Join-Path $PSScriptRoot 'test-r1-metapackage.ps1') -Version $Version -PackageDirectory $resolvedOutput
+
+    Write-Host ""
     Write-Host '==> SHA-256 release checksums' -ForegroundColor Cyan
     # Checksums are generated from the completed artifact set, not incrementally while
     # packages are still being written. The helper verifies the manifest immediately.
