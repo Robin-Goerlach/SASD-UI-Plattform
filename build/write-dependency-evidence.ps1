@@ -63,6 +63,7 @@ function Invoke-DotNetPackageInventory {
 function Add-PackageRecords {
     param(
         [Parameter(Mandatory)]
+        [AllowEmptyCollection()]
         [System.Collections.Generic.List[object]]$Destination,
 
         [Parameter(Mandatory)]
