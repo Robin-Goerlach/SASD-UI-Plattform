@@ -10,6 +10,11 @@ $ErrorActionPreference = 'Stop'
 $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 . (Join-Path $PSScriptRoot 'product-projects.ps1')
 
+# Keep the consumer outside the repository so it cannot inherit Directory.Build.props,
+# Directory.Packages.props or other SASD-only build policy. That makes this a real
+# package-consumer test rather than another project in the monorepo.
+$smokeRoot = Join-Path ([System.IO.Path]::GetTempPath()) "sasd-ui-r1-metapackage-consumer-$PID"
+
 function Invoke-DotNetStep {
     param(
         [Parameter(Mandatory)]
@@ -51,7 +56,6 @@ try {
         throw "R1 application metapackage was not found: $appPackage"
     }
 
-    $smokeRoot = Join-Path $repositoryRoot 'artifacts/r1-metapackage-consumer-smoke'
     if (Test-Path $smokeRoot) {
         Remove-Item $smokeRoot -Recurse -Force
     }
@@ -183,4 +187,10 @@ Console.WriteLine($"Resolved {requiredR1Types.Length} representative SASD R1 typ
 }
 finally {
     Pop-Location
+
+    # The smoke is evidence, not a release artifact. Remove its generated project,
+    # restore graph and binaries so developer/CI machines do not accumulate temp state.
+    if (Test-Path $smokeRoot) {
+        Remove-Item $smokeRoot -Recurse -Force -ErrorAction SilentlyContinue
+    }
 }
