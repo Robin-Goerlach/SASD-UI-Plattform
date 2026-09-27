@@ -47,7 +47,7 @@ Package evidence is opt-in for ordinary local verification and is always availab
 pwsh ./build/verify.ps1 -IncludePackDryRun
 ```
 
-The underlying `build/pack-dry-run.ps1` keeps the list of product packages explicit. It never publishes packages. For each configured product project it creates a normal `.nupkg` plus `.snupkg` in `artifacts/nuget-dry-run/` and inspects the archives directly.
+The underlying `build/pack-dry-run.ps1` keeps the list of product packages explicit. It never publishes packages. For each configured product project it creates a normal `.nupkg` plus `.snupkg` in `artifacts/nuget-dry-run/`, enables the .NET SDK's built-in Package Validation, and inspects the archives directly.
 
 The dry-run verifies that every product package contains:
 
@@ -60,6 +60,6 @@ After all packages are complete, `build/write-checksums.ps1` writes a determinis
 
 Using the project-local module README keeps package guidance close to the public surface it describes instead of maintaining a second copied package document. A product project without that README fails the dry-run rather than silently producing a package with no landing-page documentation.
 
-The dry-run uses version `0.0.0-local` by default and performs no push or feed operation. Checksum generation proves artifact integrity for the dry-run; it does not replace the still-pending SBOM, signing or public-package-topology decisions.
+The dry-run uses version `0.0.0-local` by default and performs no push or feed operation. SDK Package Validation currently checks the internal consistency/applicability of the package being built; it is not yet a cross-version API baseline because no approved R1 baseline package has been selected. Checksum generation proves artifact integrity for the dry-run; it does not replace the still-pending SBOM, signing or public-package-topology decisions.
 
 When `-IncludePackDryRun` is used, `build/write-dependency-evidence.ps1` also records the resolved direct and transitive NuGet dependency graph for the same explicit product-project inventory. It verifies that direct dependencies are centrally versioned and that every resolved NuGet package is at least named in `THIRD-PARTY-NOTICES.md`. The generated `artifacts/release-evidence/nuget-dependencies.json` is deterministic release evidence; it is deliberately **not** labelled an SBOM because no SPDX/CycloneDX standard is being claimed.
