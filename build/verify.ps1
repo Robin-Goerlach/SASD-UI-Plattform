@@ -243,6 +243,12 @@ try {
         # out of the packaging step makes the extra CI evidence deterministic without
         # making ordinary local verification pay the packaging cost unless requested.
         & (Join-Path $PSScriptRoot 'pack-dry-run.ps1') -SkipRestore
+
+        Write-Host ""
+        Write-Host '==> NuGet dependency evidence' -ForegroundColor Cyan
+        # Record the resolved direct/transitive package graph from the same restored
+        # product projects used by packaging. This is release evidence, not an SBOM.
+        & (Join-Path $PSScriptRoot 'write-dependency-evidence.ps1')
     }
 
     Write-Host ""

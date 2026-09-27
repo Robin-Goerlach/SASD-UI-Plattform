@@ -61,3 +61,5 @@ After all packages are complete, `build/write-checksums.ps1` writes a determinis
 Using the project-local module README keeps package guidance close to the public surface it describes instead of maintaining a second copied package document. A product project without that README fails the dry-run rather than silently producing a package with no landing-page documentation.
 
 The dry-run uses version `0.0.0-local` by default and performs no push or feed operation. Checksum generation proves artifact integrity for the dry-run; it does not replace the still-pending SBOM, signing or public-package-topology decisions.
+
+When `-IncludePackDryRun` is used, `build/write-dependency-evidence.ps1` also records the resolved direct and transitive NuGet dependency graph for the same explicit product-project inventory. It verifies that direct dependencies are centrally versioned and that every resolved NuGet package is at least named in `THIRD-PARTY-NOTICES.md`. The generated `artifacts/release-evidence/nuget-dependencies.json` is deterministic release evidence; it is deliberately **not** labelled an SBOM because no SPDX/CycloneDX standard is being claimed.
