@@ -10,40 +10,67 @@
 
 ## 2. Paketgruppen
 
-### Kern
+Das Repository führt den Pack-Dry-Run bewusst für granulare interne Produktprojekte aus. So werden Metadaten, Symbole, Dependency-Beziehungen und XML-Dokumentation früh geprüft. Dieses technische Inventar ist absichtlich größer als die unterstützte direkte Consumer-Oberfläche.
 
-- `Sasd.Ui.Core`
-- `Sasd.Ui.WinForms`
-- wenige logisch zusammenhängende R1-Pakete für Theme, Shell, Data, Dialogs, Windows und State.
+### Unterstützte direkte R1-Consumer-Einstiegspakete
 
-### Adapter
+| Paket | Zweck für Consumer |
+| --- | --- |
+| `Sasd.Ui.Core` | Plattformneutrale Verträge und Semantik bei direktem Bedarf. |
+| `Sasd.Ui.WinForms` | Minimales natives WinForms-Fundament. |
+| `Sasd.Ui.WinForms.App` | Empfohlenes Komfort-Metapaket für typische R1-Anwendungen. |
+| `Sasd.Ui.WinForms.Data` | Explizites Opt-in für Grid, Search/Filter/Paging, Listen und Bäume. |
+| `Sasd.Ui.WinForms.Krypton` | Explizite optionale visuelle Implementierung. |
 
-- Krypton-Implementierung;
-- ScottPlot;
-- ScintillaNET;
-- WebView2;
-- Docking;
-- PDF/Media.
+Die fünf Einstiegspakete sind eine Dokumentations- und Supportgrenze. Da die Plattform getrennte Assemblies beibehält, bleiben Implementierungspakete wie Commands, Forms, Dialogs, Shell, State, Theming und Windows reale transitive NuGet-Abhängigkeiten und können auf dem Feed sichtbar sein.
 
-Adapter sind opt-in und dürfen nicht über ein allgemeines Metapaket in jede Anwendung gelangen.
+### R1-Application-Metapaket
+
+`Sasd.Ui.WinForms.App` ist dependency-only und besitzt keine eigene Runtime-Assembly. Seine direkten Abhängigkeiten sind exakt:
+
+- `Sasd.Ui.WinForms.Commands`;
+- `Sasd.Ui.WinForms.Dialogs`;
+- `Sasd.Ui.WinForms.Forms`;
+- `Sasd.Ui.WinForms.Shell`;
+- `Sasd.Ui.WinForms.State`;
+- `Sasd.Ui.WinForms.Theming`;
+- `Sasd.Ui.WinForms.Windows`.
+
+`Sasd.Ui.WinForms.Data`, `Sasd.Ui.WinForms.Krypton`, `Sasd.Ui.WinForms.Media` und spätere R2/R3-Adapter sind bewusst ausgeschlossen. Der Pack-Dry-Run erzwingt diese Grenze.
+
+### Spezialadapter
+
+ScottPlot, ScintillaNET, WebView2, Docking, PDF/Media und ähnliche Funktionen bleiben getrennte Opt-in-Pakete und gelangen nicht über das allgemeine R1-App-Metapaket in jede Anwendung.
 
 ## 3. Consumer-Paketstrategie
 
-Für typische Anwendungen kann ein kuratiertes R1-Metapaket erwogen werden, wenn es nur leichte Kernpakete bündelt. Ein Metapaket darf keine R2-Adapter enthalten.
+Eine typische R1-Anwendung startet mit:
+
+```xml
+<ItemGroup>
+  <PackageReference Include="Sasd.Ui.WinForms.App" Version="<freigegebene-version>" />
+</ItemGroup>
+```
+
+`Sasd.Ui.WinForms.Data` wird nur bei datenlastigen Oberflächen ergänzt. `Sasd.Ui.WinForms.Krypton` wird nur ergänzt, wenn die Anwendung diese visuelle Implementierung bewusst auswählt.
+
+Sehr kleine Anwendungen dürfen direkt mit `Sasd.Ui.Core` oder `Sasd.Ui.WinForms` arbeiten. Direkte Referenzen auf Implementierungspakete bleiben für begründete Spezialfälle möglich, sind aber nicht der normale R1-Einstieg.
+
+ADR-0017 dokumentiert die Paketentscheidung und ihre Review-Kriterien.
 
 ## 4. Metadaten
 
-Jedes Paket enthält:
+Jedes Paket enthält gemeinsame Identitätsmetadaten:
 
 - ID, Titel, Beschreibung;
 - Version und Repository-URL;
 - Lizenzexpression oder Lizenzdatei;
 - Tags;
 - README;
-- Symbolpaket;
-- XML-Dokumentation;
 - Release Notes beziehungsweise Changelog-Link;
 - deterministische Repository-/Commitmetadaten.
+
+Konkrete Assembly-Pakete enthalten zusätzlich XML-Dokumentation und ein Symbolpaket. Dependency-only-Metapakete enthalten bewusst weder Runtime-Assembly noch Symbolpaket.
 
 ## 5. Abhängigkeitsregeln
 
@@ -57,12 +84,16 @@ Jedes Paket enthält:
 
 Vor Veröffentlichung:
 
-- Paketinhalt inspizieren;
-- leere Consumerlösung erstellen;
+- Paketinhalt und Dependency-Manifest inspizieren;
+- frisches Consumer-Projekt erzeugen;
 - Paket aus geplantem Feed installieren;
-- Build, Designer und Minimalbeispiel testen;
+- repräsentative öffentliche Typen restaurieren und bauen;
+- prüfen, dass App exakt die erlaubten Module und nicht Data/Krypton/Media einzieht;
+- Designer und Minimalbeispiel testen;
 - transitive Abhängigkeiten und Lizenznotices prüfen;
 - Deinstallation/Updatepfad prüfen.
+
+Der aktuelle Dry-Run führt bereits einen lokalen Feed-Restore/Build-Smoke für `Sasd.Ui.WinForms.App` aus; der spätere interne Release Candidate wiederholt diesen Weg gegen den echten Feed.
 
 ## 7. Paketanzahl als Architekturindikator
 
