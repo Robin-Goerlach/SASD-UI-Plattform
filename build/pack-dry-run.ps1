@@ -60,11 +60,20 @@ function Assert-PackageContents {
         }
 
         if ($Metapackage) {
-            # A metapackage must remain dependency-only. Accidentally shipping a generated
-            # marker DLL would create a public assembly/API that serves no runtime purpose.
-            $runtimeEntries = @($entryNames | Where-Object { $_ -like 'lib/*' -or $_ -like 'ref/*' })
-            if ($runtimeEntries.Count -gt 0) {
-                throw "Metapackage '$PackageId' unexpectedly contains runtime/reference assets: $($runtimeEntries -join ', ')"
+            # A metapackage must remain dependency-only. NuGet uses a zero-byte _._
+            # framework marker to represent an intentionally empty lib group; anything
+            # else under lib/ref would create an accidental runtime/reference asset.
+            $frameworkEntries = @($entryNames | Where-Object { $_ -like 'lib/*' -or $_ -like 'ref/*' })
+            $unexpectedRuntimeEntries = @(
+                $frameworkEntries |
+                    Where-Object { $_ -ne 'lib/net8.0-windows7.0/_._' }
+            )
+            if ($unexpectedRuntimeEntries.Count -gt 0) {
+                throw "Metapackage '$PackageId' unexpectedly contains runtime/reference assets: $($unexpectedRuntimeEntries -join ', ')"
+            }
+
+            if ($frameworkEntries -notcontains 'lib/net8.0-windows7.0/_._') {
+                throw "Metapackage '$PackageId' does not contain its expected NuGet _._ framework marker."
             }
 
             $nuspecEntry = $archive.Entries |
