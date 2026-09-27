@@ -121,8 +121,21 @@ try {
         foreach ($projectResult in @($inventory.projects)) {
             foreach ($framework in @($projectResult.frameworks)) {
                 $frameworkName = [string]$framework.framework
-                Add-PackageRecords -Destination $records -Project $project -Framework $frameworkName -Kind 'top-level' -Packages @($framework.topLevelPackages)
-                Add-PackageRecords -Destination $records -Project $project -Framework $frameworkName -Kind 'transitive' -Packages @($framework.transitivePackages)
+                $topLevelPackages = if ($null -ne $framework.PSObject.Properties['topLevelPackages']) {
+                    @($framework.topLevelPackages)
+                }
+                else {
+                    @()
+                }
+                $transitivePackages = if ($null -ne $framework.PSObject.Properties['transitivePackages']) {
+                    @($framework.transitivePackages)
+                }
+                else {
+                    @()
+                }
+
+                Add-PackageRecords -Destination $records -Project $project -Framework $frameworkName -Kind 'top-level' -Packages $topLevelPackages
+                Add-PackageRecords -Destination $records -Project $project -Framework $frameworkName -Kind 'transitive' -Packages $transitivePackages
             }
         }
     }
