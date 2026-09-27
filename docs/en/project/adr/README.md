@@ -50,3 +50,4 @@ Numbers are never reused. A later decision supersedes an older ADR through a ref
 | 0014 | Internal NuGet feed before public release | Accepted |
 | 0015 | No mobile/macOS/Linux desktop implementation in current scope | Accepted |
 | 0016 | WPF, ASPX/web, and Java as separate product lines | Accepted |
+| 0017 | Curated R1 consumer packages with an application metapackage | Accepted |
