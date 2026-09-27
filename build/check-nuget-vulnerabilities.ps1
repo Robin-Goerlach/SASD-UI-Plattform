@@ -57,7 +57,6 @@ function Invoke-DotNetVulnerabilityInventory {
                 "with exit code $($process.ExitCode): $standardError")
         }
 
-        $diagnostics = @($standardError)
         # NuGet can report audit-source failures as warnings while the command itself still
         # succeeds. Treat those as an evidence failure so a network/source problem cannot
         # accidentally become a clean vulnerability report.
@@ -187,13 +186,27 @@ try {
         }
 
         $inventory = Invoke-DotNetVulnerabilityInventory -Project $project
-        $projectResults = @($inventory.projects)
+        $projectResults = if ($null -ne $inventory.PSObject.Properties['projects']) {
+            @($inventory.projects)
+        }
+        else {
+            @()
+        }
         if ($projectResults.Count -eq 0) {
             throw "NuGet vulnerability audit returned no project result for '$project'."
         }
 
         foreach ($projectResult in $projectResults) {
-            $frameworkResults = @($projectResult.frameworks)
+            if ($null -eq $projectResult) {
+                throw "NuGet vulnerability audit returned an empty project result for '$project'."
+            }
+
+            $frameworkResults = if ($null -ne $projectResult.PSObject.Properties['frameworks']) {
+                @($projectResult.frameworks)
+            }
+            else {
+                @()
+            }
             if ($frameworkResults.Count -eq 0) {
                 throw "NuGet vulnerability audit returned no framework result for '$project'."
             }
