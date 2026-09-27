@@ -70,16 +70,15 @@ Record evidence rather than inferring it from compilation. Use [`r1-manual-accep
 
 Automated accessible names and smoke checks remain useful, but they do not replace these manual gates.
 
-### C. Strategic decisions that require explicit approval
+### C. Strategic decisions
 
-Do not silently decide these during routine implementation:
+The **R1 NuGet consumer topology is resolved** by ADR-0017: five supported direct entry packages, including the dependency-only `Sasd.Ui.WinForms.App` metapackage, while internal assemblies remain granular. The package dry-run must keep this boundary executable through dependency inspection and a local-feed consumer build.
 
-1. **public NuGet topology** — internal projects are currently more granular than the intended consumer package surface;
-2. **native WinForms vs Krypton default visual implementation** — decide only after Designer/DPI/focus/High-Contrast evidence;
-3. **UI Automation/screenshot-regression tooling** — a new third-party dependency or toolchain needs an explicit decision;
-4. any new specialist R2 adapter/runtime dependency.
+The remaining decisions still require explicit approval:
 
-The current pack dry-run proves technical packability of the internal product projects. It does not declare that all of those projects become separate public packages.
+1. **native WinForms vs Krypton default visual implementation** — decide only after Designer/DPI/focus/High-Contrast evidence;
+2. **UI Automation/screenshot-regression tooling** — a new third-party dependency or toolchain needs an explicit decision;
+3. any new specialist R2 adapter/runtime dependency.
 
 ### D. First real SASD adoption
 
@@ -123,8 +122,8 @@ Unless a real consumer exposes a defect with higher priority:
 2. close dependency-free automated evidence gaps and release hygiene;
 3. choose and implement the public-API baseline approach;
 4. execute the manual Designer/DPI/High-Contrast/accessibility matrix;
-5. make the explicit public-package and native-vs-Krypton decisions using the collected evidence;
-6. produce an internal release candidate;
+5. make the native-vs-Krypton decision using the collected evidence;
+6. produce an internal release candidate using the ADR-0017 package topology;
 7. migrate the bounded Prompt Manager feature against the packaged candidate;
 8. fix/simplify R1 APIs based on that migration;
 9. produce final release evidence and tag/publish R1.0 internally.
