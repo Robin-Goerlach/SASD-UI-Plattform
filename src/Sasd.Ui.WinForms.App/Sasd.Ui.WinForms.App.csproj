@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <PackageId>Sasd.Ui.WinForms.App</PackageId>
+    <Description>Curated R1 application metapackage for standard SASD WinForms application infrastructure.</Description>
+
+    <!--
+      This project exists to define the consumer-facing R1 convenience boundary. It
+      intentionally contributes no runtime assembly: applications continue to reference
+      the real modular SASD assemblies, while NuGet resolves the normal application set
+      through one direct package reference.
+    -->
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <SuppressDependenciesWhenPacking>false</SuppressDependenciesWhenPacking>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      Keep data-heavy and optional visual/specialist packages out of this list.
+      Sasd.Ui.WinForms.Data and Sasd.Ui.WinForms.Krypton remain explicit opt-ins;
+      R2 adapters must never arrive transitively through this package.
+    -->
+    <ProjectReference Include="..\Sasd.Ui.WinForms.Commands\Sasd.Ui.WinForms.Commands.csproj" />
+    <ProjectReference Include="..\Sasd.Ui.WinForms.Dialogs\Sasd.Ui.WinForms.Dialogs.csproj" />
+    <ProjectReference Include="..\Sasd.Ui.WinForms.Forms\Sasd.Ui.WinForms.Forms.csproj" />
+    <ProjectReference Include="..\Sasd.Ui.WinForms.Shell\Sasd.Ui.WinForms.Shell.csproj" />
+    <ProjectReference Include="..\Sasd.Ui.WinForms.State\Sasd.Ui.WinForms.State.csproj" />
+    <ProjectReference Include="..\Sasd.Ui.WinForms.Theming\Sasd.Ui.WinForms.Theming.csproj" />
+    <ProjectReference Include="..\Sasd.Ui.WinForms.Windows\Sasd.Ui.WinForms.Windows.csproj" />
+  </ItemGroup>
+</Project>
