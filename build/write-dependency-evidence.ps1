@@ -28,7 +28,6 @@ function Invoke-DotNetPackageInventory {
         $startInfo.ArgumentList.Add($argument)
     }
 
-    using namespace System.Diagnostics
     $process = [System.Diagnostics.Process]::new()
     $process.StartInfo = $startInfo
 
