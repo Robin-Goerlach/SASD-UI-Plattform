@@ -50,3 +50,4 @@ Nummern werden nicht wiederverwendet. Eine spätere Entscheidung ersetzt eine al
 | 0014 | Interner NuGet-Feed vor öffentlicher Veröffentlichung | Accepted |
 | 0015 | Keine Mobile-/macOS-/Linux-Desktopimplementierung im aktuellen Scope | Accepted |
 | 0016 | WPF, ASPX/Web und Java als getrennte Produktlinien | Accepted |
+| 0017 | Kuratierte R1-Consumer-Pakete mit Application-Metapaket | Accepted |
