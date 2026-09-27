@@ -130,6 +130,7 @@ The `src` folder follows the package boundaries defined by the architecture. Cur
 
 - `Sasd.Ui.Core` — platform-neutral contracts, theme semantics and result models;
 - `Sasd.Ui.WinForms` — native WinForms base classes and UI-thread infrastructure;
+- `Sasd.Ui.WinForms.App` — dependency-only R1 convenience metapackage for normal application infrastructure;
 - `Sasd.Ui.WinForms.Theming` — native theme application;
 - `Sasd.Ui.WinForms.Forms` — field layout, sections, validation and native property editor;
 - `Sasd.Ui.WinForms.Data` — grids, paging, search/filter contracts, CSV/state helpers, saved views and small KPI/sparkline primitives;
@@ -141,6 +142,18 @@ The `src` folder follows the package boundaries defined by the architecture. Cur
 - `Sasd.Ui.WinForms.Media` — dependency-free image-viewing foundation;
 - `Sasd.Ui.WinForms.Krypton` — isolated Krypton technology pilot;
 - `samples/Sasd.Ui.ComponentGallery` — executable specification and acceptance host.
+
+## R1 package entry points
+
+ADR-0017 keeps the supported direct R1 package surface intentionally small:
+
+- `Sasd.Ui.Core` for platform-neutral contracts;
+- `Sasd.Ui.WinForms` for the minimal WinForms foundation;
+- `Sasd.Ui.WinForms.App` as the normal application convenience metapackage;
+- `Sasd.Ui.WinForms.Data` as an explicit data-controls opt-in;
+- `Sasd.Ui.WinForms.Krypton` as an explicit visual-adapter opt-in.
+
+The App package contains no runtime assembly. It resolves Commands, Dialogs, Forms, Shell, State, Theming and Windows transitively while deliberately excluding Data, Krypton, Media and later R2/R3 adapters. The package dry-run restores and builds a fresh consumer from the local package output to enforce that boundary.
 
 ## Reference consumers and integrated example
 
