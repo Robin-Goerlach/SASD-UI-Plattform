@@ -110,12 +110,11 @@ function Add-VulnerabilityFindings {
 
         $packageId = [string]$package.id
         $resolvedVersion = [string]$package.resolvedVersion
-        $vulnerabilities = if ($null -ne $package.PSObject.Properties['vulnerabilities']) {
-            @($package.vulnerabilities)
+        $vulnerabilities = @(
+        if ($null -ne $package.PSObject.Properties['vulnerabilities']) {
+            $package.vulnerabilities
         }
-        else {
-            @()
-        }
+    )
 
         if ($vulnerabilities.Count -eq 0) {
             # --vulnerable is a filtered command. If NuGet returns a package here without
@@ -186,12 +185,11 @@ try {
         }
 
         $inventory = Invoke-DotNetVulnerabilityInventory -Project $project
-        $projectResults = if ($null -ne $inventory.PSObject.Properties['projects']) {
-            @($inventory.projects)
+        $projectResults = @(
+        if ($null -ne $inventory.PSObject.Properties['projects']) {
+            $inventory.projects
         }
-        else {
-            @()
-        }
+    )
         if ($projectResults.Count -eq 0) {
             throw "NuGet vulnerability audit returned no project result for '$project'."
         }
@@ -201,30 +199,27 @@ try {
                 throw "NuGet vulnerability audit returned an empty project result for '$project'."
             }
 
-            $frameworkResults = if ($null -ne $projectResult.PSObject.Properties['frameworks']) {
-                @($projectResult.frameworks)
-            }
-            else {
-                @()
-            }
+            $frameworkResults = @(
+        if ($null -ne $projectResult.PSObject.Properties['frameworks']) {
+            $projectResult.frameworks
+        }
+    )
             if ($frameworkResults.Count -eq 0) {
                 throw "NuGet vulnerability audit returned no framework result for '$project'."
             }
 
             foreach ($framework in $frameworkResults) {
                 $frameworkName = [string]$framework.framework
-                $topLevelPackages = if ($null -ne $framework.PSObject.Properties['topLevelPackages']) {
-                    @($framework.topLevelPackages)
-                }
-                else {
-                    @()
-                }
-                $transitivePackages = if ($null -ne $framework.PSObject.Properties['transitivePackages']) {
-                    @($framework.transitivePackages)
-                }
-                else {
-                    @()
-                }
+                $topLevelPackages = @(
+        if ($null -ne $framework.PSObject.Properties['topLevelPackages']) {
+            $framework.topLevelPackages
+        }
+    )
+                $transitivePackages = @(
+        if ($null -ne $framework.PSObject.Properties['transitivePackages']) {
+            $framework.transitivePackages
+        }
+    )
 
                 Add-VulnerabilityFindings -Destination $findings -Project $project -Framework $frameworkName -Kind 'top-level' -Packages $topLevelPackages
                 Add-VulnerabilityFindings -Destination $findings -Project $project -Framework $frameworkName -Kind 'transitive' -Packages $transitivePackages
