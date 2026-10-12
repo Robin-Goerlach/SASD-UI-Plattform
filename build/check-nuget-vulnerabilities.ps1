@@ -205,7 +205,15 @@ try {
         }
     )
             if ($frameworkResults.Count -eq 0) {
-                throw "NuGet vulnerability audit returned no framework result for '$project'."
+                # With --vulnerable, NuGet omits frameworks entirely when there are no
+                # vulnerable packages. A successful query with project results and no
+                # audit-source errors is therefore a clean result, not a schema failure.
+                # Keep the audited project in the evidence; the TFM is not supplied.
+                $auditedProjects.Add([pscustomobject][ordered]@{
+                    project = $project
+                    framework = $null
+                })
+                continue
             }
 
             foreach ($framework in $frameworkResults) {
