@@ -38,10 +38,21 @@ Third-party components are used deliberately but are not absorbed uncontrolled i
 
 Every release produces:
 
-- a machine-readable SBOM;
+- a machine-readable standards-compliant SBOM;
 - `THIRD-PARTY-NOTICES` listing package, version, license, and source;
-- a vulnerability-scan report;
+- a vulnerability-scan report covering direct and transitive NuGet dependencies;
 - checksums for release artifacts.
+
+### Current automated R1 evidence
+
+The repository already produces two complementary NuGet evidence files during the release dry-run:
+
+- `nuget-dependencies.json` records the resolved direct/transitive package graph and verifies central direct-package versioning plus notice coverage;
+- `nuget-vulnerabilities.json` records the timestamped result of `dotnet list package --vulnerable --include-transitive --format json` for every explicit product project.
+
+Restore also enables `NuGetAuditMode=all` so transitive vulnerabilities are surfaced by normal NuGet auditing. The explicit vulnerability gate fails on any reported finding and also fails when the audit source is unavailable; a missing security feed must never be interpreted as a clean scan.
+
+These files are **release evidence, not the final SBOM**. The dependency inventory does not claim SPDX or CycloneDX conformance, and the vulnerability report is inherently time-sensitive because advisory data can change after a build.
 
 ## 6. Fork Rule
 

@@ -249,6 +249,13 @@ try {
         # Record the resolved direct/transitive package graph from the same restored
         # product projects used by packaging. This is release evidence, not an SBOM.
         & (Join-Path $PSScriptRoot 'write-dependency-evidence.ps1')
+
+        Write-Host ""
+        Write-Host '==> NuGet vulnerability audit' -ForegroundColor Cyan
+        # Query current vulnerability data for both direct and transitive product-package
+        # dependencies. The helper fails closed when audit data is unavailable and fails
+        # the release gate when NuGet reports any known vulnerability.
+        & (Join-Path $PSScriptRoot 'check-nuget-vulnerabilities.ps1')
     }
 
     Write-Host ""

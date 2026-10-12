@@ -38,10 +38,21 @@ Drittanbieterkomponenten werden bewusst genutzt, aber nicht unkontrolliert in ei
 
 Jedes Release erzeugt:
 
-- maschinenlesbare SBOM;
+- eine maschinenlesbare standardkonforme SBOM;
 - `THIRD-PARTY-NOTICES` mit Paket, Version, Lizenz und Quelle;
-- Vulnerability-Scanbericht;
+- einen Vulnerability-Scanbericht für direkte und transitive NuGet-Abhängigkeiten;
 - Prüfsummen der Releaseartefakte.
+
+### Aktuelle automatisierte R1-Evidence
+
+Der Release-Dry-Run erzeugt bereits zwei ergänzende NuGet-Evidence-Dateien:
+
+- `nuget-dependencies.json` erfasst den aufgelösten direkten/transitiven Paketgraphen und prüft zentrale Versionierung direkter Pakete sowie Notice-Abdeckung;
+- `nuget-vulnerabilities.json` erfasst den zeitgestempelten Befund von `dotnet list package --vulnerable --include-transitive --format json` für jedes explizite Produktprojekt.
+
+Zusätzlich aktiviert der Restore `NuGetAuditMode=all`, damit auch normale NuGet-Audits transitive Schwachstellen berücksichtigen. Das explizite Vulnerability-Gate schlägt bei jedem bekannten Fund fehl und ebenfalls dann, wenn die Audit-Quelle nicht verfügbar ist. Fehlende Sicherheitsdaten dürfen nicht als sauberer Scan interpretiert werden.
+
+Diese Dateien sind **Release-Evidence, aber noch keine endgültige SBOM**. Das Dependency-Inventar beansprucht keine SPDX-/CycloneDX-Konformität; der Vulnerability-Bericht ist zudem zeitabhängig, weil sich Advisory-Daten nach einem Build ändern können.
 
 ## 6. Fork-Regel
 
